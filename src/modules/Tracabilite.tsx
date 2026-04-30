@@ -406,7 +406,7 @@ export default function Tracabilite() {
                 <Input 
                   value={searchTerm} 
                   onChange={(e: any) => setSearchTerm(e.target.value)}
-                  placeholder="{t('ph_search_product') || 'Rechercher un produit...'}"
+                  placeholder={t('ph_search_product') || 'Rechercher un produit...'}
                   className="h-14 rounded-2xl border-white pr-10 text-lg shadow-sm"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">

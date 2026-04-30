@@ -116,12 +116,12 @@ export default function CleaningPlan() {
                   onChange={e => setFrequence(e.target.value)}
                   className="mt-1 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-crousty-purple focus:border-crousty-purple transition-all"
                 >
-                  <option value="QUOTIDIEN">Quotidien</option>
-                  <option value="HEBDOMADAIRE">Hebdomadaire</option>
-                  <option value="MENSUEL">Mensuel</option>
-                  <option value="TRIMESTRIEL">Trimestriel</option>
-                  <option value="APRÈS SERVICE">Après service</option>
-                  <option value="APRÈS UTILISATION">Après utilisation</option>
+                  <option value="QUOTIDIEN">{t('lbl_daily') || 'Quotidien'}</option>
+                  <option value="HEBDOMADAIRE">{t('lbl_weekly') || 'Hebdomadaire'}</option>
+                  <option value="MENSUEL">{t('lbl_monthly') || 'Mensuel'}</option>
+                  <option value="TRIMESTRIEL">{t('lbl_quarterly') || 'Trimestriel'}</option>
+                  <option value="APRÈS SERVICE">{t('lbl_after_service') || 'Après service'}</option>
+                  <option value="APRÈS UTILISATION">{t('lbl_after_use') || 'Après utilisation'}</option>
                 </select>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default function CleaningPlan() {
   if (!isAvailable) {
     const hoursRemaining = 17 - currentHour - 1;
     const minsRemaining = 60 - currentTime.getMinutes();
-    timeMessage = `Dans ${hoursRemaining}h${minsRemaining < 10 ? '0' : ''}${minsRemaining}`;
+    timeMessage = `${t('lbl_in_time') || 'Dans'} ${hoursRemaining}h${minsRemaining < 10 ? '0' : ''}${minsRemaining}`;
   }
 
   const handleSave = () => {
@@ -218,12 +218,12 @@ export default function CleaningPlan() {
       {/* Cleaning Header Block */}
       <div className={`p-4 rounded-3xl border-2 shadow-sm mb-6 ${isAvailable ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
         <div className="flex justify-between items-start mb-2">
-          <h3 className="flex items-center gap-2 font-black text-lg text-gray-800"><Wind className="text-gray-500" /> NETTOYAGE DU SOIR</h3>
+          <h3 className="flex items-center gap-2 font-black text-lg text-gray-800"><Wind className="text-gray-500" /> {t('lbl_cleaning_evening') || 'NETTOYAGE DU SOIR'}</h3>
         </div>
         {!isAvailable ? (
           <div>
             <div className="flex items-center gap-2 text-gray-600 font-bold text-sm mb-1">
-               Disponible à partir de 17h00
+               {t('lbl_available_from') || 'Disponible à partir de'} 17h00
             </div>
             <div className="flex items-center gap-2 text-orange-500 font-bold text-sm">
                <Clock size={16} /> ⏳ {timeMessage}
@@ -391,7 +391,7 @@ export default function CleaningPlan() {
                           }}
                         >
                           {<style.icon size={12} />}
-                          {style.label}
+                          {t(`lbl_${style.label.toLowerCase().replace(/ /g, '_').replace(/è/g, 'e')}`) || style.label}
                         </span>
                       </div>
                     </div>

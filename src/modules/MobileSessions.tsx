@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
+import { useI18n } from '../lib/i18n';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   Smartphone, Search, Plus, RefreshCw, Calendar, Clock, User, QrCode, 
@@ -37,6 +39,7 @@ const DEFAULT_MOBILE_PROFILES = [
 ];
 
 export const MobileSessions = () => {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const { config } = useConfig();
   
@@ -278,15 +281,15 @@ export const MobileSessions = () => {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-gray-800 tracking-tight">Espace Sessions Mobiles</h1>
-          <p className="text-gray-500 font-medium">Gérez vos collectes de données sur smartphone</p>
+          <h1 className="text-2xl font-black text-gray-800 tracking-tight">{t('lbl_mobile_sessions_space') || 'Espace Sessions Mobiles'}</h1>
+          <p className="text-gray-500 font-medium">{t('lbl_mobile_sessions_desc') || 'Gérez vos collectes de données sur smartphone'}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={loadSessions} className="rounded-xl w-auto h-10 py-0 px-4 text-xs font-bold whitespace-nowrap">
-            <RefreshCw size={16} className="mr-2" /> Actualiser
+            <RefreshCw size={16} className="mr-2" /> {t('btn_refresh') || 'Actualiser'}
           </Button>
           <Button onClick={() => setShowNewModal(true)} className="rounded-xl w-auto h-10 py-0 px-4 text-xs font-bold whitespace-nowrap shadow-md shadow-crousty-purple/20">
-            <Plus size={16} className="mr-2" /> Nouvelle Session
+            <Plus size={16} className="mr-2" /> {t('btn_new_session') || 'Nouvelle Session'}
           </Button>
         </div>
       </div>
@@ -307,7 +310,7 @@ export const MobileSessions = () => {
                 <div className="flex-1 min-w-[200px] relative">
                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                    <Input 
-                    placeholder="Rechercher une session..." 
+                    placeholder={t('ph_search_session') || 'Rechercher une session...'} 
                     className="pl-10 h-10 border-none bg-white rounded-xl shadow-sm"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
@@ -318,7 +321,7 @@ export const MobileSessions = () => {
                   value={filterStatus}
                   onChange={e => setFilterStatus(e.target.value)}
                 >
-                  <option value="all">Tous les statuts</option>
+                  <option value="all">{t('lbl_all_statuses') || 'Tous les statuts'}</option>
                   <option value="waiting">En attente</option>
                   <option value="connected">Connectée</option>
                   <option value="collecting">Collecte en cours</option>
@@ -331,7 +334,7 @@ export const MobileSessions = () => {
                     value={filterCreator}
                     onChange={e => setFilterCreator(e.target.value)}
                   >
-                    <option value="all">Tous les créateurs</option>
+                    <option value="all">{t('lbl_all_creators') || 'Tous les créateurs'}</option>
                     {Array.from(new Set((sessions || []).map(s => s.createdByUserId))).filter(id => id != null).map((id, idx) => {
                       const creatorName = (sessions || []).find(s => s.createdByUserId === id)?.createdByUserName || 'Inconnu';
                       return (
@@ -349,8 +352,8 @@ export const MobileSessions = () => {
              {filteredSessions.length === 0 ? (
                <div className="p-12 text-center text-gray-400 bg-white border border-dashed rounded-3xl flex flex-col items-center">
                   <Smartphone size={48} className="mb-4 opacity-20" />
-                  <p className="font-bold">Aucune session mobile active</p>
-                  <p className="text-sm">Commencez par créer une nouvelle session de collecte.</p>
+                  <p className="font-bold">{t('lbl_no_active_mobile_session') || 'Aucune session mobile active'}</p>
+                  <p className="text-sm">{t('lbl_start_creating_session') || 'Commencez par créer une nouvelle session de collecte.'}</p>
                </div>
              ) : (
                filteredSessions.map((session, idx) => (
@@ -373,7 +376,7 @@ export const MobileSessions = () => {
         <div className="space-y-6">
            <Card className="p-5 overflow-hidden">
              <h3 className="font-black text-gray-800 mb-4 flex items-center gap-2">
-               <History size={18} className="text-crousty-purple" /> Événements récents
+               <History size={18} className="text-crousty-purple" /> {t('lbl_recent_events') || 'Événements récents'}
              </h3>
              <div className="space-y-4 text-sm relative border-l-2 border-gray-100 ml-2">
                 {auditEvents.length > 0 ? (
@@ -399,36 +402,36 @@ export const MobileSessions = () => {
                     );
                   })
                 ) : (
-                  <div className="pl-6 text-gray-400 italic text-xs py-4">Aucun événement récent</div>
+                  <div className="pl-6 text-gray-400 italic text-xs py-4">{t('lbl_no_recent_event') || 'Aucun événement récent'}</div>
                 )}
                 <button 
                   onClick={() => setShowFullAudit(true)}
                   className="text-xs text-crousty-purple font-black hover:underline mt-2 ml-4"
                 >
-                  Voir l'audit complet
+                  {t('btn_view_full_audit') || 'Voir l\'audit complet'}
                 </button>
              </div>
            </Card>
 
            <div className="bg-gradient-to-br from-crousty-purple to-crousty-purple/80 p-6 rounded-[2.5rem] text-white shadow-xl">
               <Smartphone size={32} className="mb-4 opacity-50" />
-              <h4 className="text-lg font-black leading-tight mb-2">Comment ça marche ?</h4>
+              <h4 className="text-lg font-black leading-tight mb-2">{t('lbl_how_it_works') || 'Comment ça marche ?'}</h4>
               <ul className="space-y-3 text-sm opacity-90 font-medium">
                  <li className="flex gap-2">
                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0">1</div>
-                   Créez une session et choisissez les modules.
+                   {t('lbl_step_1_desc') || 'Créez une session et choisissez les modules.'}
                  </li>
                  <li className="flex gap-2">
                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0">2</div>
-                   Scannez le QR Code avec le téléphone.
+                   {t('lbl_step_2_desc') || 'Scannez le QR Code avec le téléphone.'}
                  </li>
                  <li className="flex gap-2">
                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0">3</div>
-                   Faites la saisie et envoyez les données.
+                   {t('lbl_step_3_desc') || 'Faites la saisie et envoyez les données.'}
                  </li>
                  <li className="flex gap-2">
                    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center shrink-0">4</div>
-                   Vérifiez et importez sur cet écran.
+                   {t('lbl_step_4_desc') || 'Vérifiez et importez sur cet écran.'}
                  </li>
               </ul>
            </div>
@@ -440,7 +443,7 @@ export const MobileSessions = () => {
         <div className="fixed inset-0 z-[6000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
            <Card className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto p-0 flex flex-col shadow-2xl">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                <h2 className="text-xl font-black text-gray-800">Nouvelle Session Mobile</h2>
+                <h2 className="text-xl font-black text-gray-800">{t('btn_new_session') || 'Nouvelle Session'} Mobile</h2>
                 <button onClick={() => setShowNewModal(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20}/></button>
               </div>
               

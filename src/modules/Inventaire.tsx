@@ -44,6 +44,7 @@ const CategorieHeader = ({ nom, nbProduits, isExpanded, onToggle }: { nom: strin
 };
 
 export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarCollapsed?: (c: boolean) => void }) {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const isMobileMode = !!localStorage.getItem('crousty_mobile_session');
   const { products, refreshProducts } = useInventaire();
@@ -418,7 +419,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
           const cartonsNum = parseInt((d as any).cartons || '0');
           const totalNum = unitsNum + (cartonsNum * 5);
           const isLow = product && totalNum <= product.minThreshold;
-          const status = isLow ? '⚠️ RUPTURE' : 'OK';
+          const status = isLow ? `⚠️ ${t('lbl_out_of_stock_upper') || 'RUPTURE'}` : 'OK';
           tableData.push([item, formatItemValue(d), status]);
         }
       });
@@ -583,9 +584,9 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                <Calendar size={20} />
             </div>
             <div>
-               <div className="font-bold text-sm tracking-tight text-gray-900">Fréquence : {getFrequenceDisplay()}</div>
+               <div className="font-bold text-sm tracking-tight text-gray-900">{t('lbl_frequency') || 'Fréquence :'} {getFrequenceDisplay()}</div>
                <div className="text-xs font-medium">
-                 {statusInventoryDone ? '✅ Inventaire à jour' : (statusInventoryLate ? '🚨 Inventaire en retard !' : statusInventoryNeeded ? '⚠️ Inventaire attendu aujourd\'hui' : 'Prochain inventaire : en attente')}
+                 {statusInventoryDone ? '✅ Inventaire à jour' : (statusInventoryLate ? `🚨 ${t('lbl_inventory_late_excl') || 'Inventaire en retard !'}` : statusInventoryNeeded ? '⚠️ Inventaire attendu aujourd\'hui' : 'Prochain inventaire : en attente')}
                </div>
             </div>
          </div>
@@ -597,7 +598,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="Rechercher un produit..."
+              placeholder={t('ph_search_product') || 'Rechercher un produit...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-crousty-purple/50 transition-all text-sm font-medium"
@@ -609,16 +610,14 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
               <button
                 onClick={() => setActiveFilter('Tous')}
                 className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${activeFilter === 'Tous' ? 'bg-crousty-purple text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              >
-                Tous
-              </button>
+              >{t('lbl_all_count', { count: products.length }) || 'Tous'}</button>
               {Object.keys(productsByCategory).map(cat => (
                 <button
                   key={cat}
                   onClick={() => setActiveFilter(cat)}
                   className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${activeFilter === cat ? 'bg-crousty-purple text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                 >
-                  {cat}
+                  {t('cat_' + cat.toLowerCase().replace(/[ \/]+/g, '_').replace(/_+/g, '_')) || cat}
                 </button>
               ))}
             </div>
@@ -652,7 +651,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                      disabled={entries.length < 2}
                      className="accent-crousty-purple w-4 h-4 disabled:opacity-50"
                    />
-                   <span className="text-sm font-bold flex items-center gap-1"><Brain size={14} className="text-crousty-purple"/> Mode intelligent</span>
+                   <span className="text-sm font-bold flex items-center gap-1"><Brain size={14} className="text-crousty-purple"/> {t('lbl_inventory_smart_mode') || 'Mode intelligent'}</span>
                 </label>
                 
                 <label className="flex items-center gap-2 cursor-pointer bg-orange-50 text-orange-700 px-4 py-2 rounded-full border border-orange-200 hover:bg-orange-100 transition-colors shrink-0">
@@ -662,7 +661,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                      onChange={e => setShowRupturesOnly(e.target.checked)}
                      className="accent-orange-600 w-4 h-4"
                    />
-                   <span className="text-sm font-bold flex items-center gap-1 hidden sm:flex">⚠️ Afficher uniquement les ruptures</span>
+                   <span className="text-sm font-bold flex items-center gap-1 hidden sm:flex">⚠️ {t('lbl_show_only_out_of_stock') || 'Afficher uniquement les ruptures'}</span>
                 </label>
             </div>
           </div>

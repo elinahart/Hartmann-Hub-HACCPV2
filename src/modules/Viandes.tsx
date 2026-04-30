@@ -155,7 +155,7 @@ export default function Viandes() {
         
         <div className="space-y-4">
           <div>
-            <Label className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5 block">Temp. à cœur (°C)</Label>
+            <Label className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1.5 block">{t('lbl_core_temp_unit') || 'TEMP. À CŒUR (°C)'}</Label>
             <div className="relative">
               <Input 
                 type="number" 
@@ -164,7 +164,7 @@ export default function Viandes() {
                 value={val.temp} 
                 onChange={(e: any) => handleValueChange(product.id, 'temp', e.target.value)} 
                 className={`text-xl font-black h-12 pt-1 rounded-2xl ${isError ? 'border-red-300 ring-4 ring-red-50' : isSuccess ? 'border-green-300 ring-4 ring-green-50' : 'border-gray-200'}`}
-                placeholder="Ex: 72"
+                placeholder={t('lbl_ex_temp') || "Ex: 72"}
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-sm">°C</div>
             </div>
@@ -203,10 +203,10 @@ export default function Viandes() {
           </div>
           <div>
             <div className={`font-black text-lg leading-tight ${isDoneToday ? 'text-green-900' : enRetard ? 'text-red-900' : 'text-blue-900'}`}>
-              {isDoneToday ? "Contrôle effectué ✅" : enRetard ? "Contrôle en retard ⚠️" : "Contrôle à effectuer"}
+              {isDoneToday ? "Contrôle effectué ✅" : enRetard ? t('lbl_control_late') || "Contrôle en retard ⚠️" : "Contrôle à effectuer"}
             </div>
             <div className="text-xs font-bold text-gray-500 mt-0.5 uppercase tracking-wide">
-              Objectif : Avant 10h00 • {currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              {t('lbl_goal_before') || 'Objectif : Avant'} 10h00 • {currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
         </div>
@@ -228,13 +228,13 @@ export default function Viandes() {
           disabled={!canSubmit}
           className={`w-full py-6 text-xl rounded-[2rem] shadow-xl transition-all font-black uppercase tracking-widest ${!canSubmit ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 text-white hover:scale-[1.02] active:scale-[0.98]'}`}
         >
-          Valider le contrôle
+          {t('lbl_validate_control') || 'Valider le contrôle'}
         </Button>
       )}
       
       <div className="space-y-6 mt-12">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Historique des contrôles</h3>
+          <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">{t('lbl_controls_history') || 'Historique des contrôles'}</h3>
         </div>
         
         <div className="grid grid-cols-1 gap-4">

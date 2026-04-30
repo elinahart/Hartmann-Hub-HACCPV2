@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useI18n } from '../lib/i18n';
+import { useState, useEffect } from 'react';
 import { getAuditEvents, AuditEvent } from '../lib/audit';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -8,6 +10,7 @@ import { useManagerUI } from '../contexts/ManagerUIContext';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Timeline = () => {
+  const { t } = useI18n();
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const { openModal, closeModal } = useManagerUI();
   const { currentUser } = useAuth();
@@ -58,7 +61,7 @@ export const Timeline = () => {
               <Clock size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-gray-800 tracking-tight leading-tight">Journal d'activité complet</h2>
+              <h2 className="text-xl font-black text-gray-800 tracking-tight leading-tight">{t('lbl_activity_log_full') || "Journal d'activité complet"}</h2>
               <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">{allEvents.length} événements enregistrés</p>
             </div>
           </div>
@@ -124,8 +127,8 @@ export const Timeline = () => {
            <Clock size={24} />
          </div>
          <div>
-           <h3 className="text-lg font-black text-gray-800 leading-none mb-1">Journal d'activité</h3>
-           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{allEvents.length} événements dans les dernières 24h</p>
+           <h3 className="text-lg font-black text-gray-800 leading-none mb-1">{t('lbl_activity_log') || "Journal d'activité"}</h3>
+           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{t('lbl_events_last_24h', { count: allEvents.length }) || `${allEvents.length} événements dans les dernières 24h`}</p>
          </div>
        </div>
        <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-crousty-purple/10 group-hover:text-crousty-purple transition-colors">

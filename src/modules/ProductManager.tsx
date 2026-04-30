@@ -104,7 +104,7 @@ export default function ProductManager() {
         }}><Search size={20} /></span>
         <input
           type="text"
-          placeholder="Rechercher un produit..."
+          placeholder={t('ph_search_product') || 'Rechercher un produit...'}
           value={recherche}
           onChange={e => setRecherche(e.target.value)}
           style={{
@@ -165,9 +165,9 @@ export default function ProductManager() {
             color: "#4B5563", outline: "none"
           }}
         >
-          <option value="nom">Trier par : Nom A→Z</option>
+          <option value="nom">{t('lbl_sort_name_az') || 'Trier par : Nom A→Z'}</option>
           <option value="dlc">Trier par : DLC Courte</option>
-          <option value="categorie">Trier par : Catégorie</option>
+          <option value="categorie">{t('lbl_sort_category') || 'Trier par : Catégorie'}</option>
         </select>
         <div className="flex bg-white rounded-lg border-2 border-gray-100 p-1 gap-1">
           <button 

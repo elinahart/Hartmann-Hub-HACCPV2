@@ -107,15 +107,15 @@ export default function PrepSauces() {
       <h2 className="text-2xl font-black text-gray-800 uppercase tracking-widest text-center">📊 Traçabilité / Prep</h2>
       <Card className="space-y-4">
         <div>
-          <Label>Sauce Préparée</Label>
+          <Label>{t('lbl_prepared_sauce') || 'Sauce Préparée'}</Label>
           <Select value={selectedSauce} onChange={(e: any) => setSelectedSauce(e.target.value)}>
             {SAUCES.map(s => <option key={s.id} value={s.id}>{s.name} ({s.hours}h)</option>)}
           </Select>
         </div>
         <div>
-          <Label>Lier aux lots d'ingrédients actifs</Label>
+          <Label>{t('lbl_link_active_batches') || 'Lier aux lots d\'ingrédients actifs'}</Label>
           <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-gray-50 border border-gray-200 rounded-xl">
-            {activeLots.length === 0 ? <div className="text-xs text-gray-500">Aucun lot actif.</div> : 
+            {activeLots.length === 0 ? <div className="text-xs text-gray-500">{t('lbl_no_active_batch') || 'Aucun lot actif.'}</div> : 
               activeLots.map(lot => (
                 <label key={lot.id} className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors">
                   <input type="checkbox" checked={selectedLots.includes(lot.id)} onChange={() => toggleLot(lot.id)} className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500" />
@@ -127,10 +127,10 @@ export default function PrepSauces() {
         </div>
         
         {error && <div className="text-red-500 text-sm font-bold text-center">{error}</div>}
-        <Button onClick={handleSave}>💾 Valider la Préparation</Button>
+        <Button onClick={handleSave}>💾 {t('btn_validate_prep') || 'Valider la Préparation'}</Button>
       </Card>
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-gray-500 uppercase">Préparations Actives</h3>
+        <h3 className="text-lg font-bold text-gray-500 uppercase">{t('lbl_active_preps') || 'Préparations Actives'}</h3>
         {entries.filter(e => !e.supprime).map(e => (
           <Card key={e.id} className="relative">
             {deleteId === e.id ? (
@@ -145,11 +145,11 @@ export default function PrepSauces() {
                </div>
             )}
             <div className="font-black text-lg text-gray-800">{e.sauceName}</div>
-            <div className="text-crousty-purple text-sm font-bold mt-1">Expire dans : {formatDistanceToNow(new Date(e.dlcCalc), { locale: fr })}</div>
+            <div className="text-crousty-purple text-sm font-bold mt-1">{t('lbl_expires_in') || 'Expire dans :'} {formatDistanceToNow(new Date(e.dlcCalc), { locale: fr })}</div>
             <div className="flex items-center gap-2 mt-2">
-               <div className="text-xs text-gray-500 font-medium">Lots liés : {e.linkedLots.length}</div>
+               <div className="text-xs text-gray-500 font-medium">{t('lbl_linked_lots') || 'Lots liés :'} {e.linkedLots.length}</div>
                <span className="text-gray-300">•</span>
-               <span className="text-xs font-bold text-gray-600">Par {e.responsable}</span>
+               <span className="text-xs font-bold text-gray-600">{t('lbl_by') || 'Par'} {e.responsable}</span>
             </div>
           </Card>
         ))}

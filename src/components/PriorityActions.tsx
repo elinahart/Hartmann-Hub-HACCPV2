@@ -920,7 +920,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
          if (!inventoryDoneSince && h >= 8) {
            inventoryNeededNow = true;
            isLate = h >= 14;
-           label = isLate ? "Inventaire quotidien en retard" : "Inventaire quotidien en attente";
+           label = isLate ? (t('lbl_inv_daily_late') || 'Inventaire quotidien en retard') : (t('lbl_inv_daily_pending') || 'Inventaire quotidien en attente');
          }
       } else if (config.inventaire.frequence.toLowerCase() === 'hebdomadaire') {
          const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -934,7 +934,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
             inventoryNeededNow = true;
             // It's late if we are past the target day, or on the target day past 14h
             isLate = nowInfo.getTime() > lastRequiredDate.getTime() + (14 * 60 * 60 * 1000);
-            label = isLate ? "Inventaire hebdomadaire en retard" : "Inventaire hebdomadaire en attente";
+            label = isLate ? (t('lbl_weekly_inv_late') || 'Inventaire hebdomadaire en retard') : (t('lbl_inv_weekly_pending') || 'Inventaire hebdomadaire en attente');
          }
       } else if (config.inventaire.frequence.toLowerCase() === 'mensuel') {
          const firstDayOfMonth = new Date(nowInfo.getFullYear(), nowInfo.getMonth(), 1);
@@ -944,7 +944,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
          if (!inventoryDoneSince) {
             inventoryNeededNow = true;
             isLate = nowInfo.getDate() > 1 || h >= 14;
-            label = isLate ? "Inventaire mensuel en retard" : "Inventaire mensuel en attente";
+            label = isLate ? (t('lbl_inv_monthly_late') || 'Inventaire mensuel en retard') : (t('lbl_inv_monthly_pending') || 'Inventaire mensuel en attente');
          }
       }
 

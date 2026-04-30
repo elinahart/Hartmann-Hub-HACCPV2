@@ -553,7 +553,7 @@ export default function OilChecklist() {
   return (
     <div className="space-y-6 pb-24 pt-8 px-4 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-black text-gray-800 uppercase tracking-tighter">🛢️ Huiles de Friture</h2>
+        <h2 className="text-3xl font-black text-gray-800 uppercase tracking-tighter">🛢️ {t('nav_oil') || 'Huiles de Friture'}</h2>
         <div className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-black">TESTO 270</div>
       </div>
 
@@ -639,21 +639,21 @@ export default function OilChecklist() {
 
                 {testValue && !isChangedSince && (
                    <div className="mb-4 text-center">
-                     <div className="text-xs font-bold text-gray-500 uppercase">Seuil limite : Max {configHuiles.seuilChangement}%</div>
-                     {statut === 'changer' && <div className="text-sm font-black text-red-600 mt-1">🔴 HUILE À CHANGER</div>}
+                     <div className="text-xs font-bold text-gray-500 uppercase">{t('lbl_limit_threshold_max') || 'Seuil limite : Max'} {configHuiles.seuilChangement}%</div>
+                     {statut === 'changer' && <div className="text-sm font-black text-red-600 mt-1">🔴 {t('lbl_oil_to_change') || 'HUILE À CHANGER'}</div>}
                    </div>
                 )}
                 
                 {isChangedSince && (
                    <div className="mb-4 text-center">
-                     <div className="text-sm font-black text-indigo-600 mt-1 flex items-center justify-center gap-1"><RotateCcw size={16} /> HUILE NEUVE</div>
-                     <div className="text-xs font-bold text-gray-500">En attente du premier test</div>
+                     <div className="text-sm font-black text-indigo-600 mt-1 flex items-center justify-center gap-1"><RotateCcw size={16} /> {t('lbl_new_oil') || 'HUILE NEUVE'}</div>
+                     <div className="text-xs font-bold text-gray-500">{t('lbl_waiting_first_test') || 'En attente du premier test'}</div>
                    </div>
                 )}
 
                 {!testValue && !isChangedSince && (
                    <div className="h-12 flex items-center justify-center text-gray-400 font-bold italic mb-4">
-                     Aucun relevé récent
+                     {t('lbl_no_recent_reading') || 'Aucun relevé récent'}
                    </div>
                 )}
 
@@ -672,12 +672,12 @@ export default function OilChecklist() {
                     onChange={(e) => onPhotoClick(e, num)} 
                   />
                   <Camera size={20} />
-                  NOUVEAU TEST
+                  {t('btn_new_test') || 'NOUVEAU TEST'}
                 </label>
                 
                 {lastScanEntry && (
                    <div className="mt-4 text-[11px] text-gray-500 text-center font-medium bg-white/50 py-1.5 rounded-lg border border-gray-100/50">
-                     Dernier contrôle : {getRelativeTimeText(lastScanEntry.date)}
+                     {t('lbl_last_control') || 'Dernier contrôle :'} {getRelativeTimeText(lastScanEntry.date)}
                    </div>
                 )}
               </div>
@@ -705,20 +705,20 @@ export default function OilChecklist() {
               <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-transform shadow-sm mb-4">
                 <Plus size={32} />
               </div>
-              <span className="font-bold text-sm tracking-widest uppercase">Ajouter cuve</span>
+              <span className="font-bold text-sm tracking-widest uppercase">{t('btn_add_vat') || 'Ajouter cuve'}</span>
             </button>
           )}
         </div>
 
         <div className="space-y-4 pt-6 border-t border-dashed border-gray-200">
           <div className="flex items-center justify-between">
-            <h4 className="font-black text-gray-800 uppercase flex items-center gap-2"><RotateCcw size={20} className="text-indigo-500" /> Signaler un changement d'huile</h4>
+            <h4 className="font-black text-gray-800 uppercase flex items-center gap-2"><RotateCcw size={20} className="text-indigo-500" /> {t('btn_report_oil_change') || 'Signaler un changement d\'huile'}</h4>
             {!showChangeForm && (
               <button 
                 onClick={() => setShowChangeForm(true)}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold px-4 py-2 rounded-xl transition-colors"
               >
-                + Nouveau
+                {t('btn_new') || '+ Nouveau'}
               </button>
             )}
           </div>
@@ -777,7 +777,7 @@ export default function OilChecklist() {
       {chartData.length > 0 && (
         <Card className="p-6">
           <h3 className="text-sm font-black text-gray-800 uppercase mb-4 flex items-center gap-2">
-            📉 Évolution TPM (%)
+            📉 {t('lbl_tpm_evolution') || 'Évolution TPM'} (%)
           </h3>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
