@@ -1,11 +1,20 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.0.0";
+export const APP_VERSION = "3.0.1";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
 export const APP_LAST_UPDATE = "30 Avril 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.0.1",
+    date: "30 Avril 2026",
+    changes: [
+      "Amélioration de l'écran Gérer les produits avec une vue liste dédiée",
+      "Ajout de la gestion détaillée des unités (stock vs achat) et conversion carton/unité",
+      "Saisie rapide sur téléphone pour la date dans le module Traçabilité"
+    ]
+  },
   {
     version: "3.0.0",
     date: "30 Avril 2026",

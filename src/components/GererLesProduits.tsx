@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Check, X, Plus, Edit2, Download, Upload, Package, Box, Droplets, CupSoda, Beef, Leaf, Flame, Snowflake, IceCream2, Coffee, Milk, Wine, Apple, Drumstick, Wheat, Carrot, Candy, Utensils, Archive, ShoppingBag, CakeSlice, Droplet, GlassWater, Dessert, Settings, ChevronDown, Shield, Fish } from 'lucide-react';
+import { Trash2, Check, X, Plus, Edit2, Download, Upload, Package, Box, Droplets, CupSoda, Beef, Leaf, Flame, Snowflake, IceCream2, Coffee, Milk, Wine, Apple, Drumstick, Wheat, Carrot, Candy, Utensils, Archive, ShoppingBag, CakeSlice, Droplet, GlassWater, Dessert, Settings, ChevronDown, Shield, Fish, List } from 'lucide-react';
 import { InventoryProduct } from '../types';
 import { getStoredData, setStoredData } from '../lib/db';
 import { Button, Input, Label } from './ui/LightUI';
@@ -159,6 +159,7 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
     conversionCartonUnite: '' as number | string
   };
   const [productForm, setProductForm] = useState(defaultFormState);
+  const [viewMode, setViewMode] = useState<'form' | 'list'>('list');
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -191,6 +192,7 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
     
     setEditingProduct(null);
     setProductForm(defaultFormState);
+    setViewMode('list');
     if (onSave) onSave();
   };
 
@@ -304,6 +306,15 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
           <Settings size={20} className="text-crousty-purple" /> Gérer les produits
         </h3>
         <div className="flex items-center gap-2">
+          {viewMode === 'form' ? (
+            <button onClick={() => setViewMode('list')} className="bg-white border border-gray-200 text-gray-700 px-3 py-2 text-xs font-bold rounded-xl shadow-sm hover:bg-gray-50 active:scale-95 transition-transform flex items-center gap-2">
+              <List size={16} /> Liste
+            </button>
+          ) : (
+            <button onClick={() => { setEditingProduct(null); setProductForm(defaultFormState); setViewMode('form'); }} className="bg-crousty-purple text-white px-3 py-2 text-xs font-bold rounded-xl shadow-sm hover:bg-purple-700 active:scale-95 transition-transform flex items-center gap-2">
+              <Plus size={16} /> Ajouter
+            </button>
+          )}
           <label className="cursor-pointer bg-white border border-gray-200 text-crousty-purple p-2 rounded-xl shadow-sm hover:bg-gray-50 active:scale-95 transition-transform flex items-center gap-2" title="Importer">
             <Upload size={18} />
             <input type="file" accept=".json" className="hidden" onChange={handleImportProducts} />
@@ -320,7 +331,7 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
       </div>
       
       <div className="p-6 overflow-y-auto flex-1 space-y-6">
-        {isManager && products.length > 0 && (
+        {viewMode === 'list' && isManager && products.length > 0 && (
           <div className="bg-amber-50 border border-amber-100 p-4 rounded-3xl space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-amber-900 font-bold text-[10px] uppercase tracking-widest">
@@ -411,9 +422,10 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
           </div>
         )}
 
-        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-4">
-          <h4 className="font-bold text-gray-700">{editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {viewMode === 'form' && (
+          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-4">
+            <h4 className="font-bold text-gray-700">{editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-1">
               <Label>Catégorie</Label>
               <div className="relative group">
@@ -525,7 +537,9 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
             </button>
           </div>
         </div>
+        )}
 
+        {viewMode === 'list' && (
           <div className="space-y-6">
             {(Object.entries(productsByCategory) as [string, InventoryProduct[]][]).map(([cat, prods]) => {
               const style = getCategorieStyle(cat);
@@ -609,7 +623,8 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
                                       uniteStock: p.uniteStock || 'unité',
                                       uniteAchat: p.uniteAchat || 'carton',
                                       conversionCartonUnite: p.conversionCartonUnite || 5
-                                    }); 
+                                    });
+                                    setViewMode('form');
                                   }}
                                   className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
                                 >
@@ -632,6 +647,7 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
               );
             })}
           </div>
+        )}
       </div>
     </div>
   );
