@@ -117,6 +117,9 @@ const translations = {
     lbl_anticipated_inventory: "Predictive inventory and usages",
 
     lbl_creation_labels: "LABELS CREATION",
+    lbl_mode: "Mode:",
+    lbl_virtual: "Virtual",
+    lbl_disabled: "Disabled",
     lbl_manage_products: "Manage products",
     lbl_all: "All",
     lbl_frozen: "Frozen",
@@ -464,6 +467,9 @@ const translations = {
     lbl_anticipated_inventory: "Inventaire prévisionnel et usages",
 
     lbl_creation_labels: "CRÉATION D'ÉTIQUETTES",
+    lbl_mode: "Mode :",
+    lbl_virtual: "Virtuel",
+    lbl_disabled: "Désactivé",
     lbl_manage_products: "Gérer les produits",
     lbl_all: "Toutes",
     lbl_frozen: "Surgelés Congelés",

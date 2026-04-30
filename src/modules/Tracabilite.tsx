@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button, Input, Label } from '../components/ui/LightUI';
 import { getStoredData, setStoredData, savePhoto, getPhoto, deletePhoto } from '../lib/db';
-import { Camera, Image as ImageIcon, Trash2, Check, X, ScanBarcode, Search, FileText, Package, ChevronRight } from 'lucide-react';
+import { Camera, Image as ImageIcon, Trash2, Check, X, ScanBarcode, Search, FileText, Package, ChevronRight, Plus } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
@@ -23,12 +23,20 @@ interface TracabiliteEntry {
   produit: string;
   numeroLot: string;
   dlc: string;
-  photoId: string;
+  photoId?: string;
+  photoIds?: string[];
   commentaire?: string;
   userId: string;
   userName: string;
   signature?: SignatureSaisie;
   supprime?: boolean;
+}
+
+export interface TracabiliteLine {
+  id: string;
+  produit: string;
+  numeroLot: string;
+  dlc: string;
 }
 
 export default function Tracabilite() {
@@ -37,11 +45,11 @@ export default function Tracabilite() {
   const { products } = useInventaire();
   const [entries, setEntries] = useState<TracabiliteEntry[]>([]);
   
-  const [produit, setProduit] = useState('');
-  const [numeroLot, setNumeroLot] = useState('');
-  const [dlc, setDlc] = useState('');
+  const [lignes, setLignes] = useState<TracabiliteLine[]>([{ id: '1', produit: '', numeroLot: '', dlc: '' }]);
   const [commentaire, setCommentaire] = useState('');
-  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([]);
+  
+  const [activeLineId, setActiveLineId] = useState<string | null>(null);
   
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
@@ -49,6 +57,7 @@ export default function Tracabilite() {
   const [editMotif, setEditMotif] = useState('');
   
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -96,97 +105,123 @@ export default function Tracabilite() {
     // Removed click outside listener for dropdown since we use a full modal now
   }, []);
 
-  const handleScan = (decodedText: string) => {
-    // Attempt standard barcode parse: 
-    // Typically, standard scanning apps or inventory labels might just emit a string
-    // GS1 formats are complex, doing a basic set for demonstration.
-    // Let's assume the user scans a label that has properties, or just sets it as 'numeroLot'.
+  const addLigne = () => {
+    setLignes([...lignes, { id: Date.now().toString() + Math.random(), produit: '', numeroLot: '', dlc: '' }]);
+  };
 
+  const updateLigne = (id: string, field: keyof TracabiliteLine, value: string) => {
+    setLignes(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
+  };
+
+  const removeLigne = (id: string) => {
+    if (lignes.length > 1) {
+      setLignes(lignes.filter(l => l.id !== id));
+    }
+  };
+
+  const handleScan = (decodedText: string) => {
     let decoded = decodedText.trim();
     
-    // Very basic json parsing heuristic
     if (decoded.startsWith('{') && decoded.endsWith('}')) {
       try {
         const data = JSON.parse(decoded);
-        if (data.produit) setProduit(data.produit);
-        if (data.lot) setNumeroLot(data.lot);
-        if (data.dlc) setDlc(data.dlc);
+        if (activeLineId) {
+            if (data.produit) updateLigne(activeLineId, 'produit', data.produit);
+            if (data.lot) updateLigne(activeLineId, 'numeroLot', data.lot);
+            if (data.dlc) updateLigne(activeLineId, 'dlc', data.dlc);
+        }
         return;
       } catch (e) {
-        // ignore JSON parse error, fallback
+        // ignore JSON parse error
       }
     }
 
-    // fallback: just put the whole string in numeroLot if it looks like an identifier.
-    // Or if it contains 'http', it might be a link, so we store it in commentaire.
-    if (decoded.startsWith('http')) {
-      setCommentaire(`Lien scanné: ${decoded}`);
-    } else {
-      setNumeroLot(decoded);
+    if (activeLineId) {
+      if (decoded.startsWith('http')) {
+        setCommentaire(`Lien scanné: ${decoded}`);
+      } else {
+        updateLigne(activeLineId, 'numeroLot', decoded);
+      }
     }
   };
 
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
+    const files = e.target.files;
+    if (!files || files.length === 0) {
       e.target.value = '';
       return;
     }
 
-    try {
-      const dataUrl = await compressPhotoTLC(file);
-      setPhotoDataUrl(dataUrl);
-    } catch (err) {
-      console.error("Compression erreur:", err);
-      // Fallback
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPhotoDataUrl(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    const newPhotos: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+          const dataUrl = await compressPhotoTLC(file);
+          newPhotos.push(dataUrl);
+        } catch (err) {
+          console.error("Compression erreur:", err);
+          const reader = new FileReader();
+          const p = new Promise<string>((resolve) => {
+             reader.onload = (event) => {
+               resolve(event.target?.result as string);
+             };
+          });
+          reader.readAsDataURL(file);
+          newPhotos.push(await p);
+        }
     }
+    
+    setPhotoDataUrls(prev => [...prev, ...newPhotos]);
     e.target.value = '';
   };
 
   const handleManualSubmit = async () => {
-    if (!produit) {
-      setError('Veuillez sélectionner un produit de l\'inventaire');
+    const isLignesValid = lignes.every(l => l.produit);
+    if (!isLignesValid) {
+      setError('Veuillez sélectionner un produit pour chaque ligne');
       return;
     }
     
-    if (!photoDataUrl) {
-      setError('Photo obligatoire pour la traçabilité');
+    if (photoDataUrls.length === 0) {
+      setError('Photo(s) obligatoire(s) pour la traçabilité');
       return;
     }
 
-    const photoId = `trac_photo_${Date.now()}`;
-    await savePhoto(photoId, photoDataUrl);
+    const baseId = Date.now().toString();
+    const photoIds: string[] = [];
+    
+    for (let i = 0; i < photoDataUrls.length; i++) {
+        const pId = `trac_photo_${baseId}_${i}`;
+        await savePhoto(pId, photoDataUrls[i]);
+        photoIds.push(pId);
+    }
     
     const mobileWorker = localStorage.getItem('crousty_mobile_worker');
     const uName = currentUser?.name || mobileWorker || 'Inconnu';
-    const newEntry: TracabiliteEntry = {
-      id: Date.now().toString(),
+    
+    const newEntries: TracabiliteEntry[] = lignes.map((ligne, idx) => ({
+      id: `${baseId}_${idx}`,
       date: new Date().toISOString(),
-      produit,
-      numeroLot: numeroLot || 'N/A',
-      dlc: dlc || 'N/A',
-      photoId,
+      produit: ligne.produit,
+      numeroLot: ligne.numeroLot || 'N/A',
+      dlc: ligne.dlc || 'N/A',
+      photoIds,
       commentaire,
       userId: currentUser?.id || '0',
       userName: uName,
       signature: createSignature(currentUser || null)
-    };
+    }));
 
-    const updated = [newEntry, ...entries];
+    const updated = [...newEntries, ...entries];
     setEntries(updated);
     setStoredData('crousty_tracabilite_v2', updated);
     
-    setProduit('');
-    setNumeroLot('');
-    setDlc('');
+    setLignes([{ id: Date.now().toString(), produit: '', numeroLot: '', dlc: '' }]);
     setCommentaire('');
-    setPhotoDataUrl(null);
+    setPhotoDataUrls([]);
     setError('');
+    setSuccess(t('success_reception') || `Saisie enregistrée avec succès !`);
+    setTimeout(() => setSuccess(''), 4000);
   };
 
   const confirmDelete = async (id: string) => {
@@ -237,130 +272,154 @@ export default function Tracabilite() {
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm font-bold border border-red-100">{error}</div>}
 
         <div className="space-y-6">
-          <div className="relative">
-            <Label className="text-sm font-black text-gray-700 mb-2 flex items-center gap-2">
-               <Package size={16} className="text-gray-500" /> Produit <span className="text-red-500">*</span>
-            </Label>
-            <button
-               onClick={() => setIsProductModalOpen(true)}
-               className={cn(
-                 "w-full h-14 rounded-2xl border-2 transition-all text-left px-4 flex items-center justify-between",
-                 produit ? "border-green-500 bg-green-50/30 text-green-900 font-black text-lg" : "border-gray-100 bg-gray-50/50 text-gray-400 font-bold"
-               )}
-            >
-              <span>{produit || t('lbl_select_product')}</span>
-              <ChevronRight size={20} className="text-gray-400" />
-            </button>
+          <div className="space-y-4">
+             {lignes.map((ligne, idx) => (
+                <div key={ligne.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-200 relative">
+                  {lignes.length > 1 && (
+                    <button 
+                      onClick={() => removeLigne(ligne.id)}
+                      className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-white text-red-500 rounded-full hover:bg-red-50 shadow-sm transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                  <div className="font-bold text-crousty-purple mb-3 text-sm flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-crousty-purple text-white flex items-center justify-center text-xs">
+                      {idx + 1}
+                    </div>
+                    {t('lbl_product_line') || 'Ligne produit'}
+                  </div>
+
+                  <div className="mb-4">
+                    <Label className="text-sm font-black text-gray-700 mb-2 flex items-center gap-2">
+                      <Package size={16} className="text-gray-500" /> Produit <span className="text-red-500">*</span>
+                    </Label>
+                    <button
+                      onClick={() => { setActiveLineId(ligne.id); setIsProductModalOpen(true); }}
+                      className={cn(
+                        "w-full h-14 rounded-2xl border-2 transition-all text-left px-4 flex items-center justify-between",
+                        ligne.produit ? "border-green-500 bg-green-50/30 text-green-900 font-black text-lg" : "border-gray-200 bg-white text-gray-400 font-bold"
+                      )}
+                    >
+                      <span>{ligne.produit || t('lbl_select_product') || 'Sélectionner un produit'}</span>
+                      <ChevronRight size={20} className="text-gray-400" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_batch_number') || 'Numéro de Lot'}</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={ligne.numeroLot} 
+                          onChange={(e: any) => updateLigne(ligne.id, 'numeroLot', e.target.value)}
+                          placeholder="Ex: L12345"
+                          className="bg-white border-2 border-gray-100 h-12 rounded-xl"
+                        />
+                        <button 
+                          onClick={() => { setActiveLineId(ligne.id); setIsQRScannerOpen(true); }}
+                          className="bg-white text-crousty-purple border-2 border-gray-100 hover:border-crousty-purple transition-all rounded-xl w-12 h-12 shrink-0 flex items-center justify-center shadow-sm"
+                          title="Scanner"
+                        >
+                          <ScanBarcode size={20} />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_dlc') || 'DLC / DDM'}</Label>
+                      <Input 
+                        type="date"
+                        value={ligne.dlc} 
+                        onChange={(e: any) => updateLigne(ligne.id, 'dlc', e.target.value)}
+                        className="bg-white border-2 border-gray-100 h-12 rounded-xl"
+                      />
+                    </div>
+                  </div>
+                </div>
+             ))}
+
+             <button 
+                onClick={addLigne}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl border-2 border-dashed border-crousty-purple/30 text-crousty-purple font-bold hover:bg-crousty-purple/5 hover:border-crousty-purple transition-all"
+              >
+                <Plus size={20} /> {t('btn_add_another_product') || 'Ajouter un autre produit'}
+              </button>
           </div>
 
           <div className="pt-2">
             <Label className="text-sm font-black text-gray-700 mb-3 flex items-center gap-2">
-              <Camera size={16} className="text-gray-500" /> Photo de l'étiquette / du produit <span className="text-red-500">*</span>
+              <Camera size={16} className="text-gray-500" /> Photos (Étiquettes / Produits) <span className="text-red-500">*</span>
             </Label>
-            {!photoDataUrl ? (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative group">
-                  <input 
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleCapture}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  <div className="w-full h-32 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 bg-gray-50 rounded-2xl group-hover:border-crousty-purple group-hover:bg-crousty-purple/5 transition-all">
-                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-crousty-purple">
-                      <Camera size={20} />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_camera') || 'Appareil Photo'}</span>
-                  </div>
-                </div>
-                <div className="relative group">
-                  <input 
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCapture}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  <div className="w-full h-32 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 bg-gray-50 rounded-2xl group-hover:border-crousty-purple group-hover:bg-crousty-purple/5 transition-all">
-                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-crousty-purple">
-                      <ImageIcon size={20} />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_gallery') || 'Galerie'}</span>
-                  </div>
-                </div>
-                <div className="col-span-2 text-center mt-1">
-                  <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">Photo obligatoire pour validation</span>
-                </div>
-              </div>
-            ) : (
-               <div className="relative rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl aspect-video sm:aspect-auto sm:h-64 group">
-                 <img src={photoDataUrl} alt="Aperçu" className="w-full h-full object-cover" />
-                 <div className="absolute top-4 right-4 flex items-center justify-center">
-                    <button 
-                      onClick={() => setPhotoDataUrl(null)} 
-                      className="bg-white/90 backdrop-blur-md text-red-500 px-4 py-2 rounded-xl shadow-lg border border-red-100 font-bold text-sm flex items-center gap-2 active:scale-95 transition-all"
-                    >
-                      <Trash2 size={16} /> Effacer la photo
-                    </button>
-                 </div>
+            
+            {photoDataUrls.length > 0 && (
+               <div className="grid grid-cols-2 gap-3 mb-3">
+                 {photoDataUrls.map((pUrl, idx) => (
+                   <div key={idx} className="relative rounded-xl overflow-hidden border border-gray-200">
+                     <img src={pUrl} alt={`Aperçu ${idx + 1}`} className="w-full h-32 object-cover" />
+                     <button 
+                       onClick={() => setPhotoDataUrls(prev => prev.filter((_, i) => i !== idx))} 
+                       className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-transform active:scale-95"
+                     >
+                       <Trash2 size={16} />
+                     </button>
+                   </div>
+                 ))}
                </div>
             )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="relative group">
+                <input 
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  multiple
+                  onChange={handleCapture}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="w-full h-32 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 bg-gray-50 rounded-2xl group-hover:border-crousty-purple group-hover:bg-crousty-purple/5 transition-all">
+                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-crousty-purple">
+                    <Camera size={20} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_camera') || 'Appareil Photo'}</span>
+                </div>
+              </div>
+              <div className="relative group">
+                <input 
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleCapture}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="w-full h-32 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 bg-gray-50 rounded-2xl group-hover:border-crousty-purple group-hover:bg-crousty-purple/5 transition-all">
+                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-crousty-purple">
+                    <ImageIcon size={20} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_gallery') || 'Galerie'}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          
+
           <div className="bg-gray-50 p-6 rounded-[2.5rem] border border-gray-100 space-y-4">
-             <div className="flex items-center gap-2 mb-2">
-                <div className="h-px bg-gray-200 flex-1"></div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">{t('lbl_optional_info') || 'Informations facultatives'}</span>
-                <div className="h-px bg-gray-200 flex-1"></div>
-             </div>
-
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <div>
-                 <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_batch_number') || 'Numéro de Lot'} </Label>
-                 <div className="flex gap-2">
-                   <Input 
-                     value={numeroLot} 
-                     onChange={(e: any) => setNumeroLot(e.target.value)}
-                     placeholder="Ex: L12345"
-                     className="bg-white border-none h-12 rounded-xl"
-                   />
-                   <button 
-                     onClick={() => setIsQRScannerOpen(true)}
-                     className="bg-white text-crousty-purple border border-gray-100 hover:border-crousty-purple transition-all rounded-xl w-12 h-12 shrink-0 flex items-center justify-center shadow-sm"
-                     title="Scanner"
-                   >
-                     <ScanBarcode size={20} />
-                   </button>
-                 </div>
-               </div>
-               <div>
-                 <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_dlc') || 'DLC / DDM'}</Label>
-                 <Input 
-                   type="date"
-                   value={dlc} 
-                   onChange={(e: any) => setDlc(e.target.value)}
-                   className="bg-white border-none h-12 rounded-xl"
-                 />
-               </div>
-             </div>
-
              <div>
-               <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_additional_comments') || 'Commentaires additionnels'}</Label>
+               <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_additional_comments') || 'Commentaires additionnels partagés (Optionnel)'}</Label>
                <Input 
                  value={commentaire} 
                  onChange={(e: any) => setCommentaire(e.target.value)}
-                 placeholder={t('ph_optional_remarks')}
-                 className="bg-white border-none h-12 rounded-xl"
+                 placeholder={t('ph_optional_remarks') || 'Remarques...'}
+                 className="bg-white border-2 border-gray-100 h-12 rounded-xl"
                />
              </div>
           </div>
           
           <Button 
             onClick={handleManualSubmit} 
-            disabled={!produit || !photoDataUrl}
+            disabled={!lignes.every(l => l.produit) || photoDataUrls.length === 0}
             className={cn(
               "w-full h-16 text-lg font-black rounded-2xl shadow-xl transition-all duration-300",
-              (!produit || !photoDataUrl) 
+              (!lignes.every(l => l.produit) || photoDataUrls.length === 0) 
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
                 : "bg-crousty-purple text-white hover:bg-crousty-purple/90 active:scale-[0.98] shadow-purple-200"
             )}
@@ -435,8 +494,11 @@ export default function Tracabilite() {
                           <button
                             key={p.id}
                             onClick={() => {
-                              setProduit(p.name);
+                              if (activeLineId) {
+                                updateLigne(activeLineId, 'produit', p.name);
+                              }
                               setIsProductModalOpen(false);
+                              setActiveLineId(null);
                               setError('');
                             }}
                             className="bg-white border text-left border-gray-200 rounded-2xl p-4 flex items-center gap-3 hover:border-crousty-purple hover:bg-purple-50 group transition-all"
@@ -471,13 +533,26 @@ export default function Tracabilite() {
 
 const TracabiliteItem = ({ e, deleteId, setDeleteId, confirmDelete, editId, setEditId, editData, setEditData, editMotif, setEditMotif, startEdit, handleEditSave }: any) => {
   const { t } = useI18n();
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [showPhotos, setShowPhotos] = useState(false);
 
   useEffect(() => {
-    getPhoto(e.photoId).then(data => {
-      if (data) setPhoto(data);
-    });
-  }, [e.photoId]);
+    const loadPhotos = async () => {
+      const loadedPhotos: string[] = [];
+      if (e.photoId) { // Backward compatibility
+        const data = await getPhoto(e.photoId);
+        if (data) loadedPhotos.push(data);
+      }
+      if (e.photoIds && Array.isArray(e.photoIds)) {
+        for (const pid of e.photoIds) {
+          const data = await getPhoto(pid);
+          if (data) loadedPhotos.push(data);
+        }
+      }
+      setPhotos(loadedPhotos);
+    };
+    loadPhotos();
+  }, [e.photoId, e.photoIds]);
 
   return (
     <Card className="p-4 relative">
@@ -528,15 +603,8 @@ const TracabiliteItem = ({ e, deleteId, setDeleteId, confirmDelete, editId, setE
         </div>
       )}
 
-      <div className="flex gap-4">
-        {photo ? (
-          <img src={photo} alt="Photo du produit" className="w-24 h-24 mt-1 object-cover rounded-xl border border-gray-200" />
-        ) : (
-          <div className="w-24 h-24 mt-1 bg-gray-100 rounded-xl flex items-center justify-center text-gray-300">
-            <ImageIcon size={32} />
-          </div>
-        )}
-        <div className="flex-1 min-w-0 pr-16 border-l border-gray-100 pl-4">
+      <div className="flex flex-col gap-4">
+        <div className="flex-1 min-w-0 pr-16 pl-1">
           <div className="font-bold text-crousty-purple bg-crousty-purple/10 inline-block px-2 py-1 rounded-lg text-xs mb-2">
             Ouvert le {format(new Date(e.date), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
           </div>
@@ -545,24 +613,42 @@ const TracabiliteItem = ({ e, deleteId, setDeleteId, confirmDelete, editId, setE
           
           <div className="grid grid-cols-2 gap-2 text-xs mb-2">
             <div className="text-gray-500">Lot: <span className="font-bold text-gray-700">{e.numeroLot}</span></div>
-            <div className="text-gray-500">DLC: <span className="font-bold text-crousty-purple">{e.dlc !== 'N/A' ? new Date(e.dlc).toLocaleDateString() : 'N/A'}</span></div>
+            <div className="text-gray-500">DLC: <span className="font-bold text-crousty-purple">{e.dlc !== 'N/A' && e.dlc ? new Date(e.dlc).toLocaleDateString() : 'N/A'}</span></div>
           </div>
           
           {e.commentaire && (
-            <div className="bg-gray-50 p-2 rounded-lg text-gray-600 italic text-xs mb-2 truncate">"{e.commentaire}"</div>
+            <div className="bg-orange-50 border border-orange-100 p-2 rounded-lg text-orange-800 italic text-xs mb-2">"{e.commentaire}"</div>
           )}
           
           <div className="flex items-center justify-between">
-            <div className="text-xs text-gray-400 mt-2 border-t border-gray-100 pt-2 flex items-center gap-1">
+            <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
               <div className="w-4 h-4 bg-gray-100 rounded-full flex items-center justify-center font-bold text-[8px] text-gray-500 uppercase">{e.userName.substring(0, 2)}</div> {e.userName}
             </div>
             {e.signature?.dateModification && (
-              <p className="text-[10px] text-orange-500 mt-2 font-bold select-none border-t border-gray-100 pt-2 text-right">
+              <p className="text-[10px] text-orange-500 mt-2 font-bold select-none text-right">
                 Modifié par {e.signature.modifiePar} (Vu)
               </p>
             )}
           </div>
         </div>
+
+        {photos.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-gray-100">
+            <button 
+              onClick={() => setShowPhotos(!showPhotos)}
+              className="flex items-center gap-2 text-xs font-bold text-crousty-purple hover:text-crousty-pink transition-colors"
+            >
+              <ImageIcon size={14} /> {showPhotos ? 'Masquer les photos' : (photos.length > 1 ? `Voir les ${photos.length} photos` : `Voir la photo`)}
+            </button>
+            {showPhotos && (
+              <div className={`mt-2 grid gap-2 ${photos.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {photos.map((p, idx) => (
+                  <img key={idx} src={p} alt={`Traçabilité ${idx + 1}`} className="w-full h-auto rounded-lg border border-gray-200 shadow-sm" />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       </>
       )}

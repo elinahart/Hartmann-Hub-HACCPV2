@@ -30,23 +30,34 @@ export interface ReceptionEntry {
   lignes: ReceptionProductLine[];
   commentaire?: string;
   photoId?: string;
+  photoIds?: string[];
   responsable: string;
   signature?: SignatureSaisie;
   supprime?: boolean;
 }
 
 const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }: any) => {
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [showPhoto, setShowPhoto] = useState(false);
   const { t } = useI18n();
 
   useEffect(() => {
-    if (e.photoId) {
-      getPhoto(e.photoId).then(data => {
-        if (data) setPhoto(data);
-      });
-    }
-  }, [e.photoId]);
+    const loadPhotos = async () => {
+      const loadedPhotos: string[] = [];
+      if (e.photoId) { // Backward compatibility
+        const data = await getPhoto(e.photoId);
+        if (data) loadedPhotos.push(data);
+      }
+      if (e.photoIds && Array.isArray(e.photoIds)) {
+        for (const pid of e.photoIds) {
+          const data = await getPhoto(pid);
+          if (data) loadedPhotos.push(data);
+        }
+      }
+      setPhotos(loadedPhotos);
+    };
+    loadPhotos();
+  }, [e.photoId, e.photoIds]);
 
   return (
     <Card className="text-sm relative group overflow-hidden p-4">
@@ -82,16 +93,20 @@ const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }:
       
       {e.commentaire && <div className="bg-orange-50 p-2 rounded-lg text-orange-800 italic text-xs mb-2 border border-orange-100">"{e.commentaire}"</div>}
       
-      {photo && (
+      {photos.length > 0 && (
         <div className="mt-3 pt-3 border-t border-gray-100">
           <button 
             onClick={() => setShowPhoto(!showPhoto)}
             className="flex items-center gap-2 text-xs font-bold text-crousty-purple hover:text-crousty-pink transition-colors"
           >
-            <ImageIcon size={14} /> {showPhoto ? (t('btn_hide_delivery_note') || 'Masquer le bon de livraison') : (t('btn_see_delivery_note') || 'Voir le bon de livraison')}
+            <ImageIcon size={14} /> {showPhoto ? (t('btn_hide_delivery_note') || 'Masquer les pièces jointes') : (t('btn_see_delivery_note') || (photos.length > 1 ? `Voir les ${photos.length} pièces jointes` : `Voir la pièce jointe`))}
           </button>
           {showPhoto && (
-            <img src={photo} alt="Bon" className="mt-2 w-full h-auto rounded-lg border border-gray-200 shadow-sm" />
+            <div className={`mt-2 grid gap-2 ${photos.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {photos.map((p, idx) => (
+                <img key={idx} src={p} alt={`Bon ${idx + 1}`} className="w-full h-auto rounded-lg border border-gray-200 shadow-sm" />
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -129,7 +144,7 @@ export default function Receptions() {
   const commentaire = draft.commentaire;
   const setCommentaire = (v: string) => setDraft(p => ({ ...p, commentaire: v }));
 
-  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([]);
   
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -167,23 +182,32 @@ export default function Receptions() {
   }, []);
 
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
+    const files = e.target.files;
+    if (!files || files.length === 0) {
       e.target.value = '';
       return;
     }
 
-    try {
-      const dataUrl = await compressPhotoTLC(file);
-      setPhotoDataUrl(dataUrl);
-    } catch (err) {
-      console.error("Compression erreur:", err);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPhotoDataUrl(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    const newPhotos: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+          const dataUrl = await compressPhotoTLC(file);
+          newPhotos.push(dataUrl);
+        } catch (err) {
+          console.error("Compression erreur:", err);
+          const reader = new FileReader();
+          const p = new Promise<string>((resolve) => {
+             reader.onload = (event) => {
+               resolve(event.target?.result as string);
+             };
+          });
+          reader.readAsDataURL(file);
+          newPhotos.push(await p);
+        }
     }
+    
+    setPhotoDataUrls(prev => [...prev, ...newPhotos]);
     e.target.value = '';
   };
 
@@ -192,7 +216,7 @@ export default function Receptions() {
   };
 
   const updateLigne = (id: string, field: keyof ReceptionProductLine, value: string) => {
-    setLignes(lignes.map(l => l.id === id ? { ...l, [field]: value } : l));
+    setLignes(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
   };
 
   const removeLigne = (id: string) => {
@@ -224,10 +248,14 @@ export default function Receptions() {
       }
 
       const id = Date.now().toString();
-      const photoId = photoDataUrl ? `recept_bon_${id}` : undefined;
-
-      if (photoDataUrl && photoId) {
-        await savePhoto(photoId, photoDataUrl);
+      const photoIds: string[] = [];
+      
+      if (photoDataUrls.length > 0) {
+        for (let i = 0; i < photoDataUrls.length; i++) {
+            const pId = `recept_bon_${id}_${i}`;
+            await savePhoto(pId, photoDataUrls[i]);
+            photoIds.push(pId);
+        }
       }
 
       const rawWorker = localStorage.getItem('crousty_mobile_worker');
@@ -239,7 +267,7 @@ export default function Receptions() {
         fournisseur,
         lignes,
         commentaire,
-        photoId, 
+        photoIds: photoIds.length > 0 ? photoIds : undefined, 
         responsable: currentUser?.name || mobileWorker,
         signature: createSignature(currentUser || null)
       };
@@ -260,7 +288,7 @@ export default function Receptions() {
       });
 
       clearDraft();
-      setPhotoDataUrl(null);
+      setPhotoDataUrls([]);
       setError('');
       setSuccess(t('success_reception') || `Réception de ${fournisseur} enregistrée !`);
       
@@ -403,41 +431,51 @@ export default function Receptions() {
           </div>
 
           <div className="pt-2">
-            <Label className="mb-2 block">{t('lbl_delivery_note') || 'Bon de livraison (Photo optionnelle)'}</Label>
-            {!photoDataUrl ? (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    capture="environment" 
-                    onChange={handleCapture} 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                  />
-                  <Button variant="outline" className="w-full h-auto flex flex-col items-center justify-center gap-2 border-dashed py-4 bg-gray-50 hover:bg-crousty-pink/5 border-gray-300 hover:border-crousty-purple px-2">
-                    <Camera size={20} className="text-gray-400" /> <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">{t('btn_camera') || 'Appareil Photo'}</span>
-                  </Button>
-                </div>
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleCapture} 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                  />
-                  <Button variant="outline" className="w-full h-auto flex flex-col items-center justify-center gap-2 border-dashed py-4 bg-gray-50 hover:bg-crousty-pink/5 border-gray-300 hover:border-crousty-purple px-2">
-                    <ImageIcon size={20} className="text-gray-400" /> <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">{t('btn_gallery') || 'Galerie'}</span>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-               <div className="relative rounded-xl overflow-hidden border border-gray-200">
-                 <img src={photoDataUrl} alt="Aperçu" className="w-full h-48 object-cover" />
-                 <button onClick={() => setPhotoDataUrl(null)} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full shadow-lg">
-                   <Trash2 size={16} />
-                 </button>
+            <Label className="mb-2 block">{t('lbl_delivery_note') || 'Bon(s) de livraison / Pièces jointes (Optionnel)'}</Label>
+            
+            {photoDataUrls.length > 0 && (
+               <div className="grid grid-cols-2 gap-3 mb-3">
+                 {photoDataUrls.map((pUrl, idx) => (
+                   <div key={idx} className="relative rounded-xl overflow-hidden border border-gray-200">
+                     <img src={pUrl} alt={`Aperçu ${idx + 1}`} className="w-full h-32 object-cover" />
+                     <button 
+                       onClick={() => setPhotoDataUrls(prev => prev.filter((_, i) => i !== idx))} 
+                       className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-transform active:scale-95"
+                     >
+                       <Trash2 size={16} />
+                     </button>
+                   </div>
+                 ))}
                </div>
             )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="relative">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  capture="environment"
+                  multiple
+                  onChange={handleCapture} 
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                />
+                <Button variant="outline" className="w-full h-auto flex flex-col items-center justify-center gap-2 border-dashed py-4 bg-gray-50 hover:bg-crousty-pink/5 border-gray-300 hover:border-crousty-purple px-2">
+                  <Camera size={20} className="text-gray-400" /> <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">{t('btn_camera') || 'Appareil Photo'}</span>
+                </Button>
+              </div>
+              <div className="relative">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  multiple
+                  onChange={handleCapture} 
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                />
+                <Button variant="outline" className="w-full h-auto flex flex-col items-center justify-center gap-2 border-dashed py-4 bg-gray-50 hover:bg-crousty-pink/5 border-gray-300 hover:border-crousty-purple px-2">
+                  <ImageIcon size={20} className="text-gray-400" /> <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">{t('btn_gallery') || 'Galerie'}</span>
+                </Button>
+              </div>
+            </div>
           </div>
           
           {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl scale-in-center animate-in text-sm font-bold border border-red-100 mt-2">{error}</div>}
