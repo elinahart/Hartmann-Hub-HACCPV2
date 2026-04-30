@@ -10,6 +10,7 @@ import { useConfig } from '../contexts/ConfigContext';
 import { useAutoDraft } from '../hooks/useAutoDraft';
 import { logAuditEvent } from '../lib/audit';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { useI18n } from '../lib/i18n';
 
 import { compressPhotoTLC } from '../lib/imageUtils';
 
@@ -37,6 +38,7 @@ export interface ReceptionEntry {
 const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }: any) => {
   const [photo, setPhoto] = useState<string | null>(null);
   const [showPhoto, setShowPhoto] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (e.photoId) {
@@ -50,7 +52,7 @@ const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }:
     <Card className="text-sm relative group overflow-hidden p-4">
       {deleteId === e.id ? (
         <div className="absolute top-2 right-2 flex items-center gap-2 bg-red-50 p-1 rounded-lg z-10">
-          <span className="text-xs text-red-600 font-bold px-1">Sûr ?</span>
+          <span className="text-xs text-red-600 font-bold px-1">{t('lbl_sure') || 'Sûr ?'}</span>
           <button onClick={() => confirmDelete(e.id)} className="p-1 text-red-600 hover:text-red-800"><Check size={16}/></button>
           <button onClick={() => setDeleteId(null)} className="p-1 text-gray-500 hover:text-gray-700"><X size={16}/></button>
         </div>
@@ -70,9 +72,9 @@ const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }:
           <div key={ligne.id} className="bg-gray-50 p-3 rounded-xl border border-gray-100">
             <div className="font-bold text-gray-800 mb-1">{ligne.produit} <span className="text-sm font-bold text-gray-500">({ligne.quantite})</span></div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="text-gray-500">Lot: <span className="font-bold text-gray-700">{ligne.numeroLot}</span></div>
-              <div className="text-gray-500">DLC: <span className="text-crousty-purple font-bold">{new Date(ligne.dlc).toLocaleDateString()}</span></div>
-              {ligne.temperature && <div className="text-gray-500">Temp: <span className="font-bold text-gray-700">{ligne.temperature}°C</span></div>}
+              <div className="text-gray-500">{t('lbl_lot') || 'Lot'}: <span className="font-bold text-gray-700">{ligne.numeroLot}</span></div>
+              <div className="text-gray-500">{t('lbl_dlc') || 'DLC'}: <span className="text-crousty-purple font-bold">{new Date(ligne.dlc).toLocaleDateString()}</span></div>
+              {ligne.temperature && <div className="text-gray-500">{t('lbl_temp') || 'Temp'}: <span className="font-bold text-gray-700">{ligne.temperature}°C</span></div>}
             </div>
           </div>
         ))}
@@ -86,7 +88,7 @@ const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }:
             onClick={() => setShowPhoto(!showPhoto)}
             className="flex items-center gap-2 text-xs font-bold text-crousty-purple hover:text-crousty-pink transition-colors"
           >
-            <ImageIcon size={14} /> {showPhoto ? 'Masquer le bon de livraison' : 'Voir le bon de livraison'}
+            <ImageIcon size={14} /> {showPhoto ? (t('btn_hide_delivery_note') || 'Masquer le bon de livraison') : (t('btn_see_delivery_note') || 'Voir le bon de livraison')}
           </button>
           {showPhoto && (
             <img src={photo} alt="Bon" className="mt-2 w-full h-auto rounded-lg border border-gray-200 shadow-sm" />
@@ -100,6 +102,7 @@ const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }:
 export default function Receptions() {
   const { currentUser } = useAuth();
   const { config } = useConfig();
+  const { t } = useI18n();
   const [entries, setEntries] = useState<ReceptionEntry[]>([]);
   
   const [draft, setDraft, clearDraft, isDraftRestored] = useAutoDraft('reception_v3', {
@@ -208,14 +211,14 @@ export default function Receptions() {
       setSuccess('');
       
       if (!fournisseur) {
-        setError("Veuillez indiquer le fournisseur.");
+        setError(t('err_supplier_required') || "Veuillez indiquer le fournisseur.");
         setIsSubmitting(false);
         return;
       }
       
       const isLignesValid = lignes.every(l => l.produit && l.quantite && l.numeroLot && l.dlc);
       if (!isLignesValid) {
-        setError("Veuillez remplir les champs obligatoires (Produit, Qté, Lot, DLC) pour toutes les lignes.");
+        setError(t('err_required_lines') || "Veuillez remplir les champs obligatoires (Produit, Qté, Lot, DLC) pour toutes les lignes.");
         setIsSubmitting(false);
         return;
       }
@@ -259,7 +262,7 @@ export default function Receptions() {
       clearDraft();
       setPhotoDataUrl(null);
       setError('');
-      setSuccess(`Réception de ${fournisseur} enregistrée !`);
+      setSuccess(t('success_reception') || `Réception de ${fournisseur} enregistrée !`);
       
       setTimeout(() => setSuccess(''), 4000);
       
@@ -298,13 +301,13 @@ export default function Receptions() {
     <div className="space-y-6">
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-crousty-dark">Nouvelle Réception</h2>
-          {isDraftRestored && <StatusBadge status="draft" label="Brouillon en cours" />}
+          <h2 className="text-lg font-black text-crousty-dark">{t('lbl_new_reception') || 'Nouvelle Réception'}</h2>
+          {isDraftRestored && <StatusBadge status="draft" label={t('lbl_draft_restored') || 'Brouillon restauré'} />}
         </div>
         
         <div className="space-y-6">
           <div className="space-y-3">
-            <Label>Fournisseur *</Label>
+            <Label>{t('lbl_supplier') || 'Fournisseur'} *</Label>
             <div className="space-y-2">
               <Select 
                 value={isCustomFournisseur ? 'custom' : fournisseur} 
@@ -318,17 +321,17 @@ export default function Receptions() {
                   }
                 }}
               >
-                <option value="" disabled>Sélectionnez un fournisseur</option>
+                <option value="" disabled>{t('lbl_select_supplier') || 'Sélectionnez un fournisseur'}</option>
                 {config.fournisseurs?.map(f => (
                   <option key={f} value={f}>{f}</option>
                 ))}
-                <option value="custom" className="italic font-bold">Personnalisé...</option>
+                <option value="custom" className="italic font-bold">{t('lbl_custom') || 'Personnalisé...'}</option>
               </Select>
               {isCustomFournisseur && (
                 <Input 
                   value={fournisseur} 
                   onChange={(e: any) => setFournisseur(e.target.value)} 
-                  placeholder="Entrez le nom du fournisseur" 
+                  placeholder={t('lbl_enter_supplier') || 'Entrez le nom du fournisseur'} 
                   autoFocus
                 />
               )}
@@ -337,8 +340,8 @@ export default function Receptions() {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-              <h3 className="font-bold text-gray-800 text-sm">Produits réceptionnés</h3>
-              <span className="text-xs font-bold text-gray-400">{lignes.length} {lignes.length > 1 ? 'articles' : 'article'}</span>
+              <h3 className="font-bold text-gray-800 text-sm">{t('lbl_received_products') || 'Produits réceptionnés'}</h3>
+              <span className="text-xs font-bold text-gray-400">{lignes.length} {lignes.length > 1 ? t('lbl_articles') || 'articles' : t('lbl_article') || 'article'}</span>
             </div>
             
             {lignes.map((ligne, index) => (
@@ -355,32 +358,32 @@ export default function Receptions() {
                   <div className="w-5 h-5 rounded-full bg-crousty-purple text-white flex items-center justify-center text-xs">
                     {index + 1}
                   </div>
-                  Ligne produit
+                  {t('lbl_product_line') || 'Ligne produit'}
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <Label>Produit *</Label>
+                    <Label>{t('lbl_product') || 'Produit'} *</Label>
                     <Input value={ligne.produit} onChange={(e: any) => updateLigne(ligne.id, 'produit', e.target.value)} placeholder="Ex: Cordon Bleu..." />
                   </div>
                   <div>
-                    <Label>Quantité *</Label>
+                    <Label>{t('lbl_quantity') || 'Quantité'} *</Label>
                     <Input value={ligne.quantite} onChange={(e: any) => updateLigne(ligne.id, 'quantite', e.target.value)} placeholder="Ex: 5 cartons" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Numéro de Lot *</Label>
+                    <Label>{t('lbl_batch_number') || 'Numéro de Lot'} *</Label>
                     <Input value={ligne.numeroLot} onChange={(e: any) => updateLigne(ligne.id, 'numeroLot', e.target.value)} placeholder="Ex: L12345" />
                   </div>
                   <div>
-                    <Label>DLC / DDM *</Label>
+                    <Label>{t('lbl_dlc') || 'DLC / DDM'} *</Label>
                     <Input type="date" value={ligne.dlc} onChange={(e: any) => updateLigne(ligne.id, 'dlc', e.target.value)} />
                   </div>
                   <div>
-                    <Label>Température (°C)</Label>
-                    <Input type="number" inputMode="decimal" value={ligne.temperature || ''} onChange={(e: any) => updateLigne(ligne.id, 'temperature', e.target.value)} placeholder="Optionnel" />
+                    <Label>{t('lbl_temperature') || 'Température (°C)'}</Label>
+                    <Input type="number" inputMode="decimal" value={ligne.temperature || ''} onChange={(e: any) => updateLigne(ligne.id, 'temperature', e.target.value)} placeholder={t('lbl_optional') || 'Optionnel'} />
                   </div>
                 </div>
               </div>
@@ -390,17 +393,17 @@ export default function Receptions() {
               onClick={addLigne}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-xl border-2 border-dashed border-crousty-purple/30 text-crousty-purple font-bold hover:bg-crousty-purple/5 hover:border-crousty-purple transition-all"
             >
-              <Plus size={20} /> Ajouter un autre produit
+              <Plus size={20} /> {t('btn_add_another_product') || 'Ajouter un autre produit'}
             </button>
           </div>
 
           <div>
-            <Label>Commentaire ou incident de réception (Optionnel)</Label>
-            <Input value={commentaire} onChange={(e: any) => setCommentaire(e.target.value)} placeholder="Colis abimé, retard..." />
+            <Label>{t('lbl_comment_incident') || 'Commentaire ou incident de réception (Optionnel)'}</Label>
+            <Input value={commentaire} onChange={(e: any) => setCommentaire(e.target.value)} placeholder={t('lbl_comment_placeholder') || 'Colis abimé, retard...'} />
           </div>
 
           <div className="pt-2">
-            <Label className="mb-2 block">Bon de livraison (Photo optionnelle)</Label>
+            <Label className="mb-2 block">{t('lbl_delivery_note') || 'Bon de livraison (Photo optionnelle)'}</Label>
             {!photoDataUrl ? (
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
@@ -412,7 +415,7 @@ export default function Receptions() {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                   />
                   <Button variant="outline" className="w-full h-auto flex flex-col items-center justify-center gap-2 border-dashed py-4 bg-gray-50 hover:bg-crousty-pink/5 border-gray-300 hover:border-crousty-purple px-2">
-                    <Camera size={20} className="text-gray-400" /> <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Appareil Photo</span>
+                    <Camera size={20} className="text-gray-400" /> <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">{t('btn_camera') || 'Appareil Photo'}</span>
                   </Button>
                 </div>
                 <div className="relative">
@@ -423,7 +426,7 @@ export default function Receptions() {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                   />
                   <Button variant="outline" className="w-full h-auto flex flex-col items-center justify-center gap-2 border-dashed py-4 bg-gray-50 hover:bg-crousty-pink/5 border-gray-300 hover:border-crousty-purple px-2">
-                    <ImageIcon size={20} className="text-gray-400" /> <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Galerie</span>
+                    <ImageIcon size={20} className="text-gray-400" /> <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">{t('btn_gallery') || 'Galerie'}</span>
                   </Button>
                 </div>
               </div>
@@ -444,20 +447,20 @@ export default function Receptions() {
             {isSubmitting ? (
               <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
-              <><Check size={20} className="mr-2" /> Valider la réception</>
+              <><Check size={20} className="mr-2" /> {t('btn_validate_reception') || 'Valider la réception'}</>
             )}
           </Button>
         </div>
       </Card>
 
-      <h3 className="font-black text-gray-800 text-lg ml-2">Historique des Réceptions</h3>
+      <h3 className="font-black text-gray-800 text-lg ml-2">{t('lbl_history_receptions') || 'Historique des Réceptions'}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {entries.filter(e => !e.supprime).map(e => (
           <ReceptionCard key={e.id} e={e} confirmDelete={confirmDelete} deleteId={deleteId} setDeleteId={setDeleteId} currentUser={currentUser} />
         ))}
         {entries.filter(e => !e.supprime).length === 0 && (
           <div className="col-span-full p-8 text-center text-gray-400 font-bold bg-white rounded-3xl border border-gray-100 shadow-sm transition-all text-sm">
-            Aucune réception enregistrée.
+            {t('lbl_no_reception') || 'Aucune réception enregistrée.'}
           </div>
         )}
       </div>

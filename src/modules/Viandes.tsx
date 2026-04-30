@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfig } from '../contexts/ConfigContext';
 import { Card, Input, Label, Button } from '../components/ui/LightUI';
@@ -35,6 +36,7 @@ export interface ViandeEntry {
 }
 
 export default function Viandes() {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const { config } = useConfig();
   const [entries, setEntries] = useState<ViandeEntry[]>([]);

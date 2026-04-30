@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, Input, Label, Button } from '../components/ui/LightUI';
 import { CleaningEntry } from '../types';
@@ -65,6 +66,7 @@ const FREQUENCE_STYLES: Record<string, { badge: { bg: string, text: string, bord
 import { useNettoyage } from '../providers/NettoyageProvider';
 
 export default function CleaningPlan() {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const { config, updateConfig } = useConfig();
   const { taches: configTasks, setTaches } = useNettoyage();
@@ -132,7 +134,7 @@ export default function CleaningPlan() {
              </Button>
           ) : <div/>}
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={onClose} className="px-6 rounded-2xl">Annuler</Button>
+            <Button variant="secondary" onClick={onClose} className="px-6 rounded-2xl">{t('btn_cancel') || 'Annuler'}</Button>
             <Button onClick={handleSave} className="bg-crousty-purple hover:bg-crousty-purple/90 px-8 rounded-2xl">
               Enregistrer
             </Button>

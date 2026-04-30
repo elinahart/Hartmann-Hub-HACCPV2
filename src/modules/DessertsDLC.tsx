@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import { getStoredData, setStoredData } from '../lib/db';
 import { addHours, addDays, addMonths, isPast } from 'date-fns';
@@ -15,6 +16,7 @@ import { triggerSystemPrint } from '../lib/printing/triggerSystemPrint';
 import { useConfig } from '../contexts/ConfigContext';
 
 export default function DessertsDLC() {
+  const { t } = useI18n();
   const { config } = useConfig();
   const { currentUser } = useAuth();
   const { produits } = useCatalogue();

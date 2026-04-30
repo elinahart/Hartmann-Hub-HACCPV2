@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useI18n } from '../lib/i18n';
 import { createPortal } from 'react-dom';
 import { Card, Input, Select } from '../components/ui/LightUI';
 import { ProductDef } from '../types';
@@ -13,6 +14,7 @@ import { getMergedProducts } from '../lib/croustyConfig';
 import { useCatalogue } from '../providers/CatalogueProvider';
 
 export default function ProductManager() {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const { produits, setProduits } = useCatalogue();
   
@@ -90,7 +92,7 @@ export default function ProductManager() {
     <div className="pt-8 pb-32 px-4 max-w-5xl mx-auto space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
-          📦 Catalogue DLC
+          📦 {t('nav_products') || 'Catalogue'}
         </h2>
       </div>
 

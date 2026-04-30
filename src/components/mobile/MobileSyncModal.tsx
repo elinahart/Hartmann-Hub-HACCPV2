@@ -176,7 +176,7 @@ export const MobileSyncModal = ({ isOpen, onClose }: MobileSyncModalProps) => {
       const moduleHandlers: Record<string, { file: string, storageKey: string, sortByDate?: string }> = {
         'inventaire': { file: 'inventaire.json', storageKey: 'crousty_inventory' },
         'temperature': { file: 'temperatures-frigo.json', storageKey: 'crousty_temp_checklist', sortByDate: 'date' },
-        'cuisson': { file: 'viandes.json', storageKey: 'crousty_viandes', sortByDate: 'date' },
+        'cuisson': { file: 'cuisson.json', storageKey: 'crousty_viandes', sortByDate: 'date' },
         'tracabilite': { file: 'tracabilite.json', storageKey: 'crousty_tracabilite_v2', sortByDate: 'date' },
         'reception': { file: 'receptions.json', storageKey: 'crousty_receptions_v3', sortByDate: 'date' },
         'nettoyage': { file: 'nettoyage.json', storageKey: 'crousty_cleaning', sortByDate: 'date' },

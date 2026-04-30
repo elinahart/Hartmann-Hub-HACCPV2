@@ -20,7 +20,7 @@ import { useConfig } from '../../contexts/ConfigContext';
 const MODULE_CONFIG: Record<string, any> = {
   inventaire: { name: 'Inventaire', icon: ClipboardList, component: Inventaire, color: 'text-purple-500', bg: 'bg-purple-50', storageKey: 'crousty_inventory', zipFile: 'inventaire.json' },
   temperature: { name: 'Températures frigo', icon: Thermometer, component: TemperaturesChecklist, color: 'text-sky-500', bg: 'bg-sky-50', storageKey: 'crousty_temp_checklist', zipFile: 'temperatures-frigo.json' },
-  cuisson: { name: 'Cuisson alimentaire', icon: Flame, component: Viandes, color: 'text-red-500', bg: 'bg-red-50', storageKey: 'crousty_viandes', zipFile: 'viandes.json' },
+  cuisson: { name: 'Cuisson alimentaire', icon: Flame, component: Viandes, color: 'text-red-500', bg: 'bg-red-50', storageKey: 'crousty_viandes', zipFile: 'cuisson.json' },
   tracabilite: { name: 'Traçabilité', icon: QrCode, component: Tracabilite, color: 'text-blue-500', bg: 'bg-blue-50', storageKey: 'crousty_tracabilite_v2', zipFile: 'tracabilite.json' },
   reception: { name: 'Réception', icon: Package, component: Receptions, color: 'text-orange-500', bg: 'bg-orange-50', storageKey: 'crousty_receptions_v3', zipFile: 'receptions.json' },
   nettoyage: { name: 'Plan de nettoyage', icon: Droplets, component: CleaningPlan, color: 'text-purple-500', bg: 'bg-purple-50', storageKey: 'crousty_cleaning', zipFile: 'nettoyage.json' },

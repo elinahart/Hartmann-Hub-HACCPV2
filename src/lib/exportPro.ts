@@ -842,7 +842,7 @@ export const generateProPDF = async (options: ExportOptions) => {
     });
   }
 
-  // --- 3. CUISSON VIANDES ---
+  // --- 3. CUISSON ALIMENTAIRE ---
   if (options.categories.viandes) {
     if (options.categories.temperatures || options.categories.tracabilite) doc.addPage();
     addHeader(`FICHE DE RELEVE DE TEMPERATURES - CUISSON ALIMENTAIRE - ${getBranding(options)}`, "RAPPEL HACCP : Température à coeur (sonde piquée) >= 67°C. En dessous, le produit est NON CONFORME et nécessite une action corrective.");

@@ -754,7 +754,7 @@ const SessionRow = ({ session, onShowQr, onImport, onDelete, isConfirmingDelete,
 const MODULE_MAP: Record<string, { storageKey: string, zipFile: string }> = {
   inventaire: { storageKey: 'crousty_inventory', zipFile: 'inventaire.json' },
   temperature: { storageKey: 'crousty_temp_checklist', zipFile: 'temperatures-frigo.json' },
-  cuisson: { storageKey: 'crousty_viandes', zipFile: 'viandes.json' },
+  cuisson: { storageKey: 'crousty_viandes', zipFile: 'cuisson.json' },
   tracabilite: { storageKey: 'crousty_tracabilite_v2', zipFile: 'tracabilite.json' },
   reception: { storageKey: 'crousty_receptions_v3', zipFile: 'receptions.json' },
   nettoyage: { storageKey: 'crousty_cleaning', zipFile: 'nettoyage.json' },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useI18n } from '../lib/i18n';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, Button } from '../components/ui/LightUI';

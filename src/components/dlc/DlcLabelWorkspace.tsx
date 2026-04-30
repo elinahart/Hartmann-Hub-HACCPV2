@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useI18n } from '../../lib/i18n';
 import { Search, Printer, Plus, Minus, Tag, FileBox, Settings } from 'lucide-react';
 import { InventoryProduct } from '../../types';
 import { PrintSettings } from '../../types/printing';
@@ -31,6 +32,7 @@ interface DlcLabelWorkspaceProps {
 export const DlcLabelWorkspace: React.FC<DlcLabelWorkspaceProps> = ({
   products, categories, activeEntries, onAddLabel, onDeleteLabel, currentUser
 }) => {
+  const { t } = useI18n();
   const { config } = useConfig();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('Toutes');
@@ -99,18 +101,18 @@ export const DlcLabelWorkspace: React.FC<DlcLabelWorkspaceProps> = ({
       {/* Top Bar */}
       <div className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6 shrink-0">
          <h2 className="text-lg md:text-xl font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
-           <Tag className="text-crousty-purple" size={24} /> Création d'Étiquettes
+           <Tag className="text-crousty-purple" size={24} /> {t('lbl_creation_labels') || "CRÉATION D'ÉTIQUETTES"}
          </h2>
          <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-2 text-xs font-bold text-gray-500 bg-gray-100 py-1.5 px-3 rounded-full">
               <span className={`w-2 h-2 rounded-full ${printSettings.mode === 'disabled' ? 'bg-red-500' : 'bg-green-500'}`}></span>
-              Mode: {printSettings.mode === 'virtual' ? 'Virtuel' : printSettings.mode === 'system' ? 'AirPrint' : 'Désactivé'}
+              {t('lbl_mode') || 'Mode:'} {printSettings.mode === 'virtual' ? t('lbl_virtual') || 'Virtual' : printSettings.mode === 'system' ? 'AirPrint' : t('lbl_disabled') || 'Disabled'}
             </div>
             <button 
               onClick={() => window.dispatchEvent(new CustomEvent('open-customization-modal', { detail: { tab: 'produits' } }))}
               className="px-3 py-1.5 bg-crousty-purple/10 text-crousty-purple hover:bg-crousty-purple/20 rounded-xl text-xs font-bold transition-colors flex items-center gap-2"
             >
-              <Plus size={14} /> <span className="hidden sm:inline">Gérer les produits</span>
+              <Plus size={14} /> <span className="hidden sm:inline">{t('lbl_manage_products') || 'Gérer les produits'}</span>
             </button>
          </div>
       </div>
@@ -123,7 +125,7 @@ export const DlcLabelWorkspace: React.FC<DlcLabelWorkspaceProps> = ({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
                 type="text"
-                placeholder="Rechercher un produit..."
+                placeholder={t('ph_search_product') || 'Rechercher un produit...'}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 className="w-full bg-gray-100 border-none rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:ring-2 focus:ring-crousty-purple outline-none"
@@ -132,11 +134,11 @@ export const DlcLabelWorkspace: React.FC<DlcLabelWorkspaceProps> = ({
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                {['Toutes', ...categories].map(cat => (
                  <button 
-                   key={cat}
+                   key={cat === 'Toutes' ? (t('lbl_all') || 'Toutes') : t(cat)}
                    onClick={() => setSelectedCat(cat)}
                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedCat === cat ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                  >
-                   {cat}
+                   {cat === 'Toutes' ? (t('lbl_all') || 'Toutes') : t(cat)}
                  </button>
                ))}
             </div>
@@ -144,7 +146,7 @@ export const DlcLabelWorkspace: React.FC<DlcLabelWorkspaceProps> = ({
 
           <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
             {filteredProducts.length === 0 ? (
-              <div className="text-center text-gray-400 font-medium py-10">Aucun produit trouvé</div>
+              <div className="text-center text-gray-400 font-medium py-10">{t('lbl_no_product_found') || 'Aucun produit trouvé'}</div>
             ) : (
               filteredProducts.map(p => {
                 const style = getIconeCategorie(p.category);
@@ -241,8 +243,8 @@ export const DlcLabelWorkspace: React.FC<DlcLabelWorkspaceProps> = ({
               <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-100 rounded-full flex items-center justify-center text-gray-300 mb-6 shadow-inner">
                 <Tag size={40} />
               </div>
-              <h3 className="text-lg md:text-xl font-black text-gray-400">Sélectionnez un produit</h3>
-              <p className="text-xs md:text-sm font-medium text-gray-400 mt-2 max-w-xs">Choisissez un produit dans la liste pour configurer son étiquette DLC.</p>
+              <h3 className="text-lg md:text-xl font-black text-gray-400">{t('lbl_select_product') || 'Sélectionnez un produit'}</h3>
+              <p className="text-xs md:text-sm font-medium text-gray-400 mt-2 max-w-xs">{t('lbl_select_prod_to_config') || 'Choisissez un produit...'} </p>
             </div>
           )}
         </div>

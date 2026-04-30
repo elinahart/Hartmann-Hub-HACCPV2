@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useI18n } from '../../lib/i18n';
 import { Search, Printer, CheckCircle, Tag, Download, Archive, Info, Check, Trash2 } from 'lucide-react';
 import { DessertEntry } from '../../types';
 import { format, isPast } from 'date-fns';

@@ -19,7 +19,7 @@ import { QRScanner } from './components/QRScanner';
 import { ExportModal } from './components/ExportModal';
 import { CustomizationModal } from './components/CustomizationModal';
 import { startOfDay, isWithinInterval, endOfDay, format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { Button } from './components/ui/LightUI';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sidebar } from './components/Sidebar';
@@ -414,7 +414,7 @@ export default function App() {
       case 'desserts': return t('nav_desserts');
       case 'products': return t('nav_products');
       case 'inventaire': return t('nav_inventaire');
-      case 'inventaire-intelligent': return 'A.I. Manager';
+      case 'inventaire-intelligent': return t('nav_ai_manager') || 'A.I. Manager';
       case 'sessions-mobiles': return t('nav_mobile_sessions');
       default: return '';
     }
@@ -460,14 +460,14 @@ export default function App() {
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        {currentUser?.role === 'manager' ? 'Admin / Manager' : 'Équipe Terrain'}
+                        {currentUser?.role === 'manager' ? (t('role_admin_manager') || 'Admin / Manager') : (t('role_field_team') || 'Équipe Terrain')}
                       </p>
                     </div>
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight truncate leading-none">
                       {new Date().getHours() >= 18 ? t('dashboard_good_evening') : t('dashboard_good_morning')} {currentUser?.name}
                     </h1>
                     <div className="flex items-center gap-2 mt-2">
-                       <span className="text-[11px] font-bold text-gray-400">{format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}</span>
+                       <span className="text-[11px] font-bold text-gray-400">{format(new Date(), 'EEEE d MMMM yyyy', { locale: language === 'en' ? enUS : fr })}</span>
                     </div>
                   </div>
                 </div>

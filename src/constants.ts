@@ -1,11 +1,20 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "2.5.5";
+export const APP_VERSION = "3.0.0";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "29 Avril 2026";
+export const APP_LAST_UPDATE = "30 Avril 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.0.0",
+    date: "30 Avril 2026",
+    changes: [
+      "Déploiement complet des traductions anglaises sur l'ensemble de l'application",
+      "Amélioration majeure de l'ergonomie (Drag & Drop) sur iPad pour la réorganisation des cuves et zones de températures dans la configuration",
+      "Interface utilisateur plus propre et adaptée aux gestes tactiles"
+    ]
+  },
   {
     version: "2.5.5",
     date: "29 Avril 2026",

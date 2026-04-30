@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Droplets, Edit2, Trash2, Plus, Shield, Check, AlertTriangle, GripVertical } from 'lucide-react';
+import { Droplets, Edit2, Trash2, Plus, Shield, Check, AlertTriangle, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { useConfig } from '../../contexts/ConfigContext';
 import { Button, Input, Label } from '../ui/LightUI';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,10 +7,12 @@ import { cn } from '../../lib/utils';
 import { motion, Reorder } from 'motion/react';
 
 import { useHuiles } from '../../providers/HuilesProvider';
+import { useI18n } from '../../lib/i18n';
 
 export const HuilesTab = () => {
   const { config, updateConfig } = useConfig();
   const { currentUser } = useAuth();
+  const { t } = useI18n();
   const isManager = currentUser?.role === 'manager';
   const { cuves, setCuves } = useHuiles();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export const HuilesTab = () => {
 
   const handleSave = () => {
     if (nom.trim() === '') {
-      setError('Le nom est requis.');
+      setError(t('err_generic') || 'Le nom est requis.');
       return;
     }
 
@@ -97,13 +99,24 @@ export const HuilesTab = () => {
     setIsSelectionMode(false);
   };
 
+  const moveItem = (index: number, direction: 'up' | 'down') => {
+    const items = [...huiles];
+    if (direction === 'up' && index > 0) {
+      [items[index], items[index - 1]] = [items[index - 1], items[index]];
+    } else if (direction === 'down' && index < items.length - 1) {
+      [items[index], items[index + 1]] = [items[index + 1], items[index]];
+    }
+    setCuves(items);
+    updateConfig({ huiles: items });
+  };
+
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-black text-gray-800">Cuves d'Huile</h3>
+        <h3 className="text-xl font-black text-gray-800">{t('nav_oil') || "Cuves d'Huile"}</h3>
         {!editingId && (
           <Button onClick={handleCreate} className="bg-crousty-purple text-white gap-2 rounded-xl h-10 px-4">
-            <Plus size={16} /> Ajouter une cuve
+            <Plus size={16} /> {t('btn_add') || 'Ajouter une cuve'}
           </Button>
         )}
       </div>
@@ -113,7 +126,7 @@ export const HuilesTab = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-amber-900 font-bold text-[10px] uppercase tracking-widest">
               <Shield size={14} className="text-amber-500" />
-              Gestion
+              {t('btn_manage') || 'Gestion'}
             </div>
             <div className="flex gap-2">
               <Button 
@@ -126,14 +139,14 @@ export const HuilesTab = () => {
                   isSelectionMode ? "bg-amber-200 text-amber-900" : "bg-white text-gray-500 border border-gray-200"
                 )}
               >
-                {isSelectionMode ? 'Annuler' : 'Sélectionner'}
+                {isSelectionMode ? t('btn_cancel') || 'Annuler' : t('btn_select') || 'Sélectionner'}
               </Button>
               <Button 
                 onClick={() => setShowBulkDeleteConfirm('all')}
                 className="h-7 px-3 bg-red-100 text-red-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
                 variant="ghost"
               >
-                Vider
+                {t('btn_empty') || 'Vider'}
               </Button>
             </div>
           </div>
@@ -147,14 +160,14 @@ export const HuilesTab = () => {
                 >
                   {selectedIds.length === huiles.length && <Check size={14} className="text-amber-500" />}
                 </button>
-                <span className="text-[10px] font-black text-amber-900 uppercase">{selectedIds.length} sélectionné(s)</span>
+                <span className="text-[10px] font-black text-amber-900 uppercase">{selectedIds.length} {t('lbl_selected') || 'sélectionné(s)'}</span>
               </div>
               <Button 
                 disabled={selectedIds.length === 0}
                 onClick={() => setShowBulkDeleteConfirm('selected')}
                 className="h-7 px-3 bg-red-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-red-200 shadow-opacity-20"
               >
-                Supprimer
+                {t('btn_delete') || 'Supprimer'}
               </Button>
             </div>
           )}
@@ -165,46 +178,41 @@ export const HuilesTab = () => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
           <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl space-y-6 animate-in zoom-in-95 duration-300">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-black text-gray-900">Confirmation</h3>
+              <h3 className="text-xl font-black text-gray-900">{t('lbl_confirmation') || 'Confirmation'}</h3>
               <p className="text-sm text-gray-500 font-medium tracking-tight">
                 {showBulkDeleteConfirm === 'all' 
-                  ? "Voulez-vous supprimer toutes les cuves d'huile ?"
-                  : `Voulez-vous supprimer les ${selectedIds.length} cuves sélectionnées ?`}
+                  ? t('lbl_confirm_empty_oils') || "Voulez-vous supprimer toutes les cuves d'huile ?"
+                  : t('lbl_confirm_delete_oils_selected') || `Voulez-vous supprimer les ${selectedIds.length} cuves sélectionnées ?`}
               </p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => setShowBulkDeleteConfirm(null)} variant="ghost" className="flex-1 font-black uppercase tracking-widest text-[10px]">Annuler</Button>
-              <Button onClick={handleBulkDelete} className="flex-1 bg-red-500 text-white font-black uppercase tracking-widest text-[10px]">Confirmer</Button>
+              <Button onClick={() => setShowBulkDeleteConfirm(null)} variant="ghost" className="flex-1 font-black uppercase tracking-widest text-[10px]">{t('btn_cancel') || 'Annuler'}</Button>
+              <Button onClick={handleBulkDelete} className="flex-1 bg-red-500 text-white font-black uppercase tracking-widest text-[10px]">{t('btn_yes') || 'Confirmer'}</Button>
             </div>
           </div>
         </div>
       )}
 
-      <Reorder.Group axis="y" values={huiles} onReorder={(newOrder) => {
-        setCuves(newOrder);
-        updateConfig({ huiles: newOrder });
-      }} className="space-y-3">
-        {huiles.map((h: any) => (
-          <Reorder.Item 
+      <div className="space-y-3">
+        {huiles.map((h: any, index: number) => (
+          <div 
             key={h.id} 
-            value={h}
-            dragListener={!isSelectionMode && editingId !== h.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
           >
           <div 
             onClick={() => isSelectionMode && toggleSelection(h.id)}
             className={cn(
-              "border rounded-2xl bg-white overflow-hidden shadow-sm transition-all cursor-pointer relative group",
+              "border rounded-2xl bg-white overflow-hidden shadow-sm transition-all relative group",
+              !isSelectionMode && "cursor-default",
+              isSelectionMode && "cursor-pointer",
               editingId === h.id ? "border-crousty-purple ring-2 ring-purple-50 z-10" : "border-gray-100",
               selectedIds.includes(h.id) && "border-amber-400 bg-amber-50/20"
             )}
           >
             {editingId === h.id ? (
               <div className="p-4 bg-gray-50 flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                <Input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom de la cuve" autoFocus className="flex-1" />
-                <Button variant="outline" onClick={() => setEditingId(null)}>Annuler</Button>
-                <Button onClick={handleSave} className="bg-crousty-purple text-white font-bold">Enregistrer</Button>
+                <Input value={nom} onChange={(e: any) => setNom(e.target.value)} placeholder="Nom de la cuve" autoFocus className="flex-1" />
+                <Button variant="outline" onClick={() => setEditingId(null)}>{t('btn_cancel') || 'Annuler'}</Button>
+                <Button onClick={handleSave} className="bg-crousty-purple text-white font-bold">{t('btn_save') || 'Enregistrer'}</Button>
               </div>
             ) : (
               <div className="flex items-center justify-between p-4 min-h-[44px]">
@@ -217,9 +225,6 @@ export const HuilesTab = () => {
                       {selectedIds.includes(h.id) && <Check size={12} className="text-white" />}
                     </div>
                   )}
-                  {!isSelectionMode && (
-                    <GripVertical className="text-gray-200 cursor-grab active:cursor-grabbing group-hover:text-gray-400" size={20} />
-                  )}
                   <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-yellow-50 text-yellow-600">
                     <Droplets size={20} />
                   </div>
@@ -229,6 +234,22 @@ export const HuilesTab = () => {
                 </div>
                 {!isSelectionMode && (
                   <div className="flex items-center gap-1">
+                    <div className="flex flex-col border-r border-gray-100 pr-1 mr-1">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); moveItem(index, 'up'); }} 
+                        disabled={index === 0}
+                        className={cn("p-1 rounded-md transition-colors", index === 0 ? "text-gray-200" : "text-gray-400 hover:bg-gray-100 hover:text-gray-800")}
+                      >
+                        <ChevronUp size={20} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); moveItem(index, 'down'); }} 
+                        disabled={index === huiles.length - 1}
+                        className={cn("p-1 rounded-md transition-colors", index === huiles.length - 1 ? "text-gray-200" : "text-gray-400 hover:bg-gray-100 hover:text-gray-800")}
+                      >
+                        <ChevronDown size={20} />
+                      </button>
+                    </div>
                     <button onClick={(e) => { e.stopPropagation(); handleEdit(h); }} className="p-2 text-gray-400 hover:text-crousty-purple hover:bg-purple-50 rounded-xl transition-colors">
                       <Edit2 size={20} />
                     </button>
@@ -240,9 +261,9 @@ export const HuilesTab = () => {
               </div>
             )}
           </div>
-          </Reorder.Item>
+          </div>
         ))}
-      </Reorder.Group>
+      </div>
 
         {confirmDelete && (
           <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -250,22 +271,22 @@ export const HuilesTab = () => {
               <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trash2 size={32} />
               </div>
-              <h3 className="text-xl font-black text-gray-800 text-center mb-2 tracking-tight">Supprimer la cuve ?</h3>
+              <h3 className="text-xl font-black text-gray-800 text-center mb-2 tracking-tight">{t('lbl_delete_oils_confirm_title') || 'Supprimer la cuve ?'}</h3>
               <p className="text-gray-500 text-center font-medium mb-6 text-sm">
-                Voulez-vous vraiment supprimer <span className="font-bold text-gray-800">"{huiles.find((h:any) => h.id === confirmDelete)?.nom}"</span> ?
+                {t('lbl_delete_confirm') || 'Voulez-vous vraiment supprimer'} <span className="font-bold text-gray-800">"{huiles.find((h:any) => h.id === confirmDelete)?.nom}"</span> ?
               </p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setConfirmDelete(null)}
                   className="flex-1 h-12 bg-gray-100 text-gray-600 rounded-xl font-bold"
                 >
-                  Annuler
+                  {t('btn_cancel') || 'Annuler'}
                 </button>
                 <button 
                   onClick={() => handleDelete(confirmDelete)}
                   className="flex-1 h-12 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-200"
                 >
-                  Supprimer
+                  {t('btn_delete') || 'Supprimer'}
                 </button>
               </div>
             </div>
@@ -273,12 +294,12 @@ export const HuilesTab = () => {
         )}
 
         {editingId === 'NEW' && (
-          <div className="border border-gray-100 rounded-2xl bg-gray-50 p-4 space-y-3 shadow-sm" onClick={e => e.stopPropagation()}>
-            <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Ajouter une cuve</Label>
+           <div className="border border-gray-100 rounded-2xl bg-gray-50 p-4 space-y-3 shadow-sm" onClick={e => e.stopPropagation()}>
+            <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t('btn_add') || 'Ajouter une cuve'}</Label>
             <div className="flex items-center gap-3">
-              <Input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ex: Cuve 5" autoFocus className="flex-1" />
-              <Button variant="outline" onClick={() => setEditingId(null)}>Annuler</Button>
-              <Button onClick={handleSave} className="bg-crousty-purple text-white font-bold">Enregistrer</Button>
+              <Input value={nom} onChange={(e: any) => setNom(e.target.value)} placeholder="Ex: Cuve 5" autoFocus className="flex-1" />
+              <Button variant="outline" onClick={() => setEditingId(null)}>{t('btn_cancel') || 'Annuler'}</Button>
+              <Button onClick={handleSave} className="bg-crousty-purple text-white font-bold">{t('btn_save') || 'Enregistrer'}</Button>
             </div>
             {error && <p className="text-red-500 font-bold text-sm bg-red-50 p-2 rounded-md">{error}</p>}
           </div>
@@ -286,7 +307,7 @@ export const HuilesTab = () => {
 
         {huiles.length === 0 && editingId !== 'NEW' && (
           <div className="text-center p-8 bg-gray-50 rounded-2xl border border-gray-100">
-            <p className="text-gray-500 font-medium tracking-tight">Aucune cuve configurée.</p>
+            <p className="text-gray-500 font-medium tracking-tight">{t('lbl_no_oils') || 'Aucune cuve configurée.'}</p>
           </div>
         )}
     </div>

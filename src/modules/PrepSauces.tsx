@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, Input, Label, Button, Select } from '../components/ui/LightUI';
 import { PrepEntry, ReceptionEntry } from '../types';
@@ -16,6 +17,7 @@ const SAUCES = [
 ];
 
 export default function PrepSauces() {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const [entries, setEntries] = useState<PrepEntry[]>([]);
   const [activeLots, setActiveLots] = useState<ReceptionEntry[]>([]);

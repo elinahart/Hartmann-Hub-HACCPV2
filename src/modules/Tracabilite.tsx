@@ -231,7 +231,7 @@ export default function Tracabilite() {
       />
       <Card className="p-6">
         <div className="mb-4">
-          <h2 className="text-lg font-black text-crousty-dark">Nouvelle Ouverture</h2>
+          <h2 className="text-lg font-black text-crousty-dark">{t('lbl_new_opening') || 'Nouvelle Ouverture'}</h2>
         </div>
         
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm font-bold border border-red-100">{error}</div>}
@@ -248,7 +248,7 @@ export default function Tracabilite() {
                  produit ? "border-green-500 bg-green-50/30 text-green-900 font-black text-lg" : "border-gray-100 bg-gray-50/50 text-gray-400 font-bold"
                )}
             >
-              <span>{produit || "Sélectionner un produit"}</span>
+              <span>{produit || t('lbl_select_product')}</span>
               <ChevronRight size={20} className="text-gray-400" />
             </button>
           </div>
@@ -271,7 +271,7 @@ export default function Tracabilite() {
                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-crousty-purple">
                       <Camera size={20} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">Appareil Photo</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_camera') || 'Appareil Photo'}</span>
                   </div>
                 </div>
                 <div className="relative group">
@@ -285,7 +285,7 @@ export default function Tracabilite() {
                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-crousty-purple">
                       <ImageIcon size={20} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">Galerie</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_gallery') || 'Galerie'}</span>
                   </div>
                 </div>
                 <div className="col-span-2 text-center mt-1">
@@ -310,13 +310,13 @@ export default function Tracabilite() {
           <div className="bg-gray-50 p-6 rounded-[2.5rem] border border-gray-100 space-y-4">
              <div className="flex items-center gap-2 mb-2">
                 <div className="h-px bg-gray-200 flex-1"></div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Informations facultatives</span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">{t('lbl_optional_info') || 'Informations facultatives'}</span>
                 <div className="h-px bg-gray-200 flex-1"></div>
              </div>
 
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                <div>
-                 <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Numéro de Lot</Label>
+                 <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_batch_number') || 'Numéro de Lot'} </Label>
                  <div className="flex gap-2">
                    <Input 
                      value={numeroLot} 
@@ -334,7 +334,7 @@ export default function Tracabilite() {
                  </div>
                </div>
                <div>
-                 <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Date Limite (DLC/DDM)</Label>
+                 <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_dlc') || 'DLC / DDM'}</Label>
                  <Input 
                    type="date"
                    value={dlc} 
@@ -345,11 +345,11 @@ export default function Tracabilite() {
              </div>
 
              <div>
-               <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Commentaires additionnels</Label>
+               <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_additional_comments') || 'Commentaires additionnels'}</Label>
                <Input 
                  value={commentaire} 
                  onChange={(e: any) => setCommentaire(e.target.value)}
-                 placeholder="Remarques éventuelles..."
+                 placeholder={t('ph_optional_remarks')}
                  className="bg-white border-none h-12 rounded-xl"
                />
              </div>
@@ -365,13 +365,13 @@ export default function Tracabilite() {
                 : "bg-crousty-purple text-white hover:bg-crousty-purple/90 active:scale-[0.98] shadow-purple-200"
             )}
           >
-            <Check size={24} className="mr-3" /> Enregistrer la traçabilité
+            <Check size={24} className="mr-3" /> {t('btn_save_traceability') || 'Enregistrer la traçabilité'}
           </Button>
         </div>
       </Card>
 
       <div className="space-y-4">
-        <h3 className="font-bold text-gray-500 px-2">HISTORIQUE DES OUVERTURES</h3>
+        <h3 className="font-bold text-gray-500 px-2">{t('lbl_history_openings') || 'HISTORIQUE DES OUVERTURES'}</h3>
         {entries.filter(e => !e.supprime).map(e => (
           <TracabiliteItem 
             key={e.id} 
@@ -382,7 +382,7 @@ export default function Tracabilite() {
           />
         ))}
         {entries.length === 0 && (
-          <div className="text-center py-8 text-gray-400">Aucun produit scanné</div>
+          <div className="text-center py-8 text-gray-400">{t('lbl_no_product_scanned') || 'Aucun produit scanné'}</div>
         )}
       </div>
       {isProductModalOpen && createPortal(
@@ -391,7 +391,7 @@ export default function Tracabilite() {
             <div className="flex items-center justify-between p-6 bg-white border-b border-gray-100 shrink-0">
               <h2 className="text-2xl font-black text-gray-800 tracking-tight flex items-center gap-3">
                 <Package className="text-crousty-purple" size={28} />
-                Sélectionner un produit
+                {t('lbl_select_product') || 'Sélectionner un produit'}
               </h2>
               <button 
                 onClick={() => setIsProductModalOpen(false)}
@@ -406,7 +406,7 @@ export default function Tracabilite() {
                 <Input 
                   value={searchTerm} 
                   onChange={(e: any) => setSearchTerm(e.target.value)}
-                  placeholder="Rechercher un produit..."
+                  placeholder="{t('ph_search_product') || 'Rechercher un produit...'}"
                   className="h-14 rounded-2xl border-white pr-10 text-lg shadow-sm"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -470,6 +470,7 @@ export default function Tracabilite() {
 }
 
 const TracabiliteItem = ({ e, deleteId, setDeleteId, confirmDelete, editId, setEditId, editData, setEditData, editMotif, setEditMotif, startEdit, handleEditSave }: any) => {
+  const { t } = useI18n();
   const [photo, setPhoto] = useState<string | null>(null);
 
   useEffect(() => {
@@ -505,8 +506,8 @@ const TracabiliteItem = ({ e, deleteId, setDeleteId, confirmDelete, editId, setE
                <Input value={editData.commentaire || ''} onChange={ev => setEditData({...editData, commentaire: ev.target.value})} />
             </div>
             <div className="flex gap-2 justify-end mt-4">
-               <Button variant="secondary" onClick={() => setEditId(null)}>Annuler</Button>
-               <Button onClick={handleEditSave} icon={Check}>Enregistrer</Button>
+               <Button variant="secondary" onClick={() => setEditId(null)}>{t('btn_cancel') || 'Annuler'}</Button>
+               <Button onClick={handleEditSave} icon={Check}>{t('btn_save') || 'Enregistrer'}</Button>
             </div>
          </div>
        ) : (

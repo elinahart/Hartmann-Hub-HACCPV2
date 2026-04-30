@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../lib/i18n';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, Input, Label, Button } from '../components/ui/LightUI';
 import { TempChecklistEntry } from '../types';
@@ -17,6 +18,7 @@ import { logAuditEvent } from '../lib/audit';
 import { StatusBadge } from '../components/ui/StatusBadge';
 
 const EditTempZoneModal = ({ zone, onClose, onSave, onDelete }: any) => {
+  const { t } = useI18n();
   const [nom, setNom] = useState(zone?.nom || '');
   const [type, setType] = useState(zone?.type || 'positif');
   const [seuilMin, setSeuilMin] = useState(zone?.seuilMin?.toString() || '0');
@@ -44,11 +46,11 @@ const EditTempZoneModal = ({ zone, onClose, onSave, onDelete }: any) => {
       <div className="p-6 space-y-6 flex-1 overflow-y-auto">
         <div className="space-y-4">
           <div>
-            <Label className="text-sm font-bold text-gray-700">Nom de l'équipement</Label>
+            <Label className="text-sm font-bold text-gray-700">{t('lbl_equipment_name') || "Nom de l'équipement"}</Label>
             <Input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ex: Frigo Boissons" className="mt-1" />
           </div>
           <div>
-            <Label className="text-sm font-bold text-gray-700">Type de froid</Label>
+            <Label className="text-sm font-bold text-gray-700">{t('lbl_cold_type') || 'Type de froid'}</Label>
             <select 
               value={type} 
               onChange={e => setType(e.target.value)}
@@ -60,11 +62,11 @@ const EditTempZoneModal = ({ zone, onClose, onSave, onDelete }: any) => {
           </div>
           <div className="flex gap-4">
              <div className="flex-1">
-               <Label className="text-sm font-bold text-gray-700">Seuil Min (°C)</Label>
+               <Label className="text-sm font-bold text-gray-700">{t('lbl_temp_min') || 'Seuil Min (°C)'}</Label>
                <Input type="number" step="0.1" value={seuilMin} onChange={e => setSeuilMin(e.target.value)} className="mt-1" />
              </div>
              <div className="flex-1">
-               <Label className="text-sm font-bold text-gray-700">Seuil Max (°C)</Label>
+               <Label className="text-sm font-bold text-gray-700">{t('lbl_temp_max') || 'Seuil Max (°C)'}</Label>
                <Input type="number" step="0.1" value={seuilMax} onChange={e => setSeuilMax(e.target.value)} className="mt-1" />
              </div>
           </div>
@@ -78,7 +80,7 @@ const EditTempZoneModal = ({ zone, onClose, onSave, onDelete }: any) => {
            </Button>
         ) : <div/>}
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={onClose} className="px-6 rounded-2xl">Annuler</Button>
+          <Button variant="secondary" onClick={onClose} className="px-6 rounded-2xl">{t('btn_cancel') || 'Annuler'}</Button>
           <Button onClick={handleSave} className="bg-crousty-purple hover:bg-crousty-purple/90 px-8 rounded-2xl">
             Enregistrer
           </Button>
@@ -96,6 +98,7 @@ export default function TemperaturesChecklist({
   isModal?: boolean, 
   onComplete?: () => void 
 }) {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const isMobileMode = !!localStorage.getItem('crousty_mobile_session');
   const { config, updateConfig } = useConfig();
@@ -641,7 +644,7 @@ export default function TemperaturesChecklist({
                         ))}
                       </div>
                       <div className="flex gap-2 justify-end mt-4">
-                         <Button variant="secondary" onClick={() => setEditId(null)}>Annuler</Button>
+                         <Button variant="secondary" onClick={() => setEditId(null)}>{t('btn_cancel') || 'Annuler'}</Button>
                          <Button onClick={handleEditSave}>💾 Enregistrer</Button>
                       </div>
                     </div>

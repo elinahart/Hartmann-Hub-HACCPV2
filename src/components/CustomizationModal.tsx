@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../lib/i18n';
 import { createPortal } from 'react-dom';
 import { X, Store, Thermometer, Droplets, Sparkles, BookOpen, Users, UploadCloud, Shield, Box, Printer, Smartphone, Settings, Flame, CheckCircle2 } from 'lucide-react';
 import { useConfig } from '../contexts/ConfigContext';

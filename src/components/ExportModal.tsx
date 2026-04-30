@@ -131,11 +131,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
               {[
                 { id: 'temperatures', label: 'Températures' },
                 { id: 'tracabilite', label: 'Traçabilité' },
-                { id: 'receptions', label: 'Livraisons' },
-                { id: 'viandes', label: 'Cuisson Viandes' },
+                { id: 'receptions', label: 'Réceptions' },
+                { id: 'viandes', label: 'Cuisson Alimentaire' },
                 { id: 'huiles', label: 'Huiles de Friture' },
                 { id: 'inventaire', label: 'Inventaire' },
-                { id: 'nettoyage', label: 'Nettoyage' }
+                { id: 'nettoyage', label: 'Plan de Nettoyage' }
               ].map((cat) => (
                 <button
                   key={cat.id}

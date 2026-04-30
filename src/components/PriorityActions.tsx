@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../lib/i18n';
 import { createPortal } from 'react-dom';
 import { getStoredData, setStoredData } from '../lib/db';
 import { createSignature } from '../lib/permissions';
@@ -772,6 +773,8 @@ function ModaleReleveTemperatures({
 
 // Logic Component
 export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }: { currentUser: any, onNavigate: (view: string) => void, onUpdateStats: () => void }) {
+  const { t } = useI18n();
+
   const [actions, setActions] = useState<ActionPrioritaire[]>([]);
   const [selectedAction, setSelectedAction] = useState<ActionPrioritaire | null>(null);
   const { config } = useConfig();
@@ -855,7 +858,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
       list.push({
         id: "temp-matin", module: "temperatures",
         niveau: h >= 10 ? "critique" : "urgent",
-        label: "Relevé températures matin en retard",
+        label: t('lbl_temp_morning_late'),
         icon: <Thermometer size={20} />,
         donnees: { créneau: "matin" }
       });
@@ -864,7 +867,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
       list.push({
         id: "temp-soir", module: "temperatures",
         niveau: h >= 20 ? "critique" : "urgent",
-        label: "Relevé températures soir en retard",
+        label: t('lbl_temp_evening_late'),
         icon: <Thermometer size={20} />,
         donnees: { créneau: "soir" }
       });
@@ -885,7 +888,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
     if (!etat.cuisson.faitAujourdhui) {
       list.push({
         id: "cuisson", module: "viandes", niveau: "info",
-        label: "Cuisson alimentaire en attente",
+        label: t('lbl_food_cooking_pending'),
         icon: <Flame size={20} />,
         donnees: {}
       });
@@ -985,7 +988,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
       <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-gray-100">
         <h2 className="font-black text-gray-800 mb-4 flex items-center gap-2 uppercase tracking-tight text-sm">
           <Flame size={18} className="text-crousty-pink" /> 
-          Actions Prioritaires ({actions.length})
+          {t('lbl_priority_actions')} ({actions.length})
         </h2>
         
         <div className="flex flex-col gap-2">

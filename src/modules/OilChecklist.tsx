@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../lib/i18n';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, Input, Label, Button } from '../components/ui/LightUI';
@@ -324,6 +325,7 @@ function PhotoViewer({ photoId, onClose }: { photoId: string; onClose: () => voi
 import { useHuiles } from '../providers/HuilesProvider';
 
 export default function OilChecklist() {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const { config, updateConfig } = useConfig();
   const { cuves: configCuves, setCuves } = useHuiles();
@@ -369,7 +371,7 @@ export default function OilChecklist() {
              </Button>
           ) : <div/>}
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={onClose} className="px-6 rounded-2xl">Annuler</Button>
+            <Button variant="secondary" onClick={onClose} className="px-6 rounded-2xl">{t('btn_cancel') || 'Annuler'}</Button>
             <Button onClick={handleSave} className="bg-crousty-purple hover:bg-crousty-purple/90 px-8 rounded-2xl">
               Enregistrer
             </Button>
