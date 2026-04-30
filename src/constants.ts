@@ -1,11 +1,21 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.0.1";
+export const APP_VERSION = "3.0.2";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
 export const APP_LAST_UPDATE = "30 Avril 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.0.2",
+    date: "30 Avril 2026",
+    changes: [
+      "Mise en place d'une gestion intelligente de session et sécurité",
+      "Verrouillage automatique de session après inactivité sur iPad ou tablettes partagées",
+      "Détection des passages en arrière-plan avec demande du code PIN au retour si nécessaire",
+      "Déconnexion totale des sessions expirées après un certain temps pour la protection des données"
+    ]
+  },
   {
     version: "3.0.1",
     date: "30 Avril 2026",

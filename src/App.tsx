@@ -28,6 +28,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import Tracabilite from './modules/Tracabilite';
 import { getInitials } from './lib/utils';
 import { useConfig } from './contexts/ConfigContext';
+import { SessionManager } from './components/SessionManager';
 
 import { ArchiveManager } from './components/ArchiveManager';
 import { UserMenu } from './components/UserMenu';
@@ -656,6 +657,7 @@ export default function App() {
   };
 
   return (
+    <SessionManager>
     <ManagerUIProvider setForceCollapsedSidebar={setIsForceCollapsed}>
     <div id="app-wrapper" className={`h-[100dvh] overflow-hidden flex bg-slate-50 text-gray-800 font-sans transition-all duration-[280ms] cubic-bezier(0.4, 0, 0.2, 1) ${isSidebarCollapsed || isForceCollapsed ? 'md:pl-[64px]' : 'md:pl-[250px]'}`}>
       {currentUser?.role === 'manager' && (
@@ -748,5 +750,6 @@ export default function App() {
     </div>
     </div>
     </ManagerUIProvider>
+    </SessionManager>
   );
 }
