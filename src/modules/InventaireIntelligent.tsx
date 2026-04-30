@@ -51,6 +51,8 @@ export default function InventaireIntelligent() {
     });
 
     const getPrimaryUnitInfo = (cat: string, name: string) => {
+      const p = products.find(prod => prod.category === cat && prod.name === name);
+      const conv = p?.conversionCartonUnite || 5;
       let sumCartons = 0;
       let sumUnits = 0;
       selectedInventories.forEach(inv => {
@@ -58,17 +60,21 @@ export default function InventaireIntelligent() {
          sumUnits += parseInt(inv.items?.[cat]?.[name]?.units || '0');
       });
       // Si on compte majoritairement en cartons, le produit est de type "carton"
-      const isCarton = sumCartons > 0 && sumUnits < sumCartons * 5;
+      const isCarton = sumCartons > 0 && sumUnits < sumCartons * conv;
       return isCarton ? 'carton' : 'unité';
     };
 
     const calculateTotalUnits = (cat: string, name: string, items: InvItems) => {
+      const p = products.find(prod => prod.category === cat && prod.name === name);
+      const conv = p?.conversionCartonUnite || 5;
       const detail = items[cat]?.[name];
       if (!detail || detail.na) return 0;
-      return parseInt(detail.units || '0') + (parseInt(detail.cartons || '0') * 5);
+      return parseInt(detail.units || '0') + (parseInt(detail.cartons || '0') * conv);
     };
 
     const getDeliveredUnits = (prodName: string, primaryUnit: 'carton' | 'unité') => {
+      const p = products.find(prod => prod.name === prodName);
+      const conv = p?.conversionCartonUnite || 5;
       let total = 0;
       relevantDeliveries.forEach(rec => {
         rec.lignes?.forEach((l: any) => {
@@ -89,7 +95,7 @@ export default function InventaireIntelligent() {
                   }
                }
 
-               total += isCarton ? num * 5 : num;
+               total += isCarton ? num * conv : num;
             }
           }
         });
@@ -124,8 +130,9 @@ export default function InventaireIntelligent() {
        
        const isRisk = daysUntilEmpty <= 3 && !hasAnomaly;
        
-       // Adapter l'affichage pour l'unité primaire (Si carton on divise par 5)
-       const displayFactor = primaryUnit === 'carton' ? 5 : 1;
+       // Adapter l'affichage pour l'unité primaire
+       const conv = p.conversionCartonUnite || 5;
+       const displayFactor = primaryUnit === 'carton' ? conv : 1;
 
        if (stockOlder > 0 || stockNewer > 0 || delivered > 0 || consumption !== 0 || hasAnomaly) {
          results.push({
@@ -248,7 +255,7 @@ export default function InventaireIntelligent() {
                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                <span title="Dernier Inventaire connu">P: {s.stockOlder}</span>
                                <span title="Inventaire actuel">A: <span className="text-crousty-purple">{s.stockNewer}</span></span>
-                               <span className="opacity-50">({s.primaryUnit === 'carton' ? 'Cart.' : 'U.'})</span>
+                               <span className="opacity-50">({s.primaryUnit === 'carton' ? (s.product.uniteAchat || 'Cart.') : (s.product.uniteStock || 'U.')})</span>
                            </div>
                         </div>
                      </div>
@@ -320,22 +327,22 @@ export default function InventaireIntelligent() {
                 <div className="grid grid-cols-2 gap-3">
                    <div className="bg-white p-4 rounded-2xl border border-orange-100 shadow-sm">
                       <div className="text-[10px] text-orange-600/80 uppercase font-bold tracking-widest mb-1">Stock Précédent</div>
-                      <div className="font-black text-orange-900 text-2xl">{selectedProductStat.stockOlder} <span className="text-sm font-medium text-orange-700/50">{selectedProductStat.primaryUnit === 'carton' ? 'cartons' : 'u.'}</span></div>
+                      <div className="font-black text-orange-900 text-2xl">{selectedProductStat.stockOlder} <span className="text-sm font-medium text-orange-700/50">{selectedProductStat.primaryUnit === 'carton' ? (selectedProductStat.product.uniteAchat || 'cartons') : (selectedProductStat.product.uniteStock || 'unités')}</span></div>
                    </div>
                    <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
                       <div className="text-[10px] text-blue-600/80 uppercase font-bold tracking-widest mb-1">+ Livraisons</div>
-                      <div className="font-black text-blue-900 text-2xl">{selectedProductStat.delivered} <span className="text-sm font-medium text-blue-700/50">{selectedProductStat.primaryUnit === 'carton' ? 'cartons' : 'u.'}</span></div>
+                      <div className="font-black text-blue-900 text-2xl">{selectedProductStat.delivered} <span className="text-sm font-medium text-blue-700/50">{selectedProductStat.primaryUnit === 'carton' ? (selectedProductStat.product.uniteAchat || 'cartons') : (selectedProductStat.product.uniteStock || 'unités')}</span></div>
                    </div>
                    <div className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm relative overflow-hidden">
                       <div className="absolute top-0 right-0 p-2 opacity-10">
                          <TrendingUp size={48} />
                       </div>
                       <div className="text-[10px] text-emerald-600/80 uppercase font-bold tracking-widest mb-1 relative z-10">- Stock Actuel</div>
-                      <div className="font-black text-emerald-900 text-2xl relative z-10">{selectedProductStat.stockNewer} <span className="text-sm font-medium text-emerald-700/50">{selectedProductStat.primaryUnit === 'carton' ? 'cartons' : 'u.'}</span></div>
+                      <div className="font-black text-emerald-900 text-2xl relative z-10">{selectedProductStat.stockNewer} <span className="text-sm font-medium text-emerald-700/50">{selectedProductStat.primaryUnit === 'carton' ? (selectedProductStat.product.uniteAchat || 'cartons') : (selectedProductStat.product.uniteStock || 'unités')}</span></div>
                    </div>
                    <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 shadow-sm">
                       <div className="text-[10px] text-indigo-600/80 uppercase font-bold tracking-widest mb-1">= Total Consommé</div>
-                      <div className="font-black text-indigo-900 text-2xl">{selectedProductStat.consumption} <span className="text-sm font-medium text-indigo-700/50">{selectedProductStat.primaryUnit === 'carton' ? 'cartons' : 'u.'}</span></div>
+                      <div className="font-black text-indigo-900 text-2xl">{selectedProductStat.consumption} <span className="text-sm font-medium text-indigo-700/50">{selectedProductStat.primaryUnit === 'carton' ? (selectedProductStat.product.uniteAchat || 'cartons') : (selectedProductStat.product.uniteStock || 'unités')}</span></div>
                    </div>
                 </div>
 
@@ -347,7 +354,7 @@ export default function InventaireIntelligent() {
                         </div>
                         <div>
                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Conso Moyenne</div>
-                           <div className="font-black text-gray-800 text-lg">{(!selectedProductStat.hasAnomaly || selectedProductStat.avgPerDay > 0) ? selectedProductStat.avgPerDay : '---'} <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{selectedProductStat.primaryUnit === 'carton' ? 'crt.' : 'u.'} / jour</span></div>
+                           <div className="font-black text-gray-800 text-lg">{(!selectedProductStat.hasAnomaly || selectedProductStat.avgPerDay > 0) ? selectedProductStat.avgPerDay : '---'} <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{(selectedProductStat.primaryUnit === 'carton' ? selectedProductStat.product.uniteAchat : selectedProductStat.product.uniteStock) || (selectedProductStat.primaryUnit === 'carton' ? 'crt.' : 'u.')} / jour</span></div>
                         </div>
                      </div>
                   </div>

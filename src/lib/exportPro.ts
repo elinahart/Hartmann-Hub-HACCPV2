@@ -516,8 +516,9 @@ const generateInventaireSheet = (options: ExportOptions, periodStr: string) => {
             
         if (!d.na) {
           const product = products.find(p => p.name === item);
-          const totalUnits = parseInt(d.units) + (parseInt(d.cartons) * 5);
-          const isLow = product && totalUnits <= product.minThreshold;
+          const conv = product?.conversionCartonUnite || 5;
+          const totalUnits = parseInt(d.units) + (parseInt(d.cartons) * conv);
+          const isLow = product && totalUnits <= (product?.minThreshold || 0);
           const status = isLow ? '⚠️ RUPTURE' : 'OK';
           
           const parts = [];
@@ -992,8 +993,9 @@ export const generateProPDF = async (options: ExportOptions) => {
               
           if (!d.na) {
             const product = products.find(p => p.name === item);
-            const totalUnits = parseInt(d.units) + (parseInt(d.cartons) * 5);
-            const isLow = product && totalUnits <= product.minThreshold;
+            const conv = product?.conversionCartonUnite || 5;
+            const totalUnits = parseInt(d.units) + (parseInt(d.cartons) * conv);
+            const isLow = product && totalUnits <= (product?.minThreshold || 0);
             const status = isLow ? '⚠️ RUPTURE' : 'OK';
             
             const parts = [];

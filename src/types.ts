@@ -112,6 +112,9 @@ export interface InventoryProduct {
   category: string;
   minThreshold: number;
   icon?: string;
+  uniteStock?: string;
+  uniteAchat?: string;
+  conversionCartonUnite?: number;
   signature?: SignatureSaisie;
 }
 

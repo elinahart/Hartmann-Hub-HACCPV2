@@ -277,6 +277,7 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
     doc.setFontSize(10);
     doc.text("RAPPEL INVENTAIRE : Effectuer l'inventaire complet à la fréquence demandée par la direction.", 14, 40);
 
+    const invProducts = getStoredData<any[]>('crousty_inventory_products', []);
     const invBody: any[] = [];
     inventories.forEach(inv => {
       const dateStr = format(new Date(inv.date), 'dd/MM/yy HH:mm');
@@ -295,9 +296,10 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
 
           if (!na) {
              let statut = "OK";
-             const totalUnites = parseInt(units) + (parseInt(cartons) * 5); // 5 could be dynamic but assuming 5 here based on UI
-             if (totalUnites === 0) statut = "RUPTURE";
-             // Can't statically know minThreshold easily without products array, leaving basic "OK/RUPTURE"
+             const product = invProducts.find(p => p.name === prod && p.category === cat);
+             const conv = product?.conversionCartonUnite || 5;
+             const totalUnites = parseInt(units) + (parseInt(cartons) * conv);
+             if (totalUnites === 0 || (product && totalUnites <= product.minThreshold)) statut = "RUPTURE";
              
              invBody.push([
                dateStr,

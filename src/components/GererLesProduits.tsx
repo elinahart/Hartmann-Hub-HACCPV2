@@ -149,7 +149,16 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
   const isManager = currentUser?.role === 'manager';
   const { products, setProducts, updateProduct, deleteProduct, addProduct } = useInventaire();
   const [editingProduct, setEditingProduct] = useState<InventoryProduct | null>(null);
-  const [productForm, setProductForm] = useState({ name: '', category: 'Frais', minThreshold: '' as number | string, icon: 'Package' });
+  const defaultFormState = { 
+    name: '', 
+    category: 'Frais', 
+    minThreshold: '' as number | string, 
+    icon: 'Package',
+    uniteStock: 'unité',
+    uniteAchat: 'carton',
+    conversionCartonUnite: '' as number | string
+  };
+  const [productForm, setProductForm] = useState(defaultFormState);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -161,7 +170,18 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
     if (!productForm.name.trim()) return;
     
     const thresholdNum = productForm.minThreshold === '' ? 0 : Number(productForm.minThreshold);
-    const dataToSave = { ...productForm, minThreshold: thresholdNum };
+    const convNum = productForm.conversionCartonUnite === '' ? 5 : Number(productForm.conversionCartonUnite);
+    
+    if (convNum <= 0) {
+      alert("Le facteur de conversion doit être supérieur à 0");
+      return;
+    }
+
+    const dataToSave = { 
+      ...productForm, 
+      minThreshold: thresholdNum,
+      conversionCartonUnite: convNum
+    };
 
     if (editingProduct) {
       updateProduct(editingProduct.id, dataToSave);
@@ -170,7 +190,7 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
     }
     
     setEditingProduct(null);
-    setProductForm({ name: '', category: 'Frais', minThreshold: '', icon: 'Package' });
+    setProductForm(defaultFormState);
     if (onSave) onSave();
   };
 
@@ -429,6 +449,43 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-gray-100 mt-2">
+            <div className="col-span-3 pb-2 border-b border-gray-50 flex items-center gap-2 text-sm font-bold text-crousty-purple uppercase tracking-widest">
+              <Package size={16} /> Conditionnement
+            </div>
+            <div className="sm:col-span-1">
+              <Label>Unité de stock</Label>
+              <Input 
+                value={productForm.uniteStock} 
+                onChange={(e: any) => setProductForm({...productForm, uniteStock: e.target.value})} 
+                placeholder="Ex: unité, kg, litre..." 
+              />
+            </div>
+            <div className="sm:col-span-1">
+              <Label>Unité d'achat</Label>
+              <Input 
+                value={productForm.uniteAchat} 
+                onChange={(e: any) => setProductForm({...productForm, uniteAchat: e.target.value})} 
+                placeholder="Ex: carton, boîte..." 
+              />
+            </div>
+            <div className="sm:col-span-1">
+              <Label>Conversion {productForm.uniteAchat ? `(${productForm.uniteAchat} → ${productForm.uniteStock})` : ''}</Label>
+              <div className="relative">
+                <Input 
+                  type="number"
+                  min="1"
+                  value={productForm.conversionCartonUnite} 
+                  onChange={(e: any) => setProductForm({...productForm, conversionCartonUnite: e.target.value === '' ? '' : Number(e.target.value)})} 
+                  placeholder="Ex: 5" 
+                  className="pl-8"
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-black">X</span>
+              </div>
+              <p className="text-[9px] font-bold text-gray-400 mt-1">Combien de "{productForm.uniteStock}" dans 1 "{productForm.uniteAchat}" ?</p>
+            </div>
+          </div>
           
           <div>
             <Label className="mb-2 block">Icône associée</Label>
@@ -453,7 +510,7 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
           <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
             {editingProduct && (
               <button 
-                onClick={() => { setEditingProduct(null); setProductForm({ name: '', category: 'Frais', minThreshold: 0, icon: 'Package' }); }}
+                onClick={() => { setEditingProduct(null); setProductForm(defaultFormState); }}
                 className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-200 rounded-xl hover:bg-gray-300"
               >
                 Annuler
@@ -542,7 +599,18 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
                             {!isSelectionMode && (
                               <>
                                 <button 
-                                  onClick={() => { setEditingProduct(p); setProductForm({ name: p.name, category: p.category, minThreshold: p.minThreshold, icon: p.icon || 'Package' }); }}
+                                  onClick={() => { 
+                                    setEditingProduct(p); 
+                                    setProductForm({ 
+                                      name: p.name, 
+                                      category: p.category, 
+                                      minThreshold: p.minThreshold, 
+                                      icon: p.icon || 'Package',
+                                      uniteStock: p.uniteStock || 'unité',
+                                      uniteAchat: p.uniteAchat || 'carton',
+                                      conversionCartonUnite: p.conversionCartonUnite || 5
+                                    }); 
+                                  }}
                                   className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
                                 >
                                   <Edit2 size={16} />

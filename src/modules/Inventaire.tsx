@@ -116,7 +116,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
       return rd > dNewest;
     });
 
-    const getDelivUnits = (arr: any[], prodName: string) => {
+    const getDelivUnits = (arr: any[], prodName: string, convFactor: number) => {
       let total = 0;
       arr.forEach(r => {
         r.lignes?.forEach((l: any) => {
@@ -124,7 +124,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
             const num = parseInt(l.quantite);
             if (!isNaN(num)) {
                const isCarton = l.quantite.toLowerCase().includes('carton') || l.quantite.toLowerCase().includes('colis');
-               total += isCarton ? num * 5 : num;
+               total += isCarton ? num * convFactor : num;
             }
           }
         });
@@ -132,23 +132,24 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
       return total;
     };
 
-    const calcTotalUnits = (cat: string, name: string, items: any) => {
+    const calcTotalUnits = (cat: string, name: string, items: any, convFactor: number) => {
       const detail = items[cat]?.[name];
       if (!detail || detail.na) return 0;
-      return parseInt(detail.units || '0') + (parseInt(detail.cartons || '0') * 5);
+      return parseInt(detail.units || '0') + (parseInt(detail.cartons || '0') * convFactor);
     };
 
     const est: Record<string, number> = {};
 
     for (const p of products) {
-      const stockOldest = calcTotalUnits(p.category, p.name, oldest.items);
-      const stockNewest = calcTotalUnits(p.category, p.name, newest.items);
-      const dHist = getDelivUnits(histDeliveries, p.name);
+      const conv = p.conversionCartonUnite || 5;
+      const stockOldest = calcTotalUnits(p.category, p.name, oldest.items, conv);
+      const stockNewest = calcTotalUnits(p.category, p.name, newest.items, conv);
+      const dHist = getDelivUnits(histDeliveries, p.name, conv);
       
       const consumption = stockOldest + dHist - stockNewest;
       const avgPerDay = consumption > 0 ? consumption / daysDiffHist : 0;
 
-      const dRec = getDelivUnits(recentDeliveries, p.name);
+      const dRec = getDelivUnits(recentDeliveries, p.name, conv);
       
       let estimated = stockNewest + dRec - (avgPerDay * daysSinceLast);
       est[p.name] = Math.max(0, Math.round(estimated));
@@ -415,9 +416,10 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
         const isRecorded = !d.na;
         if (isRecorded) {
           const product = products.find(p => p.name === item);
+          const conv = product?.conversionCartonUnite || 5;
           const unitsNum = parseInt((d as any).units || '0');
           const cartonsNum = parseInt((d as any).cartons || '0');
-          const totalNum = unitsNum + (cartonsNum * 5);
+          const totalNum = unitsNum + (cartonsNum * conv);
           const isLow = product && totalNum <= product.minThreshold;
           const status = isLow ? `⚠️ ${t('lbl_out_of_stock_upper') || 'RUPTURE'}` : 'OK';
           tableData.push([item, formatItemValue(d), status]);
@@ -472,8 +474,9 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
         .filter(p => (p.name || "").toLowerCase().includes((searchQuery || "").toLowerCase()))
         .filter(p => {
           if (!showRupturesOnly) return true;
+          const conv = p.conversionCartonUnite || 5;
           const itemDetail = quantities[category]?.[p.name] ?? { units: '0', cartons: '0', na: false };
-          const totalNum = parseInt(itemDetail.units) + (parseInt(itemDetail.cartons) * 5);
+          const totalNum = parseInt(itemDetail.units) + (parseInt(itemDetail.cartons) * conv);
           return !itemDetail.na && totalNum <= p.minThreshold;
         })
         .sort((a, b) => a.name.localeCompare(b.name));
@@ -637,8 +640,9 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                            const estimated = smartEstimations[p.name];
                            if (estimated !== undefined && newQuantities[p.category]?.[p.name] === undefined) {
                              if (!newQuantities[p.category]) newQuantities[p.category] = {};
-                             const cartons = Math.floor(estimated / 5);
-                             const units = estimated % 5;
+                           const conv = p.conversionCartonUnite || 5;
+                           const cartons = Math.floor(estimated / conv);
+                           const units = estimated % conv;
                              newQuantities[p.category][p.name] = { units: String(units), cartons: String(cartons), na: false };
                              changed = true;
                            }
@@ -688,8 +692,9 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                       >
                         <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                           {categoryProducts.map((product, index) => {
+                            const conv = product.conversionCartonUnite || 5;
                             const itemDetail = quantities[category]?.[product.name] ?? { units: '0', cartons: '0', na: false };
-                            const totalNum = parseInt(itemDetail.units) + (parseInt(itemDetail.cartons) * 5);
+                            const totalNum = parseInt(itemDetail.units) + (parseInt(itemDetail.cartons) * conv);
                             const isLow = !itemDetail.na && totalNum <= product.minThreshold;
                             const style = getCategorieStyle(category);
                             const IconComp = ICONS_MAP[product.icon as keyof typeof ICONS_MAP] || Package;
@@ -778,7 +783,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                                 
                                 <div className={`grid grid-cols-2 gap-2 sm:gap-4 mt-1 ${itemDetail.na ? 'pointer-events-none' : ''}`}>
                                   <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] items-center text-gray-400 font-bold uppercase ml-1">Unités</span>
+                                    <span className="text-[10px] items-center text-gray-400 font-bold uppercase ml-1" title="Unités">{product.uniteStock || 'Unités'}</span>
                                     <div className="flex items-center justify-between bg-gray-50 p-1 rounded-xl">
                                       <button onClick={() => adjustQuantityValue(category, product.name, 'units', -1)} className="w-8 h-8 flex items-center justify-center bg-white border border-gray-100 text-orange-500 rounded-lg font-black active:scale-90 shadow-sm">-</button>
                                       <input type="number" className="w-8 bg-transparent border-none text-center font-black text-sm text-gray-800 p-0" value={itemDetail.units} onChange={e => updateQuantity(category, product.name, 'units', e.target.value)} />
@@ -786,7 +791,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                                     </div>
                                   </div>
                                   <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase ml-1">Cartons</span>
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase ml-1" title="Unité d'achat">{product.uniteAchat || 'Cartons'}</span>
                                     <div className="flex items-center justify-between bg-gray-50 p-1 rounded-xl">
                                       <button onClick={() => adjustQuantityValue(category, product.name, 'cartons', -1)} className="w-8 h-8 flex items-center justify-center bg-white border border-gray-100 text-blue-500 rounded-lg font-black active:scale-90 shadow-sm">-</button>
                                       <input type="number" className="w-8 bg-transparent border-none text-center font-black text-sm text-gray-800 p-0" value={itemDetail.cartons} onChange={e => updateQuantity(category, product.name, 'cartons', e.target.value)} />

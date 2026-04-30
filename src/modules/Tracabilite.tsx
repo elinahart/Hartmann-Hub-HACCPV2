@@ -39,6 +39,24 @@ export interface TracabiliteLine {
   dlc: string;
 }
 
+const handleDateInput = (val: string) => {
+  const cleaned = val.replace(/[^\d]/g, '').substring(0, 6);
+  if (cleaned.length > 4) {
+    return `${cleaned.substring(0, 2)}/${cleaned.substring(2, 4)}/${cleaned.substring(4, 6)}`;
+  } else if (cleaned.length > 2) {
+    return `${cleaned.substring(0, 2)}/${cleaned.substring(2, 4)}`;
+  }
+  return cleaned;
+};
+
+const displayDate = (dateStr: string) => {
+  if (!dateStr || dateStr === 'N/A') return 'N/A';
+  if (/^\d{2}\/\d{2}\/\d{2}$/.test(dateStr)) return dateStr;
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d.toLocaleDateString();
+  return dateStr;
+};
+
 export default function Tracabilite() {
   const { currentUser } = useAuth();
   const { t } = useI18n();
@@ -328,9 +346,11 @@ export default function Tracabilite() {
                     <div>
                       <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400">{t('lbl_dlc') || 'DLC / DDM'}</Label>
                       <Input 
-                        type="date"
+                        type="tel"
+                        inputMode="numeric"
                         value={ligne.dlc} 
-                        onChange={(e: any) => updateLigne(ligne.id, 'dlc', e.target.value)}
+                        onChange={(e: any) => updateLigne(ligne.id, 'dlc', handleDateInput(e.target.value))}
+                        placeholder="JJ/MM/AA"
                         className="bg-white border-2 border-gray-100 h-12 rounded-xl"
                       />
                     </div>
@@ -573,7 +593,7 @@ const TracabiliteItem = ({ e, deleteId, setDeleteId, confirmDelete, editId, setE
                </div>
                <div>
                   <Label>DLC <span className="text-gray-400 font-medium">(optionnel)</span></Label>
-                  <Input type="date" value={editData.dlc} onChange={ev => setEditData({...editData, dlc: ev.target.value})} />
+                  <Input type="tel" inputMode="numeric" placeholder="JJ/MM/AA" value={editData.dlc} onChange={ev => setEditData({...editData, dlc: handleDateInput(ev.target.value)})} />
                </div>
             </div>
             <div>
@@ -613,7 +633,7 @@ const TracabiliteItem = ({ e, deleteId, setDeleteId, confirmDelete, editId, setE
           
           <div className="grid grid-cols-2 gap-2 text-xs mb-2">
             <div className="text-gray-500">Lot: <span className="font-bold text-gray-700">{e.numeroLot}</span></div>
-            <div className="text-gray-500">DLC: <span className="font-bold text-crousty-purple">{e.dlc !== 'N/A' && e.dlc ? new Date(e.dlc).toLocaleDateString() : 'N/A'}</span></div>
+            <div className="text-gray-500">DLC: <span className="font-bold text-crousty-purple">{displayDate(e.dlc)}</span></div>
           </div>
           
           {e.commentaire && (
