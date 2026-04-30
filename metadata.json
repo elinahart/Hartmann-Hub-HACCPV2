@@ -1,0 +1,7 @@
+{
+  "name": "Hartmann Hub V3",
+  "description": "Système de Management de la Qualité et de Sécurité Sanitaire - Hartmann Hub Management",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
