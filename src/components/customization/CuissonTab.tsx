@@ -6,10 +6,12 @@ import { CookingProductConfig } from '../../lib/configSchema';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
 import { ICONS_MAP } from '../GererLesProduits';
+import { useI18n } from '../../lib/i18n';
 
 export function CuissonTab() {
   const { config, updateConfig } = useConfig();
   const { currentUser } = useAuth();
+  const { t } = useI18n();
   const isManager = currentUser?.role === 'manager';
 
   const [newProductName, setNewProductName] = useState('');
@@ -98,10 +100,9 @@ export function CuissonTab() {
           <Flame size={24} />
         </div>
         <div>
-          <h3 className="text-lg font-black text-blue-900">Cuisson Alimentaire</h3>
+          <h3 className="text-lg font-black text-blue-900">{t('nav_viandes')}</h3>
           <p className="text-sm text-blue-700/80 font-medium leading-relaxed">
-            Gérez la liste des produits qui nécessitent un contrôle de température à cœur pendant la cuisson. 
-            Ces produits apparaîtront directement dans le module "Cuisson Alimentaire" pour l'équipe.
+            {t('lbl_cooking_desc')}
           </p>
         </div>
       </div>
@@ -111,7 +112,7 @@ export function CuissonTab() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-amber-900 font-black text-xs uppercase tracking-widest">
               <Shield size={14} className="text-amber-500" />
-              Actions de Gestion (Manager)
+              {t('btn_manage')}
             </div>
             <div className="flex gap-2">
               <Button 
@@ -124,14 +125,14 @@ export function CuissonTab() {
                   isSelectionMode ? "bg-amber-200 text-amber-900" : "bg-white text-gray-500 border border-gray-200"
                 )}
               >
-                {isSelectionMode ? 'Annuler sélection' : 'Sélectionner'}
+                {isSelectionMode ? t('btn_cancel') : t('btn_select')}
               </Button>
               <Button 
                 onClick={() => setShowBulkDeleteConfirm('all')}
                 className="h-8 px-3 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
                 variant="ghost"
               >
-                Tout supprimer
+                {t('btn_empty')}
               </Button>
             </div>
           </div>
@@ -145,14 +146,14 @@ export function CuissonTab() {
                 >
                   {selectedIds.length === products.length && <Check size={14} className="text-amber-500 font-black" />}
                 </button>
-                <span className="text-xs font-black text-amber-900">{selectedIds.length} produit(s) sélectionné(s)</span>
+                <span className="text-xs font-black text-amber-900">{selectedIds.length} {t('lbl_selected')}</span>
               </div>
               <Button 
                 disabled={selectedIds.length === 0}
                 onClick={() => setShowBulkDeleteConfirm('selected')}
                 className="h-8 px-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-200 disabled:opacity-50"
               >
-                Supprimer la sélection
+                {t('btn_delete')}
               </Button>
             </div>
           )}
@@ -166,11 +167,11 @@ export function CuissonTab() {
               <AlertTriangle size={40} className="text-red-500" />
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-black text-gray-900">Confirmation forte</h3>
+              <h3 className="text-xl font-black text-gray-900">{t('lbl_confirmation')}</h3>
               <p className="text-sm text-gray-500 font-medium leading-relaxed">
                 {showBulkDeleteConfirm === 'all' 
-                  ? "Voulez-vous vraiment supprimer TOUS les produits de cuisson ? Cette action est irréversible."
-                  : `Voulez-vous vraiment supprimer les ${selectedIds.length} produits sélectionnés ?`}
+                  ? t('lbl_confirm_empty_cooking')
+                  : t('lbl_confirm_delete_selected_count', { count: selectedIds.length })}
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -178,14 +179,14 @@ export function CuissonTab() {
                 onClick={handleBulkDelete}
                 className="w-full h-14 bg-red-500 text-white rounded-2xl font-black shadow-lg shadow-red-200 uppercase tracking-widest"
               >
-                OUI, SUPPRIMER
+                {t('btn_yes')}
               </Button>
               <Button 
                 onClick={() => setShowBulkDeleteConfirm(null)}
                 variant="ghost"
                 className="w-full h-12 text-gray-500 font-black uppercase tracking-widest"
               >
-                Annuler
+                {t('btn_cancel')}
               </Button>
             </div>
           </div>
@@ -194,14 +195,14 @@ export function CuissonTab() {
 
       <div className="bg-white border border-gray-100 p-6 rounded-[2rem] shadow-sm space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nouveau produit</p>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('lbl_new_product')}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
           <div className="md:col-span-9">
             <Input 
               value={newProductName}
               onChange={(e: any) => setNewProductName(e.target.value)}
-              placeholder="Nom du produit (ex: Aiguillettes...)"
+              placeholder={t('ph_cooking_product_name')}
               className="font-bold rounded-2xl h-12"
             />
           </div>
@@ -211,12 +212,12 @@ export function CuissonTab() {
               disabled={!newProductName.trim()}
               className="w-full h-12 bg-gray-900 text-white rounded-2xl gap-2 font-black shadow-md shadow-gray-200"
             >
-              <Plus size={18} /> Ajouter
+              <Plus size={18} /> {t('btn_add')}
             </Button>
           </div>
         </div>
         <div>
-          <Label className="mb-2 block text-[10px] font-black text-gray-400 uppercase tracking-widest">Icône associée</Label>
+          <Label className="mb-2 block text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('lbl_associated_icon')}</Label>
           <div className="flex flex-wrap gap-2">
             {Object.keys(ICONS_MAP).map(iconKey => {
               const IconComp = ICONS_MAP[iconKey];
@@ -241,7 +242,7 @@ export function CuissonTab() {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between px-2">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Produits configurés ({products.length})</p>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('lbl_configured_products_count', { count: products.length })}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
@@ -270,20 +271,20 @@ export function CuissonTab() {
                 <div className="flex-1 flex items-center justify-between animate-in zoom-in-95 duration-200">
                   <div className="flex items-center gap-3">
                     <AlertTriangle className="text-red-500" size={20} />
-                    <p className="text-sm font-black text-red-900">Supprimer "{product.name}" ?</p>
+                    <p className="text-sm font-black text-red-900">{t('lbl_delete_product_confirm', { name: product.name })}</p>
                   </div>
                   <div className="flex gap-2 text-[10px]">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setDeleteId(null); }}
                       className="px-4 py-2 bg-white text-gray-500 rounded-xl font-black border border-gray-200 uppercase"
                     >
-                      Annuler
+                      {t('btn_cancel')}
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }}
                       className="px-4 py-2 bg-red-500 text-white rounded-xl font-black shadow-lg shadow-red-200 uppercase"
                     >
-                      Supprimer
+                      {t('btn_delete')}
                     </button>
                   </div>
                 </div>
@@ -324,7 +325,7 @@ export function CuissonTab() {
                           "text-[10px] font-black uppercase tracking-wider",
                           product.active ? "text-green-500" : "text-gray-400"
                         )}>
-                          {product.active ? 'Actif' : 'Inactif'}
+                          {product.active ? t('lbl_active') : t('lbl_inactive')}
                         </p>
                       </div>
                     )}
@@ -338,7 +339,7 @@ export function CuissonTab() {
                           "p-2 rounded-xl transition-colors",
                           product.active ? "text-green-500 bg-green-50" : "text-gray-400 bg-gray-50"
                         )}
-                        title={product.active ? 'Désactiver' : 'Activer'}
+                        title={product.active ? t('lbl_inactive') : t('lbl_active')}
                       >
                         <Check size={18} />
                       </button>
@@ -364,8 +365,8 @@ export function CuissonTab() {
           {products.length === 0 && (
             <div className="py-12 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
               <Flame size={48} className="mb-4 opacity-20" />
-              <p className="font-bold">Aucun produit configuré</p>
-              <p className="text-xs">Ajoutez votre premier produit ci-dessus</p>
+              <p className="font-bold">{t('lbl_no_products_configured')}</p>
+              <p className="text-xs">{t('lbl_start_creating_session')}</p>
             </div>
           )}
         </div>

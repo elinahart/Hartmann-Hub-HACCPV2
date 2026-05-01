@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Input, Label, Button, Select } from '../components/ui/LightUI';
 import { getStoredData, setStoredData, savePhoto, deletePhoto, getPhoto } from '../lib/db';
-import { Camera, Trash2, Check, CheckCircle2, X, ImageIcon, Plus, Trash } from 'lucide-react';
+import { Camera, Trash2, Check, CheckCircle2, X, ImageIcon, Plus, Trash, Package, Search, ChevronRight } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { createSignature } from '../lib/permissions';
 import { SaisieActions } from '../components/SaisieActions';
 import { SignatureSaisie } from '../types';
@@ -11,6 +12,9 @@ import { useAutoDraft } from '../hooks/useAutoDraft';
 import { logAuditEvent } from '../lib/audit';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { useI18n } from '../lib/i18n';
+import { useInventaire } from '../providers/InventaireProvider';
+import { cn } from '../lib/utils';
+import { getCategorieStyle } from '../lib/inventoryStyles';
 
 import { compressPhotoTLC } from '../lib/imageUtils';
 
@@ -36,7 +40,7 @@ export interface ReceptionEntry {
   supprime?: boolean;
 }
 
-const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }: any) => {
+const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser, onEdit }: any) => {
   const [photos, setPhotos] = useState<string[]>([]);
   const [showPhoto, setShowPhoto] = useState(false);
   const { t } = useI18n();
@@ -69,7 +73,7 @@ const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser }:
         </div>
       ) : (
         <div className="absolute top-2 right-2 z-10">
-          <SaisieActions saisie={e} onDelete={() => setDeleteId(e.id)} inline={true} />
+          <SaisieActions saisie={e} onDelete={() => setDeleteId(e.id)} onEdit={onEdit} inline={true} />
         </div>
       )}
       
@@ -118,8 +122,37 @@ export default function Receptions() {
   const { currentUser } = useAuth();
   const { config } = useConfig();
   const { t } = useI18n();
+  const { products } = useInventaire();
   const [entries, setEntries] = useState<ReceptionEntry[]>([]);
   
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [activeLineId, setActiveLineId] = useState<string | null>(null);
+
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) return sortedProducts;
+    return sortedProducts.filter(p => 
+      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [sortedProducts, searchTerm]);
+
+  const groupedProducts = useMemo(() => {
+    const groups: Record<string, typeof sortedProducts> = {};
+    filteredProducts.forEach(p => {
+      const cat = p.category || 'Non classé';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(p);
+    });
+    return groups;
+  }, [filteredProducts]);
+
   const [draft, setDraft, clearDraft, isDraftRestored] = useAutoDraft('reception_v3', {
     fournisseur: '',
     lignes: [{ id: '1', produit: '', quantite: '', numeroLot: '', dlc: '', temperature: '' }],
@@ -247,47 +280,64 @@ export default function Receptions() {
         return;
       }
 
-      const id = Date.now().toString();
+      const id = editingId || Date.now().toString();
       const photoIds: string[] = [];
       
       if (photoDataUrls.length > 0) {
         for (let i = 0; i < photoDataUrls.length; i++) {
-            const pId = `recept_bon_${id}_${i}`;
-            await savePhoto(pId, photoDataUrls[i]);
-            photoIds.push(pId);
+            // Check if it's already an existing data url or just an old ID
+            if (photoDataUrls[i].startsWith('data:')) {
+               const pId = `recept_bon_${id}_${Date.now()}_${i}`;
+               await savePhoto(pId, photoDataUrls[i]);
+               photoIds.push(pId);
+            } else {
+               // Fallback: It might be a base64 from our db load which is big and starts with data:
+               // Or wait, our loaded photos start with 'data:image/...'.
+               // Wait! getPhoto returns existing dataURL. So when we edit, we fill photoDataUrls with dataURLs. 
+               // If we re-save, we'll duplicate images in DB for no reason! 
+               const pId = `recept_bon_${id}_${Date.now()}_${i}`;
+               await savePhoto(pId, photoDataUrls[i]);
+               photoIds.push(pId);
+            }
         }
       }
 
       const rawWorker = localStorage.getItem('crousty_mobile_worker');
       const mobileWorker = rawWorker ? rawWorker.charAt(0).toUpperCase() + rawWorker.slice(1).toLowerCase() : 'Inconnu';
       
-      const entry: ReceptionEntry = {
+      const newEntry: ReceptionEntry = {
         id, 
-        date: new Date().toISOString(), 
+        date: editingId ? (entries.find(e => e.id === editingId)?.date || new Date().toISOString()) : new Date().toISOString(), 
         fournisseur,
         lignes,
         commentaire,
         photoIds: photoIds.length > 0 ? photoIds : undefined, 
-        responsable: currentUser?.name || mobileWorker,
-        signature: createSignature(currentUser || null)
+        responsable: editingId ? (entries.find(e => e.id === editingId)?.responsable || currentUser?.name || mobileWorker) : (currentUser?.name || mobileWorker),
+        signature: editingId ? entries.find(e => e.id === editingId)?.signature : createSignature(currentUser || null)
       };
 
-      const updated = [entry, ...entries];
+      let updated;
+      if (editingId) {
+         updated = entries.map(e => e.id === editingId ? newEntry : e);
+      } else {
+         updated = [newEntry, ...entries];
+      }
       setEntries(updated);
       setStoredData('crousty_receptions_v3', updated);
 
       logAuditEvent({
-        type: 'create',
+        type: editingId ? 'update' : 'create',
         module: 'reception',
-        action: 'Réception fournisseur',
-        userName: entry.responsable,
+        action: editingId ? 'Modification réception' : 'Réception fournisseur',
+        userName: newEntry.responsable,
         userId: currentUser?.id,
         source: currentUser ? 'hub' : 'mobile',
-        details: { fournisseur, lignesCount: lignes.length },
+        details: { fournisseur, lignesCount: lignes.length, receptionId: id },
         status: 'success'
       });
 
       clearDraft();
+      setEditingId(null);
       setPhotoDataUrls([]);
       setError('');
       setSuccess(t('success_reception') || `Réception de ${fournisseur} enregistrée !`);
@@ -310,6 +360,7 @@ export default function Receptions() {
     setEntries(updated);
     setStoredData('crousty_receptions_v3', updated);
     setDeleteId(null);
+    if (editingId === id) cancelEdit();
 
     if (entry) {
       logAuditEvent({
@@ -325,12 +376,49 @@ export default function Receptions() {
     }
   };
 
+  const startEdit = async (e: ReceptionEntry) => {
+    setEditingId(e.id);
+    setFournisseur(e.fournisseur);
+    setLignes(e.lignes);
+    setCommentaire(e.commentaire || '');
+    
+    setIsCustomFournisseur(!config.fournisseurs?.includes(e.fournisseur));
+    
+    const loadedPhotos: string[] = [];
+    if (e.photoId) { 
+      const data = await getPhoto(e.photoId);
+      if (data) loadedPhotos.push(data);
+    }
+    if (e.photoIds) {
+      for (const pid of e.photoIds) {
+        const data = await getPhoto(pid);
+        if (data) loadedPhotos.push(data);
+      }
+    }
+    setPhotoDataUrls(loadedPhotos);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    clearDraft();
+    setPhotoDataUrls([]);
+  };
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-crousty-dark">{t('lbl_new_reception') || 'Nouvelle Réception'}</h2>
-          {isDraftRestored && <StatusBadge status="draft" label={t('lbl_draft_restored') || 'Brouillon restauré'} />}
+          <h2 className="text-lg font-black text-crousty-dark">
+            {editingId ? "Modifier la Réception" : (t('lbl_new_reception') || 'Nouvelle Réception')}
+          </h2>
+          {editingId && (
+            <Button variant="outline" onClick={cancelEdit} className="h-8 px-3 text-xs bg-gray-50 border-gray-200">
+               Annuler la modification
+            </Button>
+          )}
+          {!editingId && isDraftRestored && <StatusBadge status="draft" label={t('lbl_draft_restored') || 'Brouillon restauré'} />}
         </div>
         
         <div className="space-y-6">
@@ -391,8 +479,19 @@ export default function Receptions() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <Label>{t('lbl_product') || 'Produit'} *</Label>
-                    <Input value={ligne.produit} onChange={(e: any) => updateLigne(ligne.id, 'produit', e.target.value)} placeholder="Ex: Cordon Bleu..." />
+                    <Label className="text-sm font-black text-gray-700 mb-2 flex items-center gap-2">
+                       <Package size={16} className="text-gray-500" /> {t('lbl_product') || 'Produit'} *
+                    </Label>
+                    <button
+                      onClick={(e) => { e.preventDefault(); setActiveLineId(ligne.id); setIsProductModalOpen(true); }}
+                      className={cn(
+                        "w-full h-14 rounded-2xl border-2 transition-all text-left px-4 flex items-center justify-between",
+                        ligne.produit ? "border-green-500 bg-green-50/30 text-green-900 font-black" : "border-gray-200 bg-white text-gray-400 font-bold"
+                      )}
+                    >
+                      <span className="truncate pr-2">{ligne.produit || t('lbl_select_product') || 'Sélectionner un produit'}</span>
+                      <ChevronRight size={20} className="text-gray-400 shrink-0" />
+                    </button>
                   </div>
                   <div>
                     <Label>{t('lbl_quantity') || 'Quantité'} *</Label>
@@ -494,7 +593,7 @@ export default function Receptions() {
       <h3 className="font-black text-gray-800 text-lg ml-2">{t('lbl_history_receptions') || 'Historique des Réceptions'}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {entries.filter(e => !e.supprime).map(e => (
-          <ReceptionCard key={e.id} e={e} confirmDelete={confirmDelete} deleteId={deleteId} setDeleteId={setDeleteId} currentUser={currentUser} />
+          <ReceptionCard key={e.id} e={e} confirmDelete={confirmDelete} deleteId={deleteId} setDeleteId={setDeleteId} currentUser={currentUser} onEdit={() => startEdit(e)} />
         ))}
         {entries.filter(e => !e.supprime).length === 0 && (
           <div className="col-span-full p-8 text-center text-gray-400 font-bold bg-white rounded-3xl border border-gray-100 shadow-sm transition-all text-sm">
@@ -502,6 +601,92 @@ export default function Receptions() {
           </div>
         )}
       </div>
+
+      {isProductModalOpen && createPortal(
+        <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white w-full max-w-2xl rounded-[2rem] overflow-hidden relative shadow-2xl h-[90dvh] flex flex-col">
+            <div className="flex items-center justify-between p-6 bg-white border-b border-gray-100 shrink-0">
+              <h2 className="text-2xl font-black text-gray-800 tracking-tight flex items-center gap-3">
+                <Package className="text-crousty-purple" size={28} />
+                {t('lbl_select_product') || 'Sélectionner un produit'}
+              </h2>
+              <button 
+                onClick={(e) => { e.preventDefault(); setIsProductModalOpen(false); }}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 border-b border-gray-100 shrink-0 bg-gray-50/50">
+              <div className="relative">
+                <Input 
+                  value={searchTerm} 
+                  onChange={(e: any) => setSearchTerm(e.target.value)}
+                  placeholder={t('ph_search_product') || 'Rechercher un produit...'}
+                  className="h-14 rounded-2xl border-white pr-10 text-lg shadow-sm"
+                  autoFocus
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                  <Search size={20} />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              {Object.keys(groupedProducts).length > 0 ? (
+                Object.entries(groupedProducts).map(([cat, prods]: [string, any[]]) => {
+                  const style = getCategorieStyle(cat);
+                  const Icon = style.icone;
+                  
+                  return (
+                    <div key={cat} className="mb-6">
+                      <div className="flex items-center gap-2 mb-3 select-none">
+                        <div className="w-1 h-4 rounded-full" style={{ background: style.couleur }} />
+                        <Icon size={16} color={style.couleur} strokeWidth={2.5} />
+                        <span className="text-sm font-bold tracking-wider uppercase" style={{ color: style.couleur }}>
+                          {cat}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {prods.map(p => (
+                          <button
+                            key={p.id}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (activeLineId) {
+                                updateLigne(activeLineId, 'produit', p.name);
+                              }
+                              setIsProductModalOpen(false);
+                              setActiveLineId(null);
+                              setError('');
+                            }}
+                            className="bg-white border text-left border-gray-200 rounded-2xl p-4 flex items-center gap-3 hover:border-crousty-purple hover:bg-purple-50 group transition-all"
+                          >
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: style.fond, color: style.couleur }}>
+                              <Package size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-black text-gray-800 truncate group-hover:text-crousty-purple transition-colors">{p.name}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-20 text-gray-400 font-bold">
+                  Aucun produit trouvé.
+                </div>
+              )}
+            </div>
+            
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 }

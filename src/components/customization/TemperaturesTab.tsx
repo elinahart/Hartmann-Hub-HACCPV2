@@ -51,11 +51,11 @@ export const TemperaturesTab = () => {
 
   const handleSave = () => {
     if (nom.trim() === '') {
-      setError(t('err_generic') || 'Le nom est requis.');
+      setError(t('err_generic'));
       return;
     }
     if (seuilMin >= seuilMax) {
-      setError(t('err_generic') || 'Le seuil min doit être inférieur au seuil max.');
+      setError(t('err_generic'));
       return;
     }
 
@@ -129,10 +129,10 @@ export const TemperaturesTab = () => {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-black text-gray-800">{t('nav_temperatures') || 'Zones Températures'}</h3>
+        <h3 className="text-xl font-black text-gray-800">{t('nav_temperatures')}</h3>
         {!editingId && (
           <Button onClick={handleCreate} className="bg-crousty-purple text-white gap-2 rounded-xl h-10 px-4">
-            <Plus size={16} /> {t('btn_add') || 'Ajouter une zone'}
+            <Plus size={16} /> {t('btn_add')}
           </Button>
         )}
       </div>
@@ -142,7 +142,7 @@ export const TemperaturesTab = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-amber-900 font-bold text-[10px] uppercase tracking-widest">
               <Shield size={14} className="text-amber-500" />
-              {t('btn_manage') || 'Gestion'}
+              {t('btn_manage')}
             </div>
             <div className="flex gap-2">
               <Button 
@@ -155,14 +155,14 @@ export const TemperaturesTab = () => {
                   isSelectionMode ? "bg-amber-200 text-amber-900" : "bg-white text-gray-500 border border-gray-200"
                 )}
               >
-                {isSelectionMode ? t('btn_cancel') || 'Annuler' : t('btn_select') || 'Sélectionner'}
+                {isSelectionMode ? t('btn_cancel') : t('btn_select')}
               </Button>
               <Button 
                 onClick={() => setShowBulkDeleteConfirm('all')}
                 className="h-7 px-3 bg-red-100 text-red-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
                 variant="ghost"
               >
-                {t('btn_empty') || 'Vider'}
+                {t('btn_empty')}
               </Button>
             </div>
           </div>
@@ -176,14 +176,14 @@ export const TemperaturesTab = () => {
                 >
                   {selectedIds.length === temperatures.length && <Check size={14} className="text-amber-500" />}
                 </button>
-                <span className="text-[10px] font-black text-amber-900 uppercase">{selectedIds.length} {t('lbl_selected') || 'sélectionné(s)'}</span>
+                <span className="text-[10px] font-black text-amber-900 uppercase">{selectedIds.length} {t('lbl_selected')}</span>
               </div>
               <Button 
                 disabled={selectedIds.length === 0}
                 onClick={() => setShowBulkDeleteConfirm('selected')}
                 className="h-7 px-3 bg-red-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest"
               >
-                {t('btn_delete') || 'Supprimer'}
+                {t('btn_delete')}
               </Button>
             </div>
           )}
@@ -194,16 +194,16 @@ export const TemperaturesTab = () => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
           <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl space-y-6 animate-in zoom-in-95 duration-300">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-black text-gray-900">{t('lbl_confirmation') || 'Confirmation'}</h3>
+              <h3 className="text-xl font-black text-gray-900">{t('lbl_confirmation')}</h3>
               <p className="text-sm text-gray-500 font-medium">
                 {showBulkDeleteConfirm === 'all' 
-                  ? t('lbl_confirm_empty_temp') || "Vider toute la liste des zones ?"
-                  : t('lbl_confirm_delete_selected') || `Supprimer les ${selectedIds.length} zones sélectionnées ?`}
+                  ? t('lbl_confirm_empty_temp')
+                  : t('lbl_confirm_delete_selected_count', { count: selectedIds.length })}
               </p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => setShowBulkDeleteConfirm(null)} variant="ghost" className="flex-1">{t('btn_no') || 'Non'}</Button>
-              <Button onClick={handleBulkDelete} className="flex-1 bg-red-500">{t('btn_yes') || 'Oui'}</Button>
+              <Button onClick={() => setShowBulkDeleteConfirm(null)} variant="ghost" className="flex-1">{t('btn_no')}</Button>
+              <Button onClick={handleBulkDelete} className="flex-1 bg-red-500">{t('btn_yes')}</Button>
             </div>
           </div>
         </div>
@@ -227,40 +227,40 @@ export const TemperaturesTab = () => {
             {editingId === tObj.id ? (
               <div className="p-4 bg-gray-50 space-y-4" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center">
-                  <h4 className="font-bold text-gray-800">{t('btn_edit') || 'Modifier la zone'}</h4>
+                  <h4 className="font-bold text-gray-800">{t('lbl_edit_zone')}</h4>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Nom de la zone</Label>
-                    <Input value={nom} onChange={(e: any) => setNom(e.target.value)} placeholder="Ex: FRIGO CUISINE" />
+                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t('lbl_equipment_name')}</Label>
+                    <Input value={nom} onChange={(e: any) => setNom(e.target.value)} placeholder={t('ph_zone_name')} />
                   </div>
                   <div className="col-span-2 flex gap-2">
                     <button 
                       onClick={() => setType('positif')}
                       className={`flex-1 py-2 rounded-xl text-sm font-bold border transition-colors flex items-center justify-center gap-2 ${type === 'positif' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-200 bg-white text-gray-500'}`}
                     >
-                      <Thermometer size={16} /> Positif
+                      <Thermometer size={16} /> {t('lbl_positive')}
                     </button>
                     <button 
                       onClick={() => setType('negatif')}
                       className={`flex-1 py-2 rounded-xl text-sm font-bold border transition-colors flex items-center justify-center gap-2 ${type === 'negatif' ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-gray-200 bg-white text-gray-500'}`}
                     >
-                      <Snowflake size={16} /> Négatif
+                      <Snowflake size={16} /> {t('lbl_negative')}
                     </button>
                   </div>
                   <div>
-                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Seuil Min (°C)</Label>
+                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t('lbl_temp_min')}</Label>
                     <Input type="number" value={seuilMin} onChange={(e: any) => setSeuilMin(Number(e.target.value))} />
                   </div>
                   <div>
-                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Seuil Max (°C)</Label>
+                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t('lbl_temp_max')}</Label>
                     <Input type="number" value={seuilMax} onChange={(e: any) => setSeuilMax(Number(e.target.value))} />
                   </div>
                 </div>
                 {error && <p className="text-red-500 font-bold text-sm bg-red-50 p-2 rounded-md">{error}</p>}
                 <div className="flex gap-2 justify-end pt-2">
-                  <Button variant="outline" onClick={() => setEditingId(null)}>{t('btn_cancel') || 'Annuler'}</Button>
-                  <Button onClick={handleSave} className="bg-crousty-purple text-white">{t('btn_save') || 'Enregistrer'}</Button>
+                  <Button variant="outline" onClick={() => setEditingId(null)}>{t('btn_cancel')}</Button>
+                  <Button onClick={handleSave} className="bg-crousty-purple text-white">{t('btn_save')}</Button>
                 </div>
               </div>
             ) : (
@@ -279,7 +279,7 @@ export const TemperaturesTab = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-800 leading-tight">{tObj.nom}</h4>
-                    <span className="text-xs font-semibold text-gray-500">{tObj.seuilMin}°C {t('lbl_to') || 'à'} {tObj.seuilMax}°C</span>
+                    <span className="text-xs font-semibold text-gray-500">{tObj.seuilMin}°C {t('lbl_to')} {tObj.seuilMax}°C</span>
                   </div>
                 </div>
                 {!isSelectionMode && (
@@ -321,22 +321,22 @@ export const TemperaturesTab = () => {
               <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trash2 size={32} />
               </div>
-              <h3 className="text-xl font-black text-gray-800 text-center mb-2">{t('lbl_delete_zone_confirm_title') || 'Supprimer la zone ?'}</h3>
+              <h3 className="text-xl font-black text-gray-800 text-center mb-2">{t('lbl_delete_zone_confirm_title')}</h3>
               <p className="text-gray-500 text-center font-medium mb-6">
-                {t('lbl_delete_confirm') || 'Voulez-vous vraiment supprimer'} <span className="font-bold text-gray-800">"{temperatures.find((tObj:any) => tObj.id === confirmDelete)?.nom}"</span> ?
+                {t('lbl_confirm_delete_item', { item: temperatures.find((tObj:any) => tObj.id === confirmDelete)?.nom })}
               </p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setConfirmDelete(null)}
                   className="flex-1 h-12 bg-gray-100 text-gray-600 rounded-xl font-bold active:scale-95 transition-transform"
                 >
-                  {t('btn_cancel') || 'Annuler'}
+                  {t('btn_cancel')}
                 </button>
                 <button 
                   onClick={() => handleDelete(confirmDelete)}
                   className="flex-1 h-12 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-200 active:scale-95 transition-transform"
                 >
-                  {t('btn_delete') || 'Supprimer'}
+                  {t('btn_delete')}
                 </button>
               </div>
             </div>
@@ -346,47 +346,47 @@ export const TemperaturesTab = () => {
         {editingId === 'NEW' && (
           <div className="border border-gray-100 rounded-2xl bg-gray-50 p-4 space-y-4 shadow-sm" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center">
-              <h4 className="font-bold text-gray-800">{t('btn_add') || 'Ajouter une zone'}</h4>
+              <h4 className="font-bold text-gray-800">{t('btn_add')}</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Nom de la zone</Label>
-                <Input value={nom} onChange={(e: any) => setNom(e.target.value)} placeholder="Ex: FRIGO CUISINE" />
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t('lbl_equipment_name')}</Label>
+                <Input value={nom} onChange={(e: any) => setNom(e.target.value)} placeholder={t('ph_zone_name')} />
               </div>
               <div className="col-span-2 flex gap-2">
                 <button 
                   onClick={() => setType('positif')}
                   className={`flex-1 py-2 rounded-xl text-sm font-bold border transition-colors flex items-center justify-center gap-2 ${type === 'positif' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-200 bg-white text-gray-500'}`}
                 >
-                  <Thermometer size={16} /> Positif
+                  <Thermometer size={16} /> {t('lbl_positive')}
                 </button>
                 <button 
                   onClick={() => setType('negatif')}
                   className={`flex-1 py-2 rounded-xl text-sm font-bold border transition-colors flex items-center justify-center gap-2 ${type === 'negatif' ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-gray-200 bg-white text-gray-500'}`}
                 >
-                  <Snowflake size={16} /> Négatif
+                  <Snowflake size={16} /> {t('lbl_negative')}
                 </button>
               </div>
               <div>
-                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Seuil Min (°C)</Label>
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t('lbl_temp_min')}</Label>
                 <Input type="number" value={seuilMin} onChange={(e: any) => setSeuilMin(Number(e.target.value))} />
               </div>
               <div>
-                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Seuil Max (°C)</Label>
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">{t('lbl_temp_max')}</Label>
                 <Input type="number" value={seuilMax} onChange={(e: any) => setSeuilMax(Number(e.target.value))} />
               </div>
             </div>
             {error && <p className="text-red-500 font-bold text-sm bg-red-50 p-2 rounded-md">{error}</p>}
             <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={() => setEditingId(null)}>{t('btn_cancel') || 'Annuler'}</Button>
-              <Button onClick={handleSave} className="bg-crousty-purple text-white">{t('btn_save') || 'Enregistrer'}</Button>
+              <Button variant="outline" onClick={() => setEditingId(null)}>{t('btn_cancel')}</Button>
+              <Button onClick={handleSave} className="bg-crousty-purple text-white">{t('btn_save')}</Button>
             </div>
           </div>
         )}
 
         {temperatures.length === 0 && editingId !== 'NEW' && (
           <div className="text-center p-8 bg-gray-50 rounded-2xl border border-gray-100">
-            <p className="text-gray-500 font-medium tracking-tight">{t('lbl_no_zones') || 'Aucune zone configurée.'}</p>
+            <p className="text-gray-500 font-medium tracking-tight">{t('lbl_no_zones')}</p>
           </div>
         )}
     </div>

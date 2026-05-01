@@ -73,11 +73,11 @@ export default function CleaningPlan() {
   const { openModal, closeModal } = useManagerUI();
 
   // Mapping from context to task objects with visual properties
-  const tasks = configTasks.map(t => ({
-    id: t.id,
-    name: t.nom,
-    freq: t.frequence,
-    desc: t.instructions || `Fréquence: ${t.frequence}`,
+  const tasks = configTasks.map(task => ({
+    id: task.id,
+    name: task.nom,
+    freq: task.frequence,
+    desc: task.instructions || `Fréquence: ${task.frequence}`,
     icon: 'Sparkles',
     color: 'bg-stone-100 text-stone-600'
   }));
@@ -198,9 +198,9 @@ export default function CleaningPlan() {
     setCheckedTasks(prev => ({ ...prev, [task]: !prev[task] }));
   };
 
-  const filteredTasks = tasks.filter(t => {
+  const filteredTasks = tasks.filter(task => {
     if (activeFilter === 'Tous') return true;
-    return t.freq.toUpperCase() === activeFilter.toUpperCase();
+    return task.freq.toUpperCase() === activeFilter.toUpperCase();
   });
 
   return (
@@ -315,14 +315,14 @@ export default function CleaningPlan() {
           
           <div className="space-y-4">
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${!isAvailable && currentUser?.role !== 'manager' ? 'opacity-60 pointer-events-none' : ''}`}>
-              {filteredTasks.map((t, index) => {
-                const style = FREQUENCE_STYLES[t.freq.toUpperCase()] || FREQUENCE_STYLES['QUOTIDIEN'];
-                const isChecked = !!checkedTasks[t.name];
+              {filteredTasks.map((task, index) => {
+                const style = FREQUENCE_STYLES[task.freq.toUpperCase()] || FREQUENCE_STYLES['QUOTIDIEN'];
+                const isChecked = !!checkedTasks[task.name];
                 
                 return (
                   <div 
-                    key={t.id || t.name} 
-                    onClick={() => isAvailable && toggleTask(t.name)} 
+                    key={task.id || task.name} 
+                    onClick={() => isAvailable && toggleTask(task.name)} 
                     className={`animate-card-in relative group flex items-start gap-4 p-5 rounded-3xl border-2 transition-all duration-300 cursor-pointer shadow-sm ${
                       isChecked ? 'bg-green-50 border-green-500' : 'bg-white border-gray-100 hover:border-gray-200'
                     }`}
@@ -338,17 +338,17 @@ export default function CleaningPlan() {
                            e.stopPropagation();
                            openModal(
                              <EditTaskModal 
-                               task={t} 
+                               task={task} 
                                onClose={closeModal} 
                                onSave={(updatedTask: any) => {
-                                  const newTasks = configTasks.map((task: any) => task.id === updatedTask.id ? updatedTask : task);
+                                  const newTasks = configTasks.map((item: any) => item.id === updatedTask.id ? updatedTask : item);
                                    setTaches(newTasks);
                                   updateConfig({ nettoyage: newTasks });
                                   closeModal();
                                }} 
                                onDelete={(id: string) => {
                                   if(window.confirm('Supprimer cette tâche ?')) {
-                                    const newTasks = configTasks.filter((task: any) => task.id !== id);
+                                    const newTasks = configTasks.filter((item: any) => item.id !== id);
                                      setTaches(newTasks);
                                     updateConfig({ nettoyage: newTasks });
                                     closeModal();
@@ -378,7 +378,7 @@ export default function CleaningPlan() {
                            {<style.icon size={22} />}
                          </div>
                          <span className={`font-black text-base transition-all ${isChecked ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
-                           {t.name}
+                           {task.name}
                          </span>
                       </div>
                       
@@ -391,7 +391,7 @@ export default function CleaningPlan() {
                           }}
                         >
                           {<style.icon size={12} />}
-                          {t(`lbl_${style.label.toLowerCase().replace(/ /g, '_').replace(/è/g, 'e')}`) || style.label}
+                          {task.name && (t(`lbl_${style.label.toLowerCase().replace(/ /g, '_').replace(/è/g, 'e')}`) || style.label)}
                         </span>
                       </div>
                     </div>

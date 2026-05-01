@@ -10,36 +10,36 @@ export const exportToExcel = (temperatures: any[], dlcs: any[], primaryDlcs: any
     "FRIGO BOISSON 2", "FRIGO CUISINE", "SALADETTE SAUCES", "SALADETTE DESSERTS", 
     "ACTIONS CORRECTIVES", "RESPONSABLE"
   ];
-  const tempRows = temperatures.map(t => {
+  const tempRows = temperatures.map(entry => {
     let actionsArr = [];
-    if (t.correctiveActions) {
-      Object.entries(t.correctiveActions).forEach(([equip, action]) => {
+    if (entry.correctiveActions) {
+      Object.entries(entry.correctiveActions).forEach(([equip, action]) => {
         if (action) {
           let str = `${equip}: ${action}`;
-          if (t.productTemperatures && t.productTemperatures[equip]) {
-            str += ` (Nouv. Temp: ${t.productTemperatures[equip]}°C)`;
+          if (entry.productTemperatures && entry.productTemperatures[equip]) {
+            str += ` (Nouv. Temp: ${entry.productTemperatures[equip]}°C)`;
           }
           actionsArr.push(str);
         }
       });
     }
     let actions = actionsArr.join(', ');
-    if (t.globalObservation) {
-      actions = actions ? `${actions} | ${t.globalObservation}` : t.globalObservation;
+    if (entry.globalObservation) {
+      actions = actions ? `${actions} | ${entry.globalObservation}` : entry.globalObservation;
     }
 
     return [
-      format(new Date(t.date), 'dd/MM/yyyy HH:mm'),
-      t.negatif || '',
-      t.positif || '',
-      t.congeleCuisine || '',
-      t.frigoBoisson1 || '',
-      t.frigoBoisson2 || '',
-      t.frigoCuisine || '',
-      t.saladetteSauces || '',
-      t.saladetteDesserts || '',
+      format(new Date(entry.date), 'dd/MM/yyyy HH:mm'),
+      entry.negatif || '',
+      entry.positif || '',
+      entry.congeleCuisine || '',
+      entry.frigoBoisson1 || '',
+      entry.frigoBoisson2 || '',
+      entry.frigoCuisine || '',
+      entry.saladetteSauces || '',
+      entry.saladetteDesserts || '',
       actions,
-      t.responsable || ''
+      entry.responsable || ''
     ];
   });
   const wsTemp = XLSX.utils.aoa_to_sheet([tempHeaders, ...tempRows]);

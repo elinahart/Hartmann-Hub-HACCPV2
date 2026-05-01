@@ -53,7 +53,7 @@ export const Sidebar = ({ currentView, setCurrentView, setShowSettings, showSett
     ...(config.modules?.huiles !== false ? [{ id: 'oil', label: t('nav_oil'), icon: Droplet }] : []),
     ...(config.modules?.inventaire !== false ? [
       { id: 'inventaire', label: t('nav_inventaire'), icon: ClipboardList },
-      ...(currentUser?.role === 'manager' ? [{ id: 'inventaire-intelligent', label: 'A.I. Manager', icon: Brain }] : [])
+      ...(currentUser?.role === 'manager' ? [{ id: 'inventaire-intelligent', label: 'IA Inventaire', icon: Brain }] : [])
     ] : []),
     ...(config.modules?.sessions !== false ? [{ id: 'sessions-mobiles', label: t('nav_mobile_sessions'), icon: Smartphone }] : []),
     ...(currentUser?.role !== 'Invité' ? [{ id: 'products', label: t('nav_products'), icon: Archive }] : []),

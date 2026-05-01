@@ -158,6 +158,29 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
     return est;
   }, [entries, products]);
 
+  useEffect(() => {
+    if (sessionStorage.getItem('crousty_start_smart_inventory') === 'true' && smartEstimations !== null) {
+      setIsSmartMode(true);
+      const newQuantities = { ...quantities };
+      let changed = false;
+      products.forEach(p => {
+        const estimated = smartEstimations[p.name];
+        if (estimated !== undefined) {
+          if (!newQuantities[p.category]) newQuantities[p.category] = {};
+          const conv = p.conversionCartonUnite || 5;
+          const cartons = Math.floor(estimated / conv);
+          const units = estimated % conv;
+          newQuantities[p.category][p.name] = { units: String(units), cartons: String(cartons), na: false };
+          changed = true;
+        }
+      });
+      if (changed) {
+        setQuantities(newQuantities);
+      }
+      sessionStorage.removeItem('crousty_start_smart_inventory');
+    }
+  }, [smartEstimations, products, quantities]);
+
   const toggleCategory = (cat: string) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
   };

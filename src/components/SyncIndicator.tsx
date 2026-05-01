@@ -41,8 +41,8 @@ export const SyncIndicator = () => {
 
     if (tasks.length === 0 && isOnline) return null;
 
-    const hasFailed = tasks.some(t => t.status === 'failed');
-    const isProcessing = tasks.some(t => t.status === 'processing');
+    const hasFailed = tasks.some(task => task.status === 'failed');
+    const isProcessing = tasks.some(task => task.status === 'processing');
 
     return (
         <AnimatePresence>

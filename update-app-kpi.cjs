@@ -19,7 +19,7 @@ const dashboardKpiLogic = `
     const cleaning = getStoredData<any[]>('crousty_cleaning', []);
     const oil = getStoredData<any[]>('crousty_oil_checklist', []);
     
-    const tempsToday = temps.some(t => isWithinInterval(new Date(t.date), interval));
+    const tempsToday = temps.some(entry => isWithinInterval(new Date(entry.date), interval));
     const cleaningToday = cleaning.some(c => isWithinInterval(new Date(c.date), interval));
     const oilToday = oil.some(o => isWithinInterval(new Date(o.date), interval));
     
@@ -34,7 +34,7 @@ const dashboardKpiLogic = `
     let lastTempStr = '-';
     if (lastTempEntry && lastTempEntry.equipments) {
       // Find first non-empty temp
-      const firstValid = Object.values(lastTempEntry.equipments).find(t => t !== '');
+      const firstValid = Object.values(lastTempEntry.equipments).find(item => item !== '');
       if (firstValid) lastTempStr = \`\${firstValid}°C\`;
     }
 

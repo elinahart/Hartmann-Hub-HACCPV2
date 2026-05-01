@@ -57,23 +57,23 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
   } else {
     // Collect all unique equipment names used this month
     const eqSet = new Set<string>();
-    temps.forEach(t => Object.keys(t.equipments).forEach(eq => eqSet.add(eq)));
+    temps.forEach(entry => Object.keys(entry.equipments).forEach(eq => eqSet.add(eq)));
     const eqNames = Array.from(eqSet);
     
-    const body = temps.map(t => {
-      const row = [format(new Date(t.date), 'dd/MM'), format(new Date(t.date), 'HH:mm')];
+    const body = temps.map(entry => {
+      const row = [format(new Date(entry.date), 'dd/MM'), format(new Date(entry.date), 'HH:mm')];
       eqNames.forEach(eq => {
-        const val = t.equipments[eq];
+        const val = entry.equipments[eq];
         row.push(val ? `${val}°C` : '-');
       });
-      row.push(Object.keys(t.correctiveActions || {}).length > 0 ? "Non Conforme" : "Conforme");
-      let actions = Object.values(t.correctiveActions || {}).join(', ');
-      if (t.signature && t.signature.modifiePar) {
-        const modMsg = `(Modifié: ${t.signature.motifModification || 'Sans motif'})`;
+      row.push(Object.keys(entry.correctiveActions || {}).length > 0 ? "Non Conforme" : "Conforme");
+      let actions = Object.values(entry.correctiveActions || {}).join(', ');
+      if (entry.signature && entry.signature.modifiePar) {
+        const modMsg = `(Modifié: ${entry.signature.motifModification || 'Sans motif'})`;
         actions = actions ? `${actions}\n${modMsg}` : modMsg;
       }
       row.push(actions);
-      row.push(t.responsable);
+      row.push(entry.responsable);
       return row;
     });
 
@@ -94,20 +94,20 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
   if (traca.length === 0) {
     doc.text("Aucun relevé de traçabilité enregistré ce mois.", 14, 40);
   } else {
-    const tracaBody = traca.map(t => {
-      let obs = t.commentaire || t.observations || '-';
-      if (t.signature && t.signature.modifiePar) {
-        const modMsg = `(Modifié: ${t.signature.motifModification || 'Sans motif'})`;
+    const tracaBody = traca.map(entry => {
+      let obs = entry.commentaire || entry.observations || '-';
+      if (entry.signature && entry.signature.modifiePar) {
+        const modMsg = `(Modifié: ${entry.signature.motifModification || 'Sans motif'})`;
         obs = obs !== '-' ? `${obs}\n${modMsg}` : modMsg;
       }
       return [
-        format(new Date(t.date), 'dd/MM/yy HH:mm'),
-        t.produit || t.ingredient || '-',
-        t.fournisseur || t.marque || '-',
-        t.numeroLot || t.lot || '-',
-        t.dlc ? format(new Date(t.dlc), 'dd/MM/yy') : (t.dlcPrimaire ? format(new Date(t.dlcPrimaire), 'dd/MM/yy') : '-'),
+        format(new Date(entry.date), 'dd/MM/yy HH:mm'),
+        entry.produit || entry.ingredient || '-',
+        entry.fournisseur || entry.marque || '-',
+        entry.numeroLot || entry.lot || '-',
+        entry.dlc ? format(new Date(entry.dlc), 'dd/MM/yy') : (entry.dlcPrimaire ? format(new Date(entry.dlcPrimaire), 'dd/MM/yy') : '-'),
         obs,
-        t.responsable
+        entry.responsable
       ];
     });
 
@@ -341,12 +341,12 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
     doc.addPage('portrait');
     addHeader(doc, `DOSSIER HACCP — ${monthName}`, "FICHE DE PRÉPARATIONS");
     
-    const prepBody = preps.map(p => [
-      format(new Date(p.date), 'dd/MM/yy'),
-      p.sauceId,
-      p.time || '-',
-      p.expiryTime || p.endTime || '-',
-      p.responsable
+    const prepBody = preps.map(prep => [
+      format(new Date(prep.date), 'dd/MM/yy'),
+      prep.sauceId,
+      prep.time || '-',
+      prep.expiryTime || prep.endTime || '-',
+      prep.responsable
     ]);
 
     autoTable(doc, {

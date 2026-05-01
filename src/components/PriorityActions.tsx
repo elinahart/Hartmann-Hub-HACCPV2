@@ -799,9 +799,9 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
 
     // Temperatures
     const tempEntries = getStoredData<any[]>('crousty_temp_checklist', []);
-    const tempsTodayEntries = tempEntries.filter((t: any) => isWithinInterval(new Date(t.date), interval));
-    const matinFait = tempsTodayEntries.some(t => new Date(t.date).getHours() < 15);
-    const soirFait = tempsTodayEntries.some(t => new Date(t.date).getHours() >= 15);
+    const tempsTodayEntries = tempEntries.filter((entry: any) => isWithinInterval(new Date(entry.date), interval));
+    const matinFait = tempsTodayEntries.some(entry => new Date(entry.date).getHours() < 15);
+    const soirFait = tempsTodayEntries.some(entry => new Date(entry.date).getHours() >= 15);
 
     // Etiquettes (Desserts)
     const dlcs = getStoredData<any[]>('crousty_desserts', []);

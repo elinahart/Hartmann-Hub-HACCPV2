@@ -104,6 +104,16 @@ export default function App() {
       setCurrentView('dashboard');
     }
   }, [config.modules, currentView]);
+
+  useEffect(() => {
+    const handleNav = (e: Event) => {
+       const ce = e as CustomEvent;
+       setCurrentView(ce.detail);
+    };
+    window.addEventListener('navigate-to', handleNav);
+    return () => window.removeEventListener('navigate-to', handleNav);
+  }, []);
+
   const [showSettings, setShowSettings] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -222,11 +232,11 @@ export default function App() {
     const products = getStoredData<any[]>('crousty_products', []);
     
     // Today stats
-    const tempsTodayEntries = temps.filter(t => isWithinInterval(new Date(t.date), interval));
+    const tempsTodayEntries = temps.filter(entry => isWithinInterval(new Date(entry.date), interval));
     const cleaningTodayEntries = cleaning.filter(c => isWithinInterval(new Date(c.date), interval));
     const oilTodayEntries = oil.filter(o => isWithinInterval(new Date(o.date), interval));
     const recToday = receptions.filter(r => isWithinInterval(new Date(r.date), interval));
-    const tracaToday = traca.filter(t => isWithinInterval(new Date(t.date), interval));
+    const tracaToday = traca.filter(entry => isWithinInterval(new Date(entry.date), interval));
     const viandesToday = viandes.filter(v => isWithinInterval(new Date(v.date), interval));
     const prepToday = preps.filter(p => isWithinInterval(new Date(p.date), interval));
     
@@ -265,8 +275,8 @@ export default function App() {
     const currentHour = now.getHours();
     
     // Check Temps Details
-    const tempsMorningDone = tempsTodayEntries.some(t => new Date(t.date).getHours() < 15);
-    const tempsEveningDone = tempsTodayEntries.some(t => new Date(t.date).getHours() >= 15);
+    const tempsMorningDone = tempsTodayEntries.some(entry => new Date(entry.date).getHours() < 15);
+    const tempsEveningDone = tempsTodayEntries.some(entry => new Date(entry.date).getHours() >= 15);
     
     const tempsMorningMissed = currentHour >= 9 && !tempsMorningDone;
     // 7 PM = 19h
@@ -330,7 +340,7 @@ export default function App() {
     const lastTempEntry = temps.length > 0 ? temps[0] : null;
     let lastTempStr = '-';
     if (lastTempEntry && lastTempEntry.equipments) {
-      const firstValid = Object.values(lastTempEntry.equipments).find(t => t !== '');
+      const firstValid = Object.values(lastTempEntry.equipments).find(item => item !== '');
       if (firstValid) lastTempStr = `${firstValid}°C`;
     }
 
@@ -415,7 +425,7 @@ export default function App() {
       case 'desserts': return t('nav_desserts');
       case 'products': return t('nav_products');
       case 'inventaire': return t('nav_inventaire');
-      case 'inventaire-intelligent': return t('nav_ai_manager') || 'A.I. Manager';
+      case 'inventaire-intelligent': return t('nav_ai_manager') || 'IA Inventaire';
       case 'sessions-mobiles': return t('nav_mobile_sessions');
       default: return '';
     }

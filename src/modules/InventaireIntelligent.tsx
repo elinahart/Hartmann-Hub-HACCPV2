@@ -171,9 +171,23 @@ export default function InventaireIntelligent() {
       <div className="flex items-center gap-3 px-2">
         <Brain className="text-crousty-purple" size={32} />
         <div>
-          <h2 className="text-2xl font-black text-gray-900 uppercase tracking-widest">A.I. Manager</h2>
+          <h2 className="text-2xl font-black text-gray-900 uppercase tracking-widest">IA Inventaire</h2>
           <p className="text-sm font-bold text-gray-500">Inventaire prévisionnel et usages</p>
         </div>
+      </div>
+
+      <div className="px-2">
+        <Button 
+          className="w-full sm:w-auto px-6 h-12 rounded-xl text-sm font-black shadow-md active:scale-95 flex items-center justify-center gap-2"
+          onClick={() => {
+             // Indicate intent to start a smart inventory
+             sessionStorage.setItem('crousty_start_smart_inventory', 'true');
+             // Dispatch event to app to open Inventaire
+             window.dispatchEvent(new CustomEvent('navigate-to', { detail: 'inventaire' }));
+          }}
+        >
+          <Brain size={18} /> Démarrer un Inventaire Pré-rempli avec l'IA
+        </Button>
       </div>
 
       {inventories.length < 2 ? (

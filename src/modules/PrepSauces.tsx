@@ -50,12 +50,12 @@ export default function PrepSauces() {
     });
     
     // Add items from traceability (v2)
-    tracabilite.forEach(t => {
+    tracabilite.forEach(entry => {
       flattenedLots.push({
-        id: t.id,
-        ingredient: t.produit,
-        numeroLot: t.numeroLot,
-        date: t.date
+        id: entry.id,
+        ingredient: entry.produit,
+        numeroLot: entry.numeroLot,
+        date: entry.date
       });
     });
     

@@ -458,6 +458,14 @@ export default function Tracabilite() {
             deleteId={deleteId} 
             setDeleteId={setDeleteId} 
             confirmDelete={confirmDelete} 
+            editId={editId}
+            setEditId={setEditId}
+            editData={editData}
+            setEditData={setEditData}
+            editMotif={editMotif}
+            setEditMotif={setEditMotif}
+            startEdit={startEdit}
+            handleEditSave={handleEditSave}
           />
         ))}
         {entries.length === 0 && (

@@ -1,11 +1,27 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.0.2";
+export const APP_VERSION = "3.0.4";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
 export const APP_LAST_UPDATE = "30 Avril 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.0.4",
+    date: "30 Avril 2026",
+    changes: [
+      "Amélioration de la sélection (UI) des produits dans le module Reception comme dans Tracabilite",
+      "Correction d'affichage de la traduction de 'Commentaires additionnels'"
+    ]
+  },
+  {
+    version: "3.0.3",
+    date: "30 Avril 2026",
+    changes: [
+      "Possibilité de modifier une réception de livraison une fois enregistrée",
+      "Ajout d'une sélection intelligente des produits de l'inventaire dans la saisie des livraisons"
+    ]
+  },
   {
     version: "3.0.2",
     date: "30 Avril 2026",
