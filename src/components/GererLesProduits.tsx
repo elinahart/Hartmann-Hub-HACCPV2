@@ -148,6 +148,12 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
   const { currentUser } = useAuth();
   const isManager = currentUser?.role === 'manager';
   const { products, setProducts, updateProduct, deleteProduct, addProduct } = useInventaire();
+
+  // Scroll lock for modal
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, []);
   const [editingProduct, setEditingProduct] = useState<InventoryProduct | null>(null);
   const defaultFormState = { 
     name: '', 

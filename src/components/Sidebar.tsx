@@ -99,13 +99,14 @@ export const Sidebar = ({ currentView, setCurrentView, setShowSettings, showSett
               return (
                 <button
                   key={item.id}
+                  id={`nav-${item.id}`}
                   onClick={() => setCurrentView(item.id)}
                   title={isCollapsed && !isMobileOpen ? item.label : undefined}
-                  className={`w-full flex items-center gap-3 py-3 rounded-xl font-bold transition-all ${
+                  className={`w-full flex items-center gap-3 py-3 rounded-xl font-bold transition-all relative isolate z-10 select-none touch-manipulation ${
                     isCollapsed && !isMobileOpen ? 'md:justify-center px-0' : 'px-4'
                   } ${
                     isActive 
-                      ? 'bg-[var(--color-primary)] text-white shadow-md sidebar-item-active' 
+                      ? 'bg-[var(--color-primary)] text-white shadow-md sidebar-item-active z-20' 
                       : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                   }`}
                 >

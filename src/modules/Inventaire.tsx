@@ -15,6 +15,7 @@ import { GererLesProduits, ICONS_MAP, getSmartIcon, DEFAULT_CATEGORIES } from '.
 
 import { useInventaire } from '../providers/InventaireProvider';
 import { useConfig } from '../contexts/ConfigContext';
+import { calculateExpectedStock, calculateConsumptionRate } from '../lib/stockCalculation';
 
 import { getCategorieStyle } from '../lib/inventoryStyles';
 
@@ -56,6 +57,14 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [activeFilter, setActiveFilter] = useState<string>('Tous');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  useEffect(() => {
+    const savedSearch = sessionStorage.getItem('crousty_inventory_search');
+    if (savedSearch) {
+      setSearchQuery(savedSearch);
+      sessionStorage.removeItem('crousty_inventory_search');
+    }
+  }, []);
   const [showRupturesOnly, setShowRupturesOnly] = useState(false);
   const [isSmartMode, setIsSmartMode] = useState(false);
   const isDirty = Object.keys(quantities).length > 0;
@@ -64,6 +73,15 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(5000);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isManageModalOpen || deleteId || isSmartMode) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isManageModalOpen, deleteId, isSmartMode]);
 
   useEffect(() => {
     setEntries(getStoredData<InventoryEntry[]>('crousty_inventory', []));
@@ -89,74 +107,38 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
     }
   }, [quantities]);
 
-  const smartEstimations = useMemo(() => {
-    if (entries.length < 2) return null;
+  const smartEstimationsData = useMemo(() => {
+    if (entries.length < 1) return null;
     
-    const rec = getStoredData<any[]>('crousty_receptions_v3', []).filter((r: any) => !r.supprime).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
-    // Calculate average consumption over the last several inventories to smooth
-    const selectedInventories = entries.slice(0, 3); 
-    const newest = selectedInventories[0]; // the last done inventory
-    const oldest = selectedInventories[selectedInventories.length - 1]; // up to 3 behind
-
-    const dNewest = new Date(newest.date).getTime();
-    const dOldest = new Date(oldest.date).getTime();
-    const daysDiffHist = Math.max(1, differenceInDays(dNewest, dOldest));
-    const daysSinceLast = Math.max(0, differenceInDays(Date.now(), dNewest));
-
-    // Deliveries inside historical period
-    const histDeliveries = rec.filter(r => {
-      const rd = new Date(r.date).getTime();
-      return rd >= dOldest && rd <= dNewest;
-    });
-
-    // Deliveries since last inventory
-    const recentDeliveries = rec.filter(r => {
-      const rd = new Date(r.date).getTime();
-      return rd > dNewest;
-    });
-
-    const getDelivUnits = (arr: any[], prodName: string, convFactor: number) => {
-      let total = 0;
-      arr.forEach(r => {
-        r.lignes?.forEach((l: any) => {
-          if (l.produit === prodName) {
-            const num = parseInt(l.quantite);
-            if (!isNaN(num)) {
-               const isCarton = l.quantite.toLowerCase().includes('carton') || l.quantite.toLowerCase().includes('colis');
-               total += isCarton ? num * convFactor : num;
-            }
-          }
-        });
-      });
-      return total;
-    };
-
-    const calcTotalUnits = (cat: string, name: string, items: any, convFactor: number) => {
-      const detail = items[cat]?.[name];
-      if (!detail || detail.na) return 0;
-      return parseInt(detail.units || '0') + (parseInt(detail.cartons || '0') * convFactor);
-    };
-
-    const est: Record<string, number> = {};
+    const rec = getStoredData<any[]>('crousty_receptions_v3', []).filter((r: any) => !r.supprime);
+    const est: Record<string, { expected: number, estimated: number, lastStock: number }> = {};
+    const newest = entries[0];
 
     for (const p of products) {
+      const expected = calculateExpectedStock(p, newest, rec);
+      const avgPerDay = calculateConsumptionRate(p, entries, rec);
+      const daysSinceLast = Math.max(0, differenceInDays(Date.now(), new Date(newest.date)));
+      
+      const countAtLast = newest.items[p.category]?.[p.name];
       const conv = p.conversionCartonUnite || 5;
-      const stockOldest = calcTotalUnits(p.category, p.name, oldest.items, conv);
-      const stockNewest = calcTotalUnits(p.category, p.name, newest.items, conv);
-      const dHist = getDelivUnits(histDeliveries, p.name, conv);
-      
-      const consumption = stockOldest + dHist - stockNewest;
-      const avgPerDay = consumption > 0 ? consumption / daysDiffHist : 0;
+      const lastStockNum = countAtLast ? 
+        (parseInt((countAtLast as any).units || '0') + parseInt((countAtLast as any).cartons || '0') * conv) : 0;
 
-      const dRec = getDelivUnits(recentDeliveries, p.name, conv);
+      const estimated = Math.max(0, lastStockNum + (expected - lastStockNum) - (avgPerDay * daysSinceLast));
       
-      let estimated = stockNewest + dRec - (avgPerDay * daysSinceLast);
-      est[p.name] = Math.max(0, Math.round(estimated));
+      est[p.name] = { expected, estimated, lastStock: lastStockNum };
     }
-    
     return est;
   }, [entries, products]);
+
+  const smartEstimations = useMemo(() => {
+    if (!smartEstimationsData) return null;
+    const legacy: Record<string, number> = {};
+    Object.keys(smartEstimationsData).forEach(k => {
+      legacy[k] = Math.round(smartEstimationsData[k].estimated);
+    });
+    return legacy;
+  }, [smartEstimationsData]);
 
   useEffect(() => {
     if (sessionStorage.getItem('crousty_start_smart_inventory') === 'true' && smartEstimations !== null) {
@@ -611,8 +593,13 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
             </div>
             <div>
                <div className="font-bold text-sm tracking-tight text-gray-900">{t('lbl_frequency') || 'Fréquence :'} {getFrequenceDisplay()}</div>
-               <div className="text-xs font-medium">
+               <div className="text-xs font-medium flex items-center gap-2">
                  {statusInventoryDone ? '✅ Inventaire à jour' : (statusInventoryLate ? `🚨 ${t('lbl_inventory_late_excl') || 'Inventaire en retard !'}` : statusInventoryNeeded ? '⚠️ Inventaire attendu aujourd\'hui' : 'Prochain inventaire : en attente')}
+                 {(statusInventoryNeeded || statusInventoryLate) && (
+                   <span className="bg-white/60 px-2 py-0.5 rounded-full text-[9px] font-black uppercase text-gray-700 border border-current flex items-center gap-1">
+                     <Brain size={10} /> IA Recommandé
+                   </span>
+                 )}
                </div>
             </div>
          </div>

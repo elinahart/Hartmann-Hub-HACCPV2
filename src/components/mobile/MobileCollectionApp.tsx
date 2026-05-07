@@ -165,6 +165,12 @@ export const MobileCollectionApp = ({ session, onExit }: { session: any, onExit:
                 const b64 = await getPhoto(item.photoId);
                 if (b64) exportedPhotos[item.photoId] = b64;
              }
+             if (item.photoIds && Array.isArray(item.photoIds)) {
+                for (const pid of item.photoIds) {
+                   const b64 = await getPhoto(pid);
+                   if (b64) exportedPhotos[pid] = b64;
+                }
+             }
              // For Oil Checklist (cuves[cid].photo)
              if (item.cuves) {
                for (const cid in item.cuves) {
