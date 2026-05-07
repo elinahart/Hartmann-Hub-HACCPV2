@@ -805,7 +805,7 @@ export default function OilChecklist() {
       <div className="space-y-4">
         <h3 className="text-xl font-black text-gray-800 uppercase tracking-tighter px-2">Historique des Relevés</h3>
         <AnimatePresence>
-          {entries.filter(e => !e.supprime).map(e => (
+          {entries.filter(e => !e.supprime).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(e => (
             <motion.div 
               key={e.id}
               initial={{ opacity: 0, y: 10 }}

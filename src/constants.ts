@@ -1,11 +1,22 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.0.4";
+export const APP_VERSION = "3.0.5";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "30 Avril 2026";
+export const APP_LAST_UPDATE = "7 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.0.5",
+    date: "7 Mai 2026",
+    changes: [
+      "Amélioration de l'inventaire intelligent basé sur l'IA avec affichage détaillé (stock attendu, consommation, autonomie)",
+      "Détection automatique des anomalies et incohérences dans les stocks",
+      "Tri de l'historique des huiles de la plus récente à la moins récente",
+      "Correction des boutons du menu latéral pour une ouverture précise",
+      "Verrouillage de l'arrière-plan lorsqu'une fenêtre est ouverte"
+    ]
+  },
   {
     version: "3.0.4",
     date: "30 Avril 2026",
