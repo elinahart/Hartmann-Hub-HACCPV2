@@ -7,7 +7,7 @@ import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { InventoryProduct } from '../types';
 import { createPortal } from 'react-dom';
-import { calculateExpectedStock, calculateConsumptionRate } from '../lib/stockCalculation';
+import { calculateExpectedStock, calculateAdvancedConsumptionMetrics } from '../lib/stockCalculation';
 
 interface InvItems {
   [category: string]: {
@@ -38,7 +38,9 @@ export default function InventaireIntelligent() {
 
     for (const p of products) {
       const expectedStockValue = calculateExpectedStock(p, newest, receptions);
-      const avgPerDay = calculateConsumptionRate(p, inventories, receptions);
+      const metrics = calculateAdvancedConsumptionMetrics(p, inventories, receptions);
+      const avgPerDay = metrics.avgPerDay;
+      const avgPerWeek = metrics.avgPerWeek;
       
       const lastCounted = newest.items[p.category]?.[p.name];
       const conv = p.conversionCartonUnite || 5;
@@ -57,6 +59,15 @@ export default function InventaireIntelligent() {
       // Anomaly detection
       const hasAnomaly = (receivedSinceLast > 0 && avgPerDay === 0 && daysSinceLast > 7) || (realEstimatedNow < 0);
 
+      // Reliability indicator
+      let reliability = "Insuffisant";
+      let reliabilityCode = "low";
+      if (metrics.intervalsCount === 1) { reliability = "Préliminaire"; reliabilityCode = "low"; }
+      else if (metrics.intervalsCount >= 2 && metrics.intervalsCount <= 3) { reliability = "Correcte"; reliabilityCode = "medium"; }
+      else if (metrics.intervalsCount > 3) { reliability = "Très Fiable"; reliabilityCode = "high"; }
+
+      const recommendedOrder = avgPerDay > 0 ? Math.max(0, Math.ceil((avgPerDay * 7) - realEstimatedNow)) : 0;
+
       results.push({
         product: p,
         expectedStock: stockAtLast + receivedSinceLast,
@@ -64,10 +75,15 @@ export default function InventaireIntelligent() {
         countNum: stockAtLast,
         receivedSinceLast,
         avgPerDay,
+        avgPerWeek,
         daysUntilEmpty,
         isRisk,
         hasAnomaly,
-        lastInventoryDate: newest.date
+        lastInventoryDate: newest.date,
+        reliability,
+        reliabilityCode,
+        recommendedOrder,
+        intervalsCount: metrics.intervalsCount
       });
     }
 
@@ -90,6 +106,27 @@ export default function InventaireIntelligent() {
   };
 
   const filteredStats = analysis?.stats.filter(s => s.product.name.toLowerCase().includes(searchQuery.toLowerCase())) || [];
+
+  const renderAmount = (amount: number, product: InventoryProduct) => {
+    const conv = product.conversionCartonUnite;
+    const unit = product.uniteStock || 'u.';
+    
+    if (conv && conv > 1 && amount > 0) {
+      const cartons = Math.floor(amount / conv);
+      const units = Math.round(amount % conv);
+      
+      return (
+        <span className="inline-flex flex-col text-right items-end">
+          <span>{amount % 1 !== 0 ? amount.toFixed(1) : amount} <span className="text-[10px] uppercase font-bold opacity-50">{unit.toLowerCase()}</span></span>
+          <span className="text-[9px] text-gray-500 font-bold mt-0.5" style={{lineHeight: 1}}>
+            Soit {cartons > 0 ? `${cartons} crt.` : ''} {cartons > 0 && units > 0 ? ' + ' : ''}{units > 0 ? `${units} ${unit.toLowerCase()}` : ''}
+          </span>
+        </span>
+      );
+    }
+    
+    return <span>{amount % 1 !== 0 ? amount.toFixed(1) : amount} <span className="text-[10px] uppercase font-bold opacity-50">{unit.toLowerCase()}</span></span>;
+  };
 
   return (
     <div className="space-y-6 pb-20 pt-8 animate-in fade-in">
@@ -131,7 +168,7 @@ export default function InventaireIntelligent() {
           </div>
           <h3 className="text-xl font-black text-gray-800 mb-3 tracking-tight">Pas assez de données</h3>
           <p className="text-sm font-bold text-gray-500 leading-relaxed max-w-md">
-            L'Intelligence Artificielle a besoin d'au moins un inventaire précédent et des livraisons pour calculer les stocks attendus.
+            L'Intelligence Artificielle a besoin d'au moins deux inventaires précédents et des livraisons pour calculer la consommation moyenne réelle et prédire les besoins avec fiabilité.
           </p>
         </Card>
       ) : (
@@ -168,22 +205,28 @@ export default function InventaireIntelligent() {
                      </div>
                      <div className="text-right">
                         <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Stock Attendu</div>
-                        <div className="text-xl font-black text-gray-900 leading-none">{s.estimatedNow} <span className="text-[10px] text-gray-400">{(p.uniteStock || 'u.').toLowerCase()}</span></div>
+                        <div className="text-xl font-black text-gray-900 leading-none">{renderAmount(s.estimatedNow, p)}</div>
                      </div>
                   </div>
 
                   <h4 className="font-black text-sm text-gray-800 mb-2 truncate">{p.name}</h4>
 
-                  <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
-                     <div className="flex items-center gap-1.5">
-                        <Clock size={12} className="text-gray-400" />
-                        <span className={`text-[10px] font-black uppercase tracking-tighter ${s.isRisk ? 'text-red-500' : 'text-gray-500'}`}>
-                           {s.daysUntilEmpty > 90 ? 'Sécurisé' : `~${s.daysUntilEmpty.toFixed(0)} jours`}
-                        </span>
+                  <div className="flex flex-col gap-2 mt-auto pt-2 border-t border-gray-100">
+                     <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-1.5">
+                            <Clock size={12} className="text-gray-400" />
+                            <span className={`text-[10px] font-black uppercase tracking-tighter ${s.isRisk ? 'text-red-500' : 'text-gray-500'}`}>
+                               {s.daysUntilEmpty > 90 ? 'Sécurisé' : `~${s.daysUntilEmpty.toFixed(0)} jours`}
+                            </span>
+                         </div>
+                         {s.hasAnomaly ? (
+                            <div className="text-[9px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase">Anomalie</div>
+                         ) : (
+                            <div className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border border-current ${s.reliabilityCode === 'high' ? 'text-emerald-500 bg-emerald-50' : s.reliabilityCode === 'medium' ? 'text-blue-500 bg-blue-50' : 'text-orange-500 bg-orange-50'}`}>
+                               Fiabilité {s.reliabilityCode === 'high' ? 'Haute' : s.reliabilityCode === 'medium' ? 'Moy.' : 'Basse'}
+                            </div>
+                         )}
                      </div>
-                     {s.hasAnomaly && (
-                        <div className="text-[9px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase">Anomalie</div>
-                     )}
                   </div>
                 </div>
               );
@@ -222,38 +265,54 @@ export default function InventaireIntelligent() {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                            <div className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Dernier Comptage</div>
-                           <div className="font-black text-gray-900 text-2xl">{selectedProductStat.countNum} <span className="text-[10px] uppercase font-bold text-gray-400">{(selectedProductStat.product.uniteStock || 'u.').toLowerCase()}</span></div>
+                           <div className="font-black text-gray-900 text-2xl">{renderAmount(selectedProductStat.countNum, selectedProductStat.product)}</div>
                            <div className="text-[9px] text-gray-400 font-bold mt-1">Le {format(new Date(selectedProductStat.lastInventoryDate), 'dd/MM')}</div>
                         </div>
                         <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
                            <div className="text-[10px] text-blue-600 uppercase font-black tracking-widest mb-1">+ Livré depuis</div>
-                           <div className="font-black text-blue-900 text-2xl">{selectedProductStat.receivedSinceLast} <span className="text-[10px] uppercase font-bold text-blue-400">{(selectedProductStat.product.uniteStock || 'u.').toLowerCase()}</span></div>
+                           <div className="font-black text-blue-900 text-2xl">{renderAmount(selectedProductStat.receivedSinceLast, selectedProductStat.product)}</div>
                         </div>
                         <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 shadow-sm">
                            <div className="text-[10px] text-indigo-600 uppercase font-black tracking-widest mb-1">= Stock Attendu</div>
-                           <div className="font-black text-indigo-900 text-2xl">{selectedProductStat.expectedStock} <span className="text-[10px] uppercase font-bold text-indigo-400">{(selectedProductStat.product.uniteStock || 'u.').toLowerCase()}</span></div>
+                           <div className="font-black text-indigo-900 text-2xl">{renderAmount(selectedProductStat.expectedStock, selectedProductStat.product)}</div>
                         </div>
                         <div className={`p-4 rounded-2xl border shadow-sm relative overflow-hidden ${selectedProductStat.hasAnomaly ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-100'}`}>
                            <div className="text-[10px] uppercase font-black tracking-widest mb-1">Estimation IA</div>
-                           <div className="font-black text-2xl">{selectedProductStat.estimatedNow} <span className="text-[10px] uppercase font-bold opacity-50">{(selectedProductStat.product.uniteStock || 'u.').toLowerCase()}</span></div>
+                           <div className="font-black text-2xl">{renderAmount(selectedProductStat.estimatedNow, selectedProductStat.product)}</div>
                         </div>
                     </div>
 
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                       <div className="flex items-center justify-between">
+                       <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                           <div className="flex items-center gap-3">
                              <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center">
                                {selectedProductStat.avgPerDay > 0 ? <TrendingDown size={18} className="text-crousty-purple" /> : <TrendingUp size={18} className="text-gray-400" />}
                              </div>
                              <div>
-                                <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none mb-1">Consommation Réelle</div>
+                                <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none mb-1">Conso Moyenne</div>
                                 <div className="font-black text-gray-800 text-lg">{selectedProductStat.avgPerDay.toFixed(2)} <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{(selectedProductStat.product.uniteStock || 'u.')} / jr</span></div>
+                                <div className="text-[10px] font-bold text-gray-400">~{selectedProductStat.avgPerWeek.toFixed(1)} / semaine</div>
                              </div>
                           </div>
                           <div className="text-right">
-                             <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none mb-1">Autonomie</div>
-                             <div className={`font-black text-lg ${selectedProductStat.isRisk ? 'text-red-600' : 'text-emerald-600'}`}>{selectedProductStat.daysUntilEmpty > 90 ? 'Safe' : `~${selectedProductStat.daysUntilEmpty.toFixed(0)}j`}</div>
+                             <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none mb-1">Rupture dans</div>
+                             <div className={`font-black text-lg ${selectedProductStat.isRisk ? 'text-red-600' : 'text-emerald-600'}`}>{selectedProductStat.daysUntilEmpty > 90 ? '> 3 mois' : `~${selectedProductStat.daysUntilEmpty.toFixed(0)}j`}</div>
                           </div>
+                       </div>
+                       
+                       <div className="flex items-center justify-between pt-2">
+                           <div>
+                               <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Fiabilité IA</div>
+                               <div className={`text-xs font-black uppercase px-2 py-0.5 rounded-md inline-flex items-center ${selectedProductStat.reliabilityCode === 'high' ? 'bg-emerald-100 text-emerald-700' : selectedProductStat.reliabilityCode === 'medium' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                                  {selectedProductStat.reliability} ({selectedProductStat.intervalsCount} inv.)
+                               </div>
+                           </div>
+                           <div className="text-right">
+                               <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Commande Suggérée</div>
+                               <div className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-md inline-block">
+                                  + {selectedProductStat.recommendedOrder} <span className="text-[10px] opacity-70">{(selectedProductStat.product.uniteStock || 'u.').toLowerCase()}</span>
+                               </div>
+                           </div>
                        </div>
                     </div>
 

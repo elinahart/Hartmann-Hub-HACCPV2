@@ -67,45 +67,90 @@ export function calculateDeliveriesSince(
 }
 
 /**
- * Calcule la consommation moyenne journalière basée sur les deux derniers inventaires.
+ * Calcule la consommation moyenne journalière basée sur tous les inventaires disponibles et les livraisons.
  */
 export function calculateConsumptionRate(
   product: InventoryProduct,
   inventories: InventoryEntry[],
   receptions: any[]
 ): number {
-  if (inventories.length < 2) return 0;
+  return calculateAdvancedConsumptionMetrics(product, inventories, receptions).avgPerDay;
+}
 
-  const newest = inventories[0];
-  const previous = inventories[1];
+export interface ConsumptionMetrics {
+  avgPerDay: number;
+  avgPerWeek: number;
+  intervalsCount: number;
+  totalDays: number;
+  totalConsumption: number;
+}
+
+/**
+ * Calcule des métriques avancées de consommation en se basant sur TOUS les inventaires passés
+ * et TOUTES les livraisons intermédiaires.
+ */
+export function calculateAdvancedConsumptionMetrics(
+  product: InventoryProduct,
+  inventories: InventoryEntry[],
+  receptions: any[]
+): ConsumptionMetrics {
+  const defaultMetrics = { avgPerDay: 0, avgPerWeek: 0, intervalsCount: 0, totalDays: 0, totalConsumption: 0 };
   
-  const dNewest = new Date(newest.date).getTime();
-  const dPrevious = new Date(previous.date).getTime();
-  const daysDiff = Math.max(1, differenceInDays(dNewest, dPrevious));
+  if (inventories.length < 2) return defaultMetrics;
 
   const conv = product.conversionCartonUnite || 5;
   
-  const getStock = (inv: InventoryEntry) => {
-    const detail = inv.items[product.category]?.[product.name] as InventoryItemDetail;
-    if (!detail || detail.na) return null;
-    return (parseInt(detail.units || '0')) + (parseInt(detail.cartons || '0') * conv);
+  let totalConsumption = 0;
+  let totalDays = 0;
+  let validIntervals = 0;
+
+  // inventories est trié du plus récent (0) au plus ancien (N)
+  for (let i = 0; i < inventories.length - 1; i++) {
+    const newest = inventories[i];
+    const older = inventories[i + 1];
+    
+    const dNewest = new Date(newest.date).getTime();
+    const dOlder = new Date(older.date).getTime();
+    const daysDiff = Math.max(1, differenceInDays(dNewest, dOlder));
+
+    const getStock = (inv: InventoryEntry) => {
+      const detail = inv.items[product.category]?.[product.name] as InventoryItemDetail;
+      if (!detail || detail.na) return null;
+      return (parseInt(detail.units || '0')) + (parseInt(detail.cartons || '0') * conv);
+    };
+
+    const stockNewest = getStock(newest);
+    const stockOlder = getStock(older);
+
+    if (stockNewest !== null && stockOlder !== null) {
+      const deliveredInBetween = calculateDeliveriesInInterval(
+        product,
+        older.date,
+        newest.date,
+        receptions
+      );
+
+      // Consommation = Ancien stock + Livré depuis - Nouveau stock
+      const consumption = stockOlder + deliveredInBetween - stockNewest;
+      
+      // On ignore les consommations négatives (ex: recomptage, don, erreur de saisie)
+      if (consumption >= 0) {
+        totalConsumption += consumption;
+        totalDays += daysDiff;
+        validIntervals++;
+      }
+    }
+  }
+
+  const avgPerDay = totalDays > 0 ? (totalConsumption / totalDays) : 0;
+
+  return {
+    avgPerDay,
+    avgPerWeek: avgPerDay * 7,
+    intervalsCount: validIntervals,
+    totalDays,
+    totalConsumption
   };
-
-  const stockNewest = getStock(newest);
-  const stockPrevious = getStock(previous);
-
-  if (stockNewest === null || stockPrevious === null) return 0;
-
-  const deliveredInBetween = calculateDeliveriesInInterval(
-    product,
-    previous.date,
-    newest.date,
-    receptions
-  );
-
-  // Consumption = Previous + Delivered - Newest
-  const consumption = stockPrevious + deliveredInBetween - stockNewest;
-  return consumption > 0 ? consumption / daysDiff : 0;
 }
 
 function calculateDeliveriesInInterval(

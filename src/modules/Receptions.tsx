@@ -22,6 +22,8 @@ export interface ReceptionProductLine {
   id: string;
   produit: string;
   quantite: string;
+  quantiteValeur?: string;
+  quantiteUnite?: string;
   numeroLot: string;
   dlc: string;
   temperature?: string;
@@ -155,7 +157,7 @@ export default function Receptions() {
 
   const [draft, setDraft, clearDraft, isDraftRestored] = useAutoDraft('reception_v3', {
     fournisseur: '',
-    lignes: [{ id: '1', produit: '', quantite: '', numeroLot: '', dlc: '', temperature: '' }],
+    lignes: [{ id: '1', produit: '', quantite: '', quantiteValeur: '', quantiteUnite: 'Unité', numeroLot: '', dlc: '', temperature: '' }],
     commentaire: ''
   });
 
@@ -245,11 +247,25 @@ export default function Receptions() {
   };
 
   const addLigne = () => {
-    setLignes([...lignes, { id: Date.now().toString() + Math.random(), produit: '', quantite: '', numeroLot: '', dlc: '', temperature: '' }]);
+    setLignes([...lignes, { id: Date.now().toString() + Math.random(), produit: '', quantite: '', quantiteValeur: '', quantiteUnite: 'Unité', numeroLot: '', dlc: '', temperature: '' }]);
   };
 
   const updateLigne = (id: string, field: keyof ReceptionProductLine, value: string) => {
     setLignes(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
+  };
+
+  const updateLigneQuantite = (id: string, valeur: string, unite: string) => {
+    setLignes(prev => prev.map(l => {
+      if (l.id === id) {
+        return {
+          ...l,
+          quantiteValeur: valeur,
+          quantiteUnite: unite,
+          quantite: `${valeur} ${unite}`
+        };
+      }
+      return l;
+    }));
   };
 
   const removeLigne = (id: string) => {
@@ -495,7 +511,33 @@ export default function Receptions() {
                   </div>
                   <div>
                     <Label>{t('lbl_quantity') || 'Quantité'} *</Label>
-                    <Input value={ligne.quantite} onChange={(e: any) => updateLigne(ligne.id, 'quantite', e.target.value)} placeholder="Ex: 5 cartons" />
+                    <div className="flex gap-2 relative">
+                       <Input 
+                         type="number" 
+                         inputMode="decimal"
+                         className="w-1/2"
+                         value={ligne.quantiteValeur || ''} 
+                         onChange={(e: any) => updateLigneQuantite(ligne.id, e.target.value, ligne.quantiteUnite || 'Unité')} 
+                         placeholder="0" 
+                       />
+                       <select
+                         className="w-1/2 h-14 rounded-xl border-gray-200 border bg-white px-4 font-bold text-sm focus:border-crousty-purple focus:ring-2 focus:ring-crousty-purple/20 transition-all outline-none"
+                         value={ligne.quantiteUnite || 'Unité'}
+                         onChange={(e: any) => updateLigneQuantite(ligne.id, ligne.quantiteValeur || '', e.target.value)}
+                       >
+                         <option value="Unité">Unité(s)</option>
+                         <option value="Carton">Carton(s)</option>
+                         <option value="Kg">Kg</option>
+                         <option value="L">Litre(s)</option>
+                         <option value="Colis">Colis</option>
+                       </select>
+                    </div>
+                    {ligne.produit && ligne.quantiteUnite === 'Carton' && ligne.quantiteValeur && products.find(p => p.name === ligne.produit)?.conversionCartonUnite ? (
+                      <div className="text-[10px] text-gray-500 font-bold mt-1 ml-1 flex items-center gap-1">
+                        <CheckCircle2 size={12} className="text-green-500" />
+                        Soit {parseFloat(ligne.quantiteValeur) * (products.find(p => p.name === ligne.produit)?.conversionCartonUnite || 1)} unités de stock
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
@@ -656,6 +698,9 @@ export default function Receptions() {
                               e.preventDefault();
                               if (activeLineId) {
                                 updateLigne(activeLineId, 'produit', p.name);
+                                const currentLine = lignes.find(l => l.id === activeLineId);
+                                const defaultUnit = p.conversionCartonUnite ? 'Carton' : 'Unité';
+                                updateLigneQuantite(activeLineId, currentLine?.quantiteValeur || '', currentLine?.quantiteUnite || defaultUnit);
                               }
                               setIsProductModalOpen(false);
                               setActiveLineId(null);
