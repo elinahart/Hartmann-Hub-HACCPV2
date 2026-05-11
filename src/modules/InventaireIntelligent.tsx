@@ -2,12 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button } from '../components/ui/LightUI';
 import { getStoredData } from '../lib/db';
 import { useInventaire } from '../providers/InventaireProvider';
-import { Brain, TrendingUp, AlertTriangle, ArrowRight, Package, TrendingDown, Clock, Search, X, Edit2, Calendar } from 'lucide-react';
+import { Brain, TrendingUp, AlertTriangle, ArrowRight, Package, TrendingDown, Clock, Search, X, Edit2, Calendar, FileText } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { InventoryProduct } from '../types';
 import { createPortal } from 'react-dom';
 import { calculateExpectedStock, calculateAdvancedConsumptionMetrics } from '../lib/stockCalculation';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { useConfig } from '../contexts/ConfigContext';
+import { useI18n } from '../lib/i18n';
 
 interface InvItems {
   [category: string]: {
@@ -17,6 +21,8 @@ interface InvItems {
 
 export default function InventaireIntelligent() {
   const { products } = useInventaire();
+  const { config } = useConfig();
+  const { t } = useI18n();
   const [inventories, setInventories] = useState<any[]>([]);
   const [receptions, setReceptions] = useState<any[]>([]);
   const [compareCount, setCompareCount] = useState<number>(2);
@@ -107,6 +113,182 @@ export default function InventaireIntelligent() {
 
   const filteredStats = analysis?.stats.filter(s => s.product.name.toLowerCase().includes(searchQuery.toLowerCase())) || [];
 
+  const getColorCode = (code: string) => {
+    switch(code) {
+      case 'high': return [16, 185, 129]; // Emerald
+      case 'medium': return [59, 130, 246]; // Blue
+      case 'low': return [245, 158, 11]; // Orange
+      default: return [107, 114, 128]; // Gray
+    }
+  };
+
+  const generatePDF = () => {
+    if (!analysis) return;
+
+    const doc = new jsPDF();
+    const primaryColor = config.restaurant?.couleurPrimaire || '#E91E8C';
+    const secondaryColor = config.restaurant?.couleurSecondaire || '#7B2FBE';
+    const restaurantName = config.restaurant?.nom || 'Mon Restaurant';
+    
+    // Hex to RGB for jspdf
+    const hexToRgb = (hex: string): [number, number, number] => {
+      const bigint = parseInt(hex.replace('#', ''), 16);
+      return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+    };
+    const rgbPrimary = hexToRgb(primaryColor);
+
+    // Header
+    doc.setFillColor(rgbPrimary[0], rgbPrimary[1], rgbPrimary[2]);
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text(restaurantName.toUpperCase(), 15, 20);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`RAPPORT D'ANALYSE INVENTAIRE IA`, 15, 30);
+    doc.text(format(new Date(), 'dd MMMM yyyy HH:mm', { locale: fr }), 195, 30, { align: 'right' });
+
+    // Global Stats & Reliability
+    const avgReliability = analysis.stats.reduce((acc, s) => {
+      if (s.reliabilityCode === 'high') return acc + 100;
+      if (s.reliabilityCode === 'medium') return acc + 60;
+      return acc + 30;
+    }, 0) / analysis.stats.length;
+
+    let yPos = 55;
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(16);
+    doc.text('Synthèse Globale', 15, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Nombre de produits analysés : ${analysis.stats.length}`, 15, yPos);
+    doc.text(`Fiabilité globale de l'analyse : ${avgReliability.toFixed(0)}%`, 110, yPos);
+    
+    yPos += 15;
+
+    // Critical Sections: Ruptures & Risks
+    const ruptures = analysis.stats.filter(s => s.estimatedNow <= 0);
+    const risks = analysis.stats.filter(s => s.isRisk && s.estimatedNow > 0);
+    const anomalies = analysis.stats.filter(s => s.hasAnomaly);
+
+    const formatAmount = (amount: number, product: InventoryProduct) => {
+      const conv = product.conversionCartonUnite;
+      const unit = product.uniteStock || 'u.';
+      if (conv && conv > 1 && amount > 0) {
+        const cartons = Math.floor(amount / conv);
+        const units = Math.round(amount % conv);
+        return `${amount} ${unit}\n(${cartons} crt ${units > 0 ? '+ ' + units + ' ' + unit : ''})`;
+      }
+      return `${amount} ${unit}`;
+    };
+
+    if (ruptures.length > 0) {
+      doc.setTextColor(185, 28, 28); // Red
+      doc.setFontSize(14);
+      doc.text(`RUPTURES DÉTECTÉES (${ruptures.length})`, 15, yPos);
+      yPos += 5;
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Produit', 'Dernier Comptage', 'Conso/Jour', 'Stock Est.', 'Statut']],
+        body: ruptures.map(s => [
+          s.product.name,
+          formatAmount(s.countNum, s.product),
+          `${s.avgPerDay.toFixed(1)} /j`,
+          '0',
+          'RUPTURE'
+        ]),
+        headStyles: { fillColor: [185, 28, 28] },
+        styles: { cellPadding: 2, fontSize: 9 },
+        margin: { left: 15, right: 15 }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (risks.length > 0) {
+      doc.setTextColor(245, 158, 11); // Orange
+      doc.setFontSize(14);
+      doc.text(`PROCHES DE LA RUPTURE (${risks.length})`, 15, yPos);
+      yPos += 5;
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Produit', 'Stock Actuel', 'Conso/Jour', 'Autonomie', 'Recommandation']],
+        body: risks.map(s => [
+          s.product.name,
+          formatAmount(s.estimatedNow, s.product),
+          `${s.avgPerDay.toFixed(1)} /j`,
+          `${s.daysUntilEmpty.toFixed(0)} jours`,
+          `Commander +${s.recommendedOrder}`
+        ]),
+        headStyles: { fillColor: [245, 158, 11] },
+        styles: { cellPadding: 2, fontSize: 9 },
+        margin: { left: 15, right: 15 }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (anomalies.length > 0) {
+      doc.setTextColor(37, 99, 235); // Blue
+      doc.setFontSize(14);
+      doc.text(`ANOMALIES & ÉCARTS (${anomalies.length})`, 15, yPos);
+      yPos += 5;
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Produit', 'Stock Attendu', 'Stock Estimé', 'Différence', 'Fiabilité']],
+        body: anomalies.map(s => [
+          s.product.name,
+          formatAmount(s.expectedStock, s.product),
+          formatAmount(s.estimatedNow, s.product),
+          (s.expectedStock - s.estimatedNow).toFixed(1),
+          s.reliability
+        ]),
+        headStyles: { fillColor: [37, 99, 235] },
+        styles: { cellPadding: 2, fontSize: 9 },
+        margin: { left: 15, right: 15 }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    // Full Analysis Table
+    if (yPos > 240) { doc.addPage(); yPos = 20; }
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(14);
+    doc.text('Détail Complet de l\'Analyse', 15, yPos);
+    yPos += 5;
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Produit', 'Stock', 'Conso/Jour', 'Recommandé', 'Fiabilité']],
+      body: analysis.stats.map(s => [
+        s.product.name,
+        formatAmount(s.estimatedNow, s.product),
+        `${s.avgPerDay.toFixed(1)} /j`,
+        s.recommendedOrder > 0 ? `+${s.recommendedOrder}` : '-',
+        s.reliability
+      ]),
+      headStyles: { fillColor: rgbPrimary },
+      styles: { fontSize: 8, cellPadding: 2 },
+      margin: { left: 15, right: 15 }
+    });
+
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Document généré par Hartmann Hub IA - Page ${i} / ${pageCount}`, 105, 290, { align: 'center' });
+    }
+
+    doc.save(`Rapport_IA_Stock_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  };
+
   const renderAmount = (amount: number, product: InventoryProduct) => {
     const conv = product.conversionCartonUnite;
     const unit = product.uniteStock || 'u.';
@@ -153,11 +335,21 @@ export default function InventaireIntelligent() {
              <Calendar className="text-crousty-purple" size={18} />
              <span className="text-sm font-black text-gray-800 uppercase tracking-wider">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</span>
            </div>
-           {analysis?.stats.filter(s => s.hasAnomaly).length > 0 && (
-             <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase animate-pulse">
-                {analysis.stats.filter(s => s.hasAnomaly).length} Anomalies
-             </div>
-           )}
+           <div className="flex items-center gap-2">
+             <Button 
+               variant="ghost" 
+               size="sm"
+               className="h-9 px-3 rounded-lg text-[10px] font-black uppercase text-gray-500 hover:text-crousty-purple hover:bg-crousty-purple/5"
+               onClick={generatePDF}
+             >
+               <FileText size={14} className="mr-1.5" /> Rapport PDF
+             </Button>
+             {analysis?.stats.filter(s => s.hasAnomaly).length > 0 && (
+               <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase animate-pulse">
+                  {analysis.stats.filter(s => s.hasAnomaly).length} Anomalies
+               </div>
+             )}
+           </div>
         </div>
       </div>
 

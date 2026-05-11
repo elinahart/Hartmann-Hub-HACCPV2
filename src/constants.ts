@@ -3,17 +3,18 @@ export const APP_VERSION = "3.0.6";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "10 Mai 2026";
+export const APP_LAST_UPDATE = "11 Mai 2026";
 
 export const APP_CHANGELOG = [
   {
     version: "3.0.6",
-    date: "10 Mai 2026",
+    date: "11 Mai 2026",
     changes: [
-      "Inventaire IA: calcul de consommation prenant en compte tous les inventaires et livraisons",
-      "Inventaire IA: conversion dynamique unité / carton quand c'est pertinent",
-      "Inventaire IA: nouveau score de fiabilité basé sur l'historique disponible",
-      "Réception: remplacement du texte libre par des champs spécifiques quantité + unité (Unité, Carton...)"
+      "Inventaire IA: Génération de rapports PDF automatiques et professionnels",
+      "Inventaire IA: Personnalisation visuelle des rapports selon l'identité du restaurant",
+      "Inventaire IA: Indicateurs de fiabilité et segmentation des risques (ruptures, anomalies)",
+      "Réception: Amélioration de la saisie avec choix d'unités (Cartons, Unités, Kg...)",
+      "Amélioration globale de la précision des calculs de consommation"
     ]
   },
   {
