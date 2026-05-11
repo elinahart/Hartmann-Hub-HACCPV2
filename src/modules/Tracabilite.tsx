@@ -79,6 +79,7 @@ export default function Tracabilite() {
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [dateSaisie, setDateSaisie] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
 
   const sortedProducts = useMemo(() => {
     return [...products].sort((a, b) => a.name.localeCompare(b.name));
@@ -217,9 +218,13 @@ export default function Tracabilite() {
     const mobileWorker = localStorage.getItem('crousty_mobile_worker');
     const uName = currentUser?.name || mobileWorker || 'Inconnu';
     
+    const entryDate = new Date(dateSaisie);
+    const now = new Date();
+    entryDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+
     const newEntries: TracabiliteEntry[] = lignes.map((ligne, idx) => ({
       id: `${baseId}_${idx}`,
-      date: new Date().toISOString(),
+      date: entryDate.toISOString(),
       produit: ligne.produit,
       numeroLot: ligne.numeroLot || 'N/A',
       dlc: ligne.dlc || 'N/A',
@@ -283,8 +288,18 @@ export default function Tracabilite() {
         onScan={handleScan} 
       />
       <Card className="p-6">
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-lg font-black text-crousty-dark">{t('lbl_new_opening') || 'Nouvelle Ouverture'}</h2>
+          <div className="flex items-center gap-2">
+            <Label className="text-sm font-black text-gray-700 whitespace-nowrap">Date d'ouverture :</Label>
+            <Input 
+               type="date" 
+               value={dateSaisie}
+               onChange={(e: any) => setDateSaisie(e.target.value)}
+               className="bg-white border-2 border-gray-100 h-10 rounded-xl w-auto"
+               max={format(new Date(), 'yyyy-MM-dd')}
+            />
+          </div>
         </div>
         
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm font-bold border border-red-100">{error}</div>}
@@ -590,9 +605,29 @@ const TracabiliteItem = ({ e, deleteId, setDeleteId, confirmDelete, editId, setE
                <Label className="text-orange-800 font-bold">⚠️ Motif de modification (obligatoire)</Label>
                <Input value={editMotif} onChange={ev => setEditMotif(ev.target.value)} placeholder="Ex: Erreur de frappe..." className="mt-1" />
             </div>
-            <div>
-               <Label>Produit <span className="text-red-500 font-bold">*</span></Label>
-               <Input value={editData.produit} onChange={ev => setEditData({...editData, produit: ev.target.value})} />
+            <div className="grid grid-cols-2 gap-2">
+               <div>
+                  <Label>Date <span className="text-red-500 font-bold">*</span></Label>
+                  <Input 
+                    type="date" 
+                    value={format(new Date(editData.date || new Date()), 'yyyy-MM-dd')} 
+                    max={format(new Date(), 'yyyy-MM-dd')}
+                    onChange={ev => {
+                      try {
+                        const newDate = new Date(ev.target.value);
+                        const oldDate = new Date(editData.date || new Date());
+                        newDate.setHours(oldDate.getHours(), oldDate.getMinutes(), oldDate.getSeconds());
+                        setEditData({...editData, date: newDate.toISOString()});
+                      } catch (e) {
+                         // invalid date string
+                      }
+                    }} 
+                  />
+               </div>
+               <div>
+                  <Label>Produit <span className="text-red-500 font-bold">*</span></Label>
+                  <Input value={editData.produit} onChange={ev => setEditData({...editData, produit: ev.target.value})} />
+               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
                <div>
