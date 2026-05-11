@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button } from '../components/ui/LightUI';
 import { getStoredData } from '../lib/db';
 import { useInventaire } from '../providers/InventaireProvider';
-import { Brain, TrendingUp, AlertTriangle, ArrowRight, Package, TrendingDown, Clock, Search, X, Edit2, Calendar, FileText } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Brain, TrendingUp, AlertTriangle, ArrowRight, Package, TrendingDown, Clock, Search, X, Edit2, Calendar, FileText, Lock } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { InventoryProduct } from '../types';
@@ -23,6 +24,8 @@ export default function InventaireIntelligent() {
   const { products } = useInventaire();
   const { config } = useConfig();
   const { t } = useI18n();
+  const { currentUser } = useAuth();
+  const isReadOnly = currentUser?.role !== 'manager';
   const [inventories, setInventories] = useState<any[]>([]);
   const [receptions, setReceptions] = useState<any[]>([]);
   const [compareCount, setCompareCount] = useState<number>(2);
@@ -43,12 +46,16 @@ export default function InventaireIntelligent() {
     const results = [];
 
     for (const p of products) {
+      const lastCounted = newest.items[p.category]?.[p.name];
+      
+      // Exclusion des produits marqués N/A (Non Applicables / Non Concernés)
+      if (lastCounted?.na === true) continue;
+
       const expectedStockValue = calculateExpectedStock(p, newest, receptions);
       const metrics = calculateAdvancedConsumptionMetrics(p, inventories, receptions);
       const avgPerDay = metrics.avgPerDay;
       const avgPerWeek = metrics.avgPerWeek;
       
-      const lastCounted = newest.items[p.category]?.[p.name];
       const conv = p.conversionCartonUnite || 5;
       const countNum = lastCounted ? (parseInt(lastCounted.units || '0') + parseInt(lastCounted.cartons || '0') * conv) : 0;
       
@@ -312,25 +319,34 @@ export default function InventaireIntelligent() {
 
   return (
     <div className="space-y-6 pb-20 pt-8 animate-in fade-in">
-      <div className="flex items-center gap-3 px-2">
-        <Brain className="text-crousty-purple" size={32} />
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 uppercase tracking-widest">IA Inventaire</h2>
-          <p className="text-sm font-bold text-gray-500">Stock attendu et anomalies détectées</p>
+      <div className="flex items-center gap-3 px-2 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Brain className="text-crousty-purple" size={32} />
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-widest">IA Inventaire</h2>
+            <p className="text-sm font-bold text-gray-500">Stock attendu et anomalies détectées</p>
+          </div>
         </div>
+        {isReadOnly && (
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-[10px] font-black uppercase tracking-widest ml-auto">
+            <Lock size={12} /> Lecture Seule
+          </div>
+        )}
       </div>
 
       <div className="px-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Button 
-          className="w-full h-12 rounded-xl text-sm font-black shadow-md active:scale-95 flex items-center justify-center gap-2"
-          onClick={() => {
-             sessionStorage.setItem('crousty_start_smart_inventory', 'true');
-             window.dispatchEvent(new CustomEvent('navigate-to', { detail: 'inventaire' }));
-          }}
-        >
-          <Brain size={18} /> Inventaire Pré-rempli (IA)
-        </Button>
-        <div className="bg-white border border-gray-100 p-4 rounded-xl flex items-center justify-between shadow-sm">
+        {!isReadOnly && (
+          <Button 
+            className="w-full h-12 rounded-xl text-sm font-black shadow-md active:scale-95 flex items-center justify-center gap-2"
+            onClick={() => {
+               sessionStorage.setItem('crousty_start_smart_inventory', 'true');
+               window.dispatchEvent(new CustomEvent('navigate-to', { detail: 'inventaire' }));
+            }}
+          >
+            <Brain size={18} /> Inventaire Pré-rempli (IA)
+          </Button>
+        )}
+        <div className={`${isReadOnly ? 'md:col-span-2' : ''} bg-white border border-gray-100 p-4 rounded-xl flex items-center justify-between shadow-sm`}>
            <div className="flex items-center gap-2">
              <Calendar className="text-crousty-purple" size={18} />
              <span className="text-sm font-black text-gray-800 uppercase tracking-wider">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</span>
@@ -510,9 +526,9 @@ export default function InventaireIntelligent() {
 
                     <Button 
                       className="w-full bg-gray-900 border border-gray-900 text-white gap-2 font-black h-12 uppercase text-xs tracking-widest shadow-lg rounded-xl"
-                      onClick={() => handleCorrectAnomaly(selectedProductStat.product.name)}
+                      onClick={() => !isReadOnly && handleCorrectAnomaly(selectedProductStat.product.name)}
                     >
-                      <Edit2 size={16} /> {selectedProductStat.hasAnomaly ? 'Corriger Anomaly' : 'Vérifier Stock'}
+                      <Edit2 size={16} /> {isReadOnly ? 'Navigation Verrouillée' : (selectedProductStat.hasAnomaly ? 'Corriger Anomaly' : 'Vérifier Stock')}
                     </Button>
                   </div>
 

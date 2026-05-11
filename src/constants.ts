@@ -1,11 +1,30 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.0.6";
+export const APP_VERSION = "3.0.8";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "11 Mai 2026";
+export const APP_LAST_UPDATE = "12 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.0.8",
+    date: "12 Mai 2026",
+    changes: [
+      "IA Manager: Exclusion automatique des produits marqués N/A des analyses et rapports",
+      "IA Manager: Harmonisation des indicateurs de fiabilité sur les données validées",
+      "IA Manager: Correction des faux positifs sur les anomalies pour les produits hors périmètre"
+    ]
+  },
+  {
+    version: "3.0.7",
+    date: "12 Mai 2026",
+    changes: [
+      "IA Manager: Mise en place de la gestion des droits par rôle (Managers vs Équipes)",
+      "IA Manager: Accès en lecture seule pour les équipes (consultation des stocks et anomalies)",
+      "IA Manager: Actions d'édition et mode intelligent réservés exclusivement aux managers",
+      "Sécurité: Verrouillage des fonctionnalités sensibles côté interface pour les rôles non-administrateurs"
+    ]
+  },
   {
     version: "3.0.6",
     date: "11 Mai 2026",
