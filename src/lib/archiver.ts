@@ -23,6 +23,18 @@ const DATA_KEYS = [
   'crousty_inventory',
 ];
 
+const safeFormatDate = (val: string | undefined | null) => {
+  if (!val || val === 'N/A') return '-';
+  if (val.includes('/')) return val;
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return val;
+    return format(d, 'dd/MM/yy');
+  } catch(e) {
+    return val;
+  }
+};
+
 export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date(), 1)) => {
   const monthName = format(targetDate, 'MMMM yyyy', { locale: fr }).toUpperCase();
   const doc = new jsPDF('landscape');
@@ -108,7 +120,7 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
         entry.produit || entry.ingredient || '-',
         entry.fournisseur || entry.marque || '-',
         entry.numeroLot || entry.lot || '-',
-        entry.dlc ? format(new Date(entry.dlc), 'dd/MM/yy') : (entry.dlcPrimaire ? format(new Date(entry.dlcPrimaire), 'dd/MM/yy') : '-'),
+        entry.dlc ? safeFormatDate(entry.dlc) : (entry.dlcPrimaire ? safeFormatDate(entry.dlcPrimaire) : '-'),
         obs,
         entry.responsable
       ];

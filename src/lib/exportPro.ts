@@ -46,6 +46,18 @@ const getPeriodString = (options: ExportOptions) => {
   return format(options.targetDate, 'MMMM yyyy', { locale: fr }).toUpperCase();
 };
 
+const safeFormatDate = (val: string | undefined | null) => {
+  if (!val || val === 'N/A') return '';
+  if (val.includes('/')) return val;
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return val;
+    return format(d, 'dd/MM/yy');
+  } catch(e) {
+    return val;
+  }
+};
+
 const getBranding = (options: ExportOptions) => {
   const name = options.restaurantInfo?.nom || "CROUSTY HUB";
   const city = options.restaurantInfo?.ville;
@@ -230,7 +242,7 @@ const generateTracabiliteSheet = (options: ExportOptions, periodStr: string) => 
     const prodStr = item.produit || item.ingredient || "";
     const marqueStr = item.marque || item.fournisseur || "";
     const lotStr = item.numeroLot || "";
-    const dlcStr = (item.dlc && item.dlc !== 'N/A') ? format(new Date(item.dlc), 'dd/MM/yy') : (item.dlcPrimaire ? format(new Date(item.dlcPrimaire), 'dd/MM/yy') : "");
+    const dlcStr = (item.dlc && item.dlc !== 'N/A') ? safeFormatDate(item.dlc) : (item.dlcPrimaire ? safeFormatDate(item.dlcPrimaire) : "");
     const respStr = item.userName || item.responsable || "";
     let obsStr = item.commentaire || item.observations || "";
     if (item.signature && item.signature.modifiePar) {
@@ -286,7 +298,7 @@ const generateReceptionsSheet = (options: ExportOptions, periodStr: string) => {
           l.produit,
           l.quantite,
           l.numeroLot,
-          l.dlc ? format(new Date(l.dlc), 'dd/MM/yy') : "",
+          l.dlc ? safeFormatDate(l.dlc) : "",
           l.temperature ? `${l.temperature}°C` : "",
           entry.responsable
         ];
@@ -790,7 +802,7 @@ export const generateProPDF = async (options: ExportOptions) => {
         item.produit || item.ingredient || "",
         item.marque || item.fournisseur || "",
         item.numeroLot || "",
-        (item.dlc && item.dlc !== 'N/A') ? format(new Date(item.dlc), 'dd/MM/yy') : (item.dlcPrimaire ? format(new Date(item.dlcPrimaire), 'dd/MM/yy') : ""),
+        (item.dlc && item.dlc !== 'N/A') ? safeFormatDate(item.dlc) : (item.dlcPrimaire ? safeFormatDate(item.dlcPrimaire) : ""),
         item.userName || item.responsable || "",
         obs
       ];
@@ -824,7 +836,7 @@ export const generateProPDF = async (options: ExportOptions) => {
             l.produit,
             l.quantite,
             l.numeroLot,
-            l.dlc ? format(new Date(l.dlc), 'dd/MM/yy') : "",
+            l.dlc ? safeFormatDate(l.dlc) : "",
             l.temperature ? `${l.temperature}°C` : "",
             entry.responsable
           ]);
