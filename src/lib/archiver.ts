@@ -88,7 +88,10 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
 
   // Traçabilité
   doc.addPage('landscape');
-  const traca = getStoredData<any[]>('crousty_traca', []).filter(e => isSameMonth(new Date(e.date), targetDate));
+  const trac1 = getStoredData<any[]>('crousty_tracabilite_v2', []).filter(e => isSameMonth(new Date(e.date), targetDate));
+  const trac2 = getStoredData<any[]>('crousty_tracabilite', []).filter(e => isSameMonth(new Date(e.date), targetDate));
+  const trac3 = getStoredData<any[]>('crousty_traca', []).filter(e => isSameMonth(new Date(e.date), targetDate));
+  const traca = [...trac1, ...trac2, ...trac3];
   addHeader(doc, `DOSSIER HACCP — ${monthName}`, "REGISTRE DE TRAÇABILITÉ DES MATIÈRES PREMIÈRES");
   
   if (traca.length === 0) {

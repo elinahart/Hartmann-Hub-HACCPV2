@@ -1063,7 +1063,7 @@ export const generateProPDF = async (options: ExportOptions) => {
   // Photos de Traçabilité
   if (options.categories.tracabilite) {
     const tracData = getDataForPeriod('crousty_tracabilite_v2', options);
-    const tracDataWithPhotos = tracData.filter(item => item.photoId);
+    const tracDataWithPhotos = tracData.filter(item => item.photoId || (item.photoIds && item.photoIds.length > 0));
     if (tracDataWithPhotos.length > 0) {
       doc.addPage();
       addHeader("ANNEXE : PHOTOS DE TRAÇABILITÉ", "Photos des étiquettes des produits ouverts dans la période.");
@@ -1074,29 +1074,33 @@ export const generateProPDF = async (options: ExportOptions) => {
       const imgHeight = 60;
       
       for (const item of tracDataWithPhotos) {
-        const photoData = await getPhoto(item.photoId);
-        if (photoData) {
-          if (yOffset + imgHeight > 190) {
-            doc.addPage();
-            addHeader("ANNEXE : PHOTOS DE TRAÇABILITÉ", "Photos des étiquettes des produits ouverts dans la période.");
-            yOffset = 45;
-            xOffset = 14;
-          }
-          
-          try {
-            doc.addImage(photoData, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
-          } catch (e) {
-            doc.text("[Image non supportée]", xOffset, yOffset + 30);
-          }
-          
-          doc.setFontSize(8);
-          doc.text(`Produit: ${item.produit}`, xOffset, yOffset + imgHeight + 4);
-          doc.text(`Lot: ${item.numeroLot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 8);
-          
-          xOffset += imgWidth + 10;
-          if (xOffset + imgWidth > 280) {
-            xOffset = 14;
-            yOffset += imgHeight + 15;
+        const photoIdsToProcess = item.photoId ? [item.photoId] : (item.photoIds || []);
+        
+        for (const pId of photoIdsToProcess) {
+          const photoData = await getPhoto(pId);
+          if (photoData) {
+            if (yOffset + imgHeight > 190) {
+              doc.addPage();
+              addHeader("ANNEXE : PHOTOS DE TRAÇABILITÉ", "Photos des étiquettes des produits ouverts dans la période.");
+              yOffset = 45;
+              xOffset = 14;
+            }
+            
+            try {
+              doc.addImage(photoData, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
+            } catch (e) {
+              doc.text("[Image non supportée]", xOffset, yOffset + 30);
+            }
+            
+            doc.setFontSize(8);
+            doc.text(`Produit: ${item.produit}`, xOffset, yOffset + imgHeight + 4);
+            doc.text(`Lot: ${item.numeroLot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 8);
+            
+            xOffset += imgWidth + 10;
+            if (xOffset + imgWidth > 280) {
+              xOffset = 14;
+              yOffset += imgHeight + 15;
+            }
           }
         }
       }

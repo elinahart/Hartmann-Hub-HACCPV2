@@ -1,11 +1,27 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.0.8";
+export const APP_VERSION = "3.1.0";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
 export const APP_LAST_UPDATE = "12 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.1.0",
+    date: "12 Mai 2026",
+    changes: [
+      "Traçabilité & Export: Support des photos associées individuellement à chaque produit lors de l'export PDF",
+      "Traçabilité: Adaptation du générateur de PDF HACCP pour intégrer automatiquement les multiples photos par produit d'une même session"
+    ]
+  },
+  {
+    version: "3.0.9",
+    date: "12 Mai 2026",
+    changes: [
+      "Traçabilité: Lier les photos individuellement à chaque produit ajouté plutôt que globalement au formulaire entier",
+      "Traçabilité: La validation du formulaire s'assure qu'une photo existe pour chaque ligne de produit ajoutée",
+    ]
+  },
   {
     version: "3.0.8",
     date: "12 Mai 2026",

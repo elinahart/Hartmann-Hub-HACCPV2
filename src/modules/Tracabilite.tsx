@@ -37,6 +37,7 @@ export interface TracabiliteLine {
   produit: string;
   numeroLot: string;
   dlc: string;
+  photoDataUrls?: string[];
 }
 
 const handleDateInput = (val: string) => {
@@ -63,9 +64,8 @@ export default function Tracabilite() {
   const { products } = useInventaire();
   const [entries, setEntries] = useState<TracabiliteEntry[]>([]);
   
-  const [lignes, setLignes] = useState<TracabiliteLine[]>([{ id: '1', produit: '', numeroLot: '', dlc: '' }]);
+  const [lignes, setLignes] = useState<TracabiliteLine[]>([{ id: '1', produit: '', numeroLot: '', dlc: '', photoDataUrls: [] }]);
   const [commentaire, setCommentaire] = useState('');
-  const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([]);
   
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
   
@@ -125,7 +125,7 @@ export default function Tracabilite() {
   }, []);
 
   const addLigne = () => {
-    setLignes([...lignes, { id: Date.now().toString() + Math.random(), produit: '', numeroLot: '', dlc: '' }]);
+    setLignes([...lignes, { id: Date.now().toString() + Math.random(), produit: '', numeroLot: '', dlc: '', photoDataUrls: [] }]);
   };
 
   const updateLigne = (id: string, field: keyof TracabiliteLine, value: string) => {
@@ -164,7 +164,19 @@ export default function Tracabilite() {
     }
   };
 
-  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const removePhotoFromLigne = (ligneId: string, photoIdx: number) => {
+    setLignes(prev => prev.map(l => {
+      if (l.id === ligneId) {
+        return {
+          ...l,
+          photoDataUrls: l.photoDataUrls?.filter((_, i) => i !== photoIdx)
+        };
+      }
+      return l;
+    }));
+  };
+
+  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>, lineId: string) => {
     const files = e.target.files;
     if (!files || files.length === 0) {
       e.target.value = '';
@@ -190,7 +202,12 @@ export default function Tracabilite() {
         }
     }
     
-    setPhotoDataUrls(prev => [...prev, ...newPhotos]);
+    setLignes(prev => prev.map(l => {
+      if (l.id === lineId) {
+        return { ...l, photoDataUrls: [...(l.photoDataUrls || []), ...newPhotos] };
+      }
+      return l;
+    }));
     e.target.value = '';
   };
 
@@ -201,20 +218,13 @@ export default function Tracabilite() {
       return;
     }
     
-    if (photoDataUrls.length === 0) {
-      setError('Photo(s) obligatoire(s) pour la traçabilité');
+    const isPhotosValid = lignes.every(l => l.photoDataUrls && l.photoDataUrls.length > 0);
+    if (!isPhotosValid) {
+      setError('Photo(s) obligatoire(s) pour chaque produit');
       return;
     }
 
     const baseId = Date.now().toString();
-    const photoIds: string[] = [];
-    
-    for (let i = 0; i < photoDataUrls.length; i++) {
-        const pId = `trac_photo_${baseId}_${i}`;
-        await savePhoto(pId, photoDataUrls[i]);
-        photoIds.push(pId);
-    }
-    
     const mobileWorker = localStorage.getItem('crousty_mobile_worker');
     const uName = currentUser?.name || mobileWorker || 'Inconnu';
     
@@ -222,26 +232,39 @@ export default function Tracabilite() {
     const now = new Date();
     entryDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
 
-    const newEntries: TracabiliteEntry[] = lignes.map((ligne, idx) => ({
-      id: `${baseId}_${idx}`,
-      date: entryDate.toISOString(),
-      produit: ligne.produit,
-      numeroLot: ligne.numeroLot || 'N/A',
-      dlc: ligne.dlc || 'N/A',
-      photoIds,
-      commentaire,
-      userId: currentUser?.id || '0',
-      userName: uName,
-      signature: createSignature(currentUser || null)
-    }));
+    const newEntries: TracabiliteEntry[] = [];
+    
+    for (let idx = 0; idx < lignes.length; idx++) {
+       const ligne = lignes[idx];
+       const photoIds: string[] = [];
+       if (ligne.photoDataUrls && ligne.photoDataUrls.length > 0) {
+           for (let i = 0; i < ligne.photoDataUrls.length; i++) {
+               const pId = `trac_photo_${baseId}_${idx}_${i}`;
+               await savePhoto(pId, ligne.photoDataUrls[i]);
+               photoIds.push(pId);
+           }
+       }
+       
+       newEntries.push({
+         id: `${baseId}_${idx}`,
+         date: entryDate.toISOString(),
+         produit: ligne.produit,
+         numeroLot: ligne.numeroLot || 'N/A',
+         dlc: ligne.dlc || 'N/A',
+         photoIds,
+         commentaire,
+         userId: currentUser?.id || '0',
+         userName: uName,
+         signature: createSignature(currentUser || null)
+       });
+    }
 
     const updated = [...newEntries, ...entries];
     setEntries(updated);
     setStoredData('crousty_tracabilite_v2', updated);
     
-    setLignes([{ id: Date.now().toString(), produit: '', numeroLot: '', dlc: '' }]);
+    setLignes([{ id: Date.now().toString(), produit: '', numeroLot: '', dlc: '', photoDataUrls: [] }]);
     setCommentaire('');
-    setPhotoDataUrls([]);
     setError('');
     setSuccess(t('success_reception') || `Saisie enregistrée avec succès !`);
     setTimeout(() => setSuccess(''), 4000);
@@ -370,6 +393,62 @@ export default function Tracabilite() {
                       />
                     </div>
                   </div>
+                  
+                  <div className="pt-2">
+                    <Label className="text-[10px] uppercase font-black tracking-widest text-gray-400 mb-3 flex items-center gap-2">
+                      <Camera size={14} className="text-gray-500" /> Photos (Étiquettes / Produits) <span className="text-red-500">*</span>
+                    </Label>
+                    
+                    {ligne.photoDataUrls && ligne.photoDataUrls.length > 0 && (
+                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                         {ligne.photoDataUrls.map((pUrl, pIdx) => (
+                           <div key={pIdx} className="relative rounded-xl overflow-hidden border border-gray-200">
+                             <img src={pUrl} alt={`Aperçu ${pIdx + 1}`} className="w-full h-24 object-cover" />
+                             <button 
+                               onClick={() => removePhotoFromLigne(ligne.id, pIdx)} 
+                               className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-lg transition-transform active:scale-95"
+                             >
+                               <Trash2 size={12} />
+                             </button>
+                           </div>
+                         ))}
+                       </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="relative group">
+                        <input 
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          multiple
+                          onChange={(e) => handleCapture(e, ligne.id)}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <div className="w-full h-24 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 bg-white rounded-xl group-hover:border-crousty-purple group-hover:bg-crousty-purple/5 transition-all">
+                          <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 group-hover:text-crousty-purple group-hover:bg-white shadow-sm">
+                            <Camera size={16} />
+                          </div>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_camera') || 'Appareil'}</span>
+                        </div>
+                      </div>
+                      <div className="relative group">
+                        <input 
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => handleCapture(e, ligne.id)}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <div className="w-full h-24 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 bg-white rounded-xl group-hover:border-crousty-purple group-hover:bg-crousty-purple/5 transition-all">
+                          <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 group-hover:text-crousty-purple group-hover:bg-white shadow-sm">
+                            <ImageIcon size={16} />
+                          </div>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_gallery') || 'Galerie'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
              ))}
 
@@ -379,62 +458,6 @@ export default function Tracabilite() {
               >
                 <Plus size={20} /> {t('btn_add_another_product') || 'Ajouter un autre produit'}
               </button>
-          </div>
-
-          <div className="pt-2">
-            <Label className="text-sm font-black text-gray-700 mb-3 flex items-center gap-2">
-              <Camera size={16} className="text-gray-500" /> Photos (Étiquettes / Produits) <span className="text-red-500">*</span>
-            </Label>
-            
-            {photoDataUrls.length > 0 && (
-               <div className="grid grid-cols-2 gap-3 mb-3">
-                 {photoDataUrls.map((pUrl, idx) => (
-                   <div key={idx} className="relative rounded-xl overflow-hidden border border-gray-200">
-                     <img src={pUrl} alt={`Aperçu ${idx + 1}`} className="w-full h-32 object-cover" />
-                     <button 
-                       onClick={() => setPhotoDataUrls(prev => prev.filter((_, i) => i !== idx))} 
-                       className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-transform active:scale-95"
-                     >
-                       <Trash2 size={16} />
-                     </button>
-                   </div>
-                 ))}
-               </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative group">
-                <input 
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  multiple
-                  onChange={handleCapture}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                <div className="w-full h-32 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 bg-gray-50 rounded-2xl group-hover:border-crousty-purple group-hover:bg-crousty-purple/5 transition-all">
-                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-crousty-purple">
-                    <Camera size={20} />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_camera') || 'Appareil Photo'}</span>
-                </div>
-              </div>
-              <div className="relative group">
-                <input 
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleCapture}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                <div className="w-full h-32 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 bg-gray-50 rounded-2xl group-hover:border-crousty-purple group-hover:bg-crousty-purple/5 transition-all">
-                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-crousty-purple">
-                    <ImageIcon size={20} />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">{t('btn_gallery') || 'Galerie'}</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="bg-gray-50 p-6 rounded-[2.5rem] border border-gray-100 space-y-4">
@@ -451,10 +474,10 @@ export default function Tracabilite() {
           
           <Button 
             onClick={handleManualSubmit} 
-            disabled={!lignes.every(l => l.produit) || photoDataUrls.length === 0}
+            disabled={!lignes.every(l => l.produit && l.photoDataUrls && l.photoDataUrls.length > 0)}
             className={cn(
               "w-full h-16 text-lg font-black rounded-2xl shadow-xl transition-all duration-300",
-              (!lignes.every(l => l.produit) || photoDataUrls.length === 0) 
+              !lignes.every(l => l.produit && l.photoDataUrls && l.photoDataUrls.length > 0)
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
                 : "bg-crousty-purple text-white hover:bg-crousty-purple/90 active:scale-[0.98] shadow-purple-200"
             )}
