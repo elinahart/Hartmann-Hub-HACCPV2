@@ -86,6 +86,7 @@ export default function InventaireIntelligent() {
 
       results.push({
         product: p,
+        lastCount: lastCounted || { units: '', cartons: '' },
         expectedStock: stockAtLast + receivedSinceLast,
         estimatedNow: Math.round(realEstimatedNow),
         countNum: stockAtLast,

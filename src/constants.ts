@@ -1,11 +1,18 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.1.1";
+export const APP_VERSION = "3.1.2";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
 export const APP_LAST_UPDATE = "12 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.1.2",
+    date: "12 Mai 2026",
+    changes: [
+      "Inventaire IA: Correction du bug empêchant le clic sur 'Corriger le stock' lors d'une anomalie",
+    ]
+  },
   {
     version: "3.1.1",
     date: "12 Mai 2026",
