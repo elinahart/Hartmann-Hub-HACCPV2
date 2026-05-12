@@ -1,11 +1,19 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.1.0";
+export const APP_VERSION = "3.1.1";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
 export const APP_LAST_UPDATE = "12 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.1.1",
+    date: "12 Mai 2026",
+    changes: [
+      "Inventaire IA: Possibilité de corriger ponctuellement l'état d'un stock directement depuis l'Anomalie sans avoir à refaire un inventaire",
+      "Export PDF: Affichage optimisé des photos en annexes avec une référence aléatoire ajoutée aux tableaux pour lier textuellement chaque ligne à sa photo"
+    ]
+  },
   {
     version: "3.1.0",
     date: "12 Mai 2026",

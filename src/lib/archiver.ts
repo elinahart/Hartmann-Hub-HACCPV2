@@ -115,6 +115,10 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
         const modMsg = `(Modifié: ${entry.signature.motifModification || 'Sans motif'})`;
         obs = obs !== '-' ? `${obs}\n${modMsg}` : modMsg;
       }
+      if (entry.photoId || (entry.photoIds && entry.photoIds.length > 0)) {
+        entry._photoRef = Math.random().toString(36).substr(2, 5).toUpperCase();
+        obs = obs !== '-' ? `${obs}\n[Photo Réf: ${entry._photoRef}]` : `[Photo Réf: ${entry._photoRef}]`;
+      }
       return [
         format(new Date(entry.date), 'dd/MM/yy HH:mm'),
         entry.produit || entry.ingredient || '-',
@@ -444,6 +448,58 @@ export const generateMonthlyPDF = async (targetDate: Date = subMonths(new Date()
              console.error("Could not add photo to PDF", e);
           }
        }
+    }
+  }
+
+  // Traçabilité Photos Appendix
+  const tracDataWithPhotos = traca.filter(item => item.photoId || (item.photoIds && item.photoIds.length > 0));
+  if (tracDataWithPhotos.length > 0) {
+    doc.addPage('landscape');
+    addHeader(doc, `DOSSIER HACCP — ${monthName}`, "ANNEXE : PHOTOS DE TRAÇABILITÉ");
+    
+    let yOffset = 45;
+    let xOffset = 14;
+    const imgWidth = 80;
+    const imgHeight = 60;
+    
+    for (const item of tracDataWithPhotos) {
+      const photoIdsToProcess = item.photoId ? [item.photoId] : (item.photoIds || []);
+      
+      for (const pId of photoIdsToProcess) {
+        const photoData = await getPhotoBase64(pId);
+        if (photoData) {
+          if (yOffset + imgHeight > 190) {
+            doc.addPage('landscape');
+            addHeader(doc, `DOSSIER HACCP — ${monthName}`, "ANNEXE : PHOTOS DE TRAÇABILITÉ");
+            yOffset = 45;
+            xOffset = 14;
+          }
+          
+          try {
+            doc.addImage(photoData, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
+          } catch (e) {
+            doc.text("[Image non supportée]", xOffset, yOffset + 30);
+          }
+          
+          doc.setFontSize(8);
+          if (item._photoRef) {
+            doc.setFont("helvetica", "bold");
+            doc.text(`Réf Image: ${item._photoRef}`, xOffset, yOffset + imgHeight + 4);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Prdt: ${item.produit || item.ingredient}`, xOffset, yOffset + imgHeight + 8);
+            doc.text(`Lot: ${item.numeroLot || item.lot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 12);
+          } else {
+            doc.text(`Produit: ${item.produit || item.ingredient}`, xOffset, yOffset + imgHeight + 4);
+            doc.text(`Lot: ${item.numeroLot || item.lot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 8);
+          }
+          
+          xOffset += imgWidth + 10;
+          if (xOffset + imgWidth > 280) {
+            xOffset = 14;
+            yOffset += imgHeight + 15;
+          }
+        }
+      }
     }
   }
 

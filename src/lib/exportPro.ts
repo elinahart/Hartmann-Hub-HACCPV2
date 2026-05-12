@@ -790,12 +790,17 @@ export const generateProPDF = async (options: ExportOptions) => {
     const trac1 = getDataForPeriod('crousty_tracabilite_v2', options) || [];
     const trac2 = getDataForPeriod('crousty_tracabilite', options) || [];
     const tracData = [...trac1, ...trac2];
+    (doc as any)._tracDataForAnnex = tracData;
 
     const tracBody = tracData.length > 0 ? tracData.map(item => {
       let obs = item.commentaire || item.observations || "";
       if (item.signature && item.signature.modifiePar) {
         const modMsg = `(Modifié: ${item.signature.motifModification || 'Sans motif'})`;
         obs = obs ? `${obs}\n${modMsg}` : modMsg;
+      }
+      if (item.photoId || (item.photoIds && item.photoIds.length > 0)) {
+        item._photoRef = Math.random().toString(36).substr(2, 5).toUpperCase();
+        obs = obs ? `${obs}\n[Photo Réf: ${item._photoRef}]` : `[Photo Réf: ${item._photoRef}]`;
       }
       return [
         item.date ? format(new Date(item.date), 'dd/MM/yy') : "",
@@ -1074,8 +1079,8 @@ export const generateProPDF = async (options: ExportOptions) => {
   // --- 7. IMAGES ---
   // Photos de Traçabilité
   if (options.categories.tracabilite) {
-    const tracData = getDataForPeriod('crousty_tracabilite_v2', options);
-    const tracDataWithPhotos = tracData.filter(item => item.photoId || (item.photoIds && item.photoIds.length > 0));
+    const tracData = (doc as any)._tracDataForAnnex || [];
+    const tracDataWithPhotos = tracData.filter((item: any) => item.photoId || (item.photoIds && item.photoIds.length > 0));
     if (tracDataWithPhotos.length > 0) {
       doc.addPage();
       addHeader("ANNEXE : PHOTOS DE TRAÇABILITÉ", "Photos des étiquettes des produits ouverts dans la période.");
@@ -1105,8 +1110,16 @@ export const generateProPDF = async (options: ExportOptions) => {
             }
             
             doc.setFontSize(8);
-            doc.text(`Produit: ${item.produit}`, xOffset, yOffset + imgHeight + 4);
-            doc.text(`Lot: ${item.numeroLot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 8);
+            if (item._photoRef) {
+              doc.setFont("helvetica", "bold");
+              doc.text(`Réf Image: ${item._photoRef}`, xOffset, yOffset + imgHeight + 4);
+              doc.setFont("helvetica", "normal");
+              doc.text(`Prdt: ${item.produit}`, xOffset, yOffset + imgHeight + 8);
+              doc.text(`Lot: ${item.numeroLot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 12);
+            } else {
+              doc.text(`Produit: ${item.produit}`, xOffset, yOffset + imgHeight + 4);
+              doc.text(`Lot: ${item.numeroLot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 8);
+            }
             
             xOffset += imgWidth + 10;
             if (xOffset + imgWidth > 280) {

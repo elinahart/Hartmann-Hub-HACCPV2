@@ -31,6 +31,9 @@ export default function InventaireIntelligent() {
   const [compareCount, setCompareCount] = useState<number>(2);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProductStat, setSelectedProductStat] = useState<any | null>(null);
+  const [isCorrectionModalOpen, setIsCorrectionModalOpen] = useState(!1);
+  const [correctionUnits, setCorrectionUnits] = useState('0');
+  const [correctionCartons, setCorrectionCartons] = useState('0');
 
   useEffect(() => {
     const inv = getStoredData<any[]>('crousty_inventory', []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -113,9 +116,38 @@ export default function InventaireIntelligent() {
     };
   }, [inventories, receptions, products]);
 
-  const handleCorrectAnomaly = (productName: string) => {
-    sessionStorage.setItem('crousty_inventory_search', productName);
-    window.dispatchEvent(new CustomEvent('navigate-to', { detail: 'inventaire' }));
+  const handleCorrectAnomaly = (stat: any) => {
+    if (stat) {
+      setCorrectionUnits(stat.lastCount.units || '0');
+      setCorrectionCartons(stat.lastCount.cartons || '0');
+      setIsCorrectionModalOpen(true);
+    }
+  };
+
+  const saveCorrection = () => {
+    if (!selectedProductStat || inventories.length === 0) return;
+    
+    // Find the newest inventory entry
+    const currentInvList = getStoredData<any[]>('crousty_inventory', []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    if (currentInvList.length === 0) return;
+    
+    const newestEntry = { ...currentInvList[0] };
+    const pInfo = selectedProductStat.product;
+    
+    // Ensure nested objects exist
+    if (!newestEntry.items) newestEntry.items = {};
+    if (!newestEntry.items[pInfo.category]) newestEntry.items[pInfo.category] = {};
+    
+    newestEntry.items[pInfo.category][pInfo.name] = {
+      units: correctionUnits,
+      cartons: correctionCartons,
+      na: false
+    };
+    
+    currentInvList[0] = newestEntry;
+    setStoredData('crousty_inventory', currentInvList);
+    setInventories(currentInvList); // This will trigger recalculation of analysis
+    setIsCorrectionModalOpen(false);
   };
 
   const filteredStats = analysis?.stats.filter(s => s.product.name.toLowerCase().includes(searchQuery.toLowerCase())) || [];
@@ -526,14 +558,62 @@ export default function InventaireIntelligent() {
 
                     <Button 
                       className="w-full bg-gray-900 border border-gray-900 text-white gap-2 font-black h-12 uppercase text-xs tracking-widest shadow-lg rounded-xl"
-                      onClick={() => !isReadOnly && handleCorrectAnomaly(selectedProductStat.product.name)}
+                      onClick={() => !isReadOnly && handleCorrectAnomaly(selectedProductStat)}
                     >
-                      <Edit2 size={16} /> {isReadOnly ? 'Navigation Verrouillée' : (selectedProductStat.hasAnomaly ? 'Corriger Anomaly' : 'Vérifier Stock')}
+                      <Edit2 size={16} /> {isReadOnly ? 'Navigation Verrouillée' : 'Corriger le stock'}
                     </Button>
                   </div>
 
                   <div className="p-4 border-t border-gray-100 bg-white">
                      <Button variant="outline" className="w-full h-12 rounded-xl text-xs font-black uppercase" onClick={() => setSelectedProductStat(null)}>Fermer</Button>
+                  </div>
+               </Card>
+            </div>,
+            document.body
+          )}
+
+          {isCorrectionModalOpen && createPortal(
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+               <Card className="w-full max-w-sm bg-white overflow-hidden shadow-2xl rounded-[2.5rem] border-0 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="px-6 pt-6 pb-4">
+                     <div className="flex items-center justify-between mb-4">
+                       <div>
+                         <h3 className="font-black text-xl text-gray-900">Corriger le stock</h3>
+                         <p className="text-xs font-black uppercase tracking-widest text-crousty-purple mt-1">{selectedProductStat.product.name}</p>
+                       </div>
+                       <button onClick={() => setIsCorrectionModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
+                         <X size={16} />
+                       </button>
+                     </div>
+                     <p className="text-xs text-gray-500 mb-6 font-medium">Ceci va remplacer la valeur pour ce produit dans le dernier inventaire.</p>
+                     
+                     <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                           <label className="block text-[10px] uppercase font-black tracking-widest text-gray-500 mb-2">Cartons</label>
+                           <Input 
+                             type="number"
+                             value={correctionCartons}
+                             onChange={(e: any) => setCorrectionCartons(e.target.value)}
+                             className="h-14 bg-gray-50 border-2 border-gray-100 rounded-2xl text-lg font-black text-center"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-[10px] uppercase font-black tracking-widest text-gray-500 mb-2">{selectedProductStat.product.uniteStock || 'Unités'}</label>
+                           <Input 
+                             type="number"
+                             value={correctionUnits}
+                             onChange={(e: any) => setCorrectionUnits(e.target.value)}
+                             className="h-14 bg-gray-50 border-2 border-gray-100 rounded-2xl text-lg font-black text-center"
+                           />
+                        </div>
+                     </div>
+                     
+                     <Button 
+                       onClick={saveCorrection}
+                       className="w-full h-14 bg-crousty-purple hover:bg-crousty-purple/90 text-white rounded-xl shadow-xl font-black text-sm transition-all"
+                     >
+                       <Check size={16} className="mr-2" /> Valider la correction
+                     </Button>
                   </div>
                </Card>
             </div>,
