@@ -111,6 +111,7 @@ export interface InventoryProduct {
   name: string;
   category: string;
   minThreshold: number;
+  fournisseur?: string;
   icon?: string;
   uniteStock?: string;
   uniteAchat?: string;

@@ -95,7 +95,7 @@ export const Sidebar = ({ currentView, setCurrentView, setShowSettings, showSett
           <div 
             ref={scrollRef}
             onScroll={checkScroll}
-            className="flex-1 overflow-y-auto py-6 px-4 space-y-2 no-scrollbar"
+            className="flex-1 overflow-y-auto py-6 px-4 space-y-2 no-scrollbar overscroll-contain touch-pan-y"
           >
             {navItems.map(item => {
               const Icon = item.icon;

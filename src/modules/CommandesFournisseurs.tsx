@@ -33,7 +33,7 @@ export default function CommandesFournisseurs() {
     const supplierGroups: Record<string, any[]> = {};
 
     for (const p of products) {
-      if (!p.fournisseur) continue;
+      const fournisseur = p.fournisseur || 'Non assigné';
 
       const lastCounted = newest.items[p.category]?.[p.name];
       if (lastCounted?.na === true) continue;
@@ -52,11 +52,12 @@ export default function CommandesFournisseurs() {
       const consumedSinceLast = avgPerDay * daysSinceLast;
       const realEstimatedNow = Math.max(0, stockAtLast + receivedSinceLast - consumedSinceLast);
 
-      const recommendedOrder = avgPerDay > 0 ? Math.max(0, Math.ceil((avgPerDay * 7) - realEstimatedNow)) : 0;
+      const targetStock = Math.max(Math.ceil(avgPerDay * 7), p.minThreshold || 0);
+      const recommendedOrder = Math.max(0, targetStock - Math.round(realEstimatedNow));
 
       if (recommendedOrder > 0) {
-        if (!supplierGroups[p.fournisseur]) {
-          supplierGroups[p.fournisseur] = [];
+        if (!supplierGroups[fournisseur]) {
+          supplierGroups[fournisseur] = [];
         }
         
         let orderCartons = 0;
@@ -67,7 +68,7 @@ export default function CommandesFournisseurs() {
           orderUnits = recommendedOrder % conv;
         }
 
-        supplierGroups[p.fournisseur].push({
+        supplierGroups[fournisseur].push({
           product: p,
           recommendedOrder,
           orderCartons,

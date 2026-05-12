@@ -159,6 +159,7 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
     name: '', 
     category: 'Frais', 
     minThreshold: '' as number | string, 
+    fournisseur: '',
     icon: 'Package',
     uniteStock: 'unité',
     uniteAchat: 'carton',
@@ -599,7 +600,7 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-1">
                     <Label className="flex items-center justify-between">
                       <span>Seuil d'alerte (Rupture)</span>
@@ -618,6 +619,15 @@ export const GererLesProduits = ({ onSave, onCancel }: { onSave?: () => void, on
                           </span>
                        )}
                     </div>
+                  </div>
+                  <div className="sm:col-span-1">
+                    <Label>Fournisseur associé</Label>
+                    <Input 
+                      value={productForm.fournisseur || ''} 
+                      onChange={(e: any) => setProductForm({...productForm, fournisseur: e.target.value})} 
+                      placeholder="Ex: Sysco, Pomona..." 
+                      className="bg-gray-50 font-bold"
+                    />
                   </div>
                 </div>
 

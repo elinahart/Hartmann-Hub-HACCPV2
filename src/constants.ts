@@ -7,11 +7,13 @@ export const APP_LAST_UPDATE = "12 Mai 2026";
 
 export const APP_CHANGELOG = [
   {
-    version: "3.2.1",
+    version: "3.5.0",
     date: "12 Mai 2026",
     changes: [
       "Tri Prédictif Intelligent : les catégories les plus pertinentes remontent automatiquement en haut de liste selon l'heure (matin/midi/soir).",
-      "Badges HACCP dynamiques : des pastilles rouges vous alertent sur le menu latéral quand une action est oubliée ou en retard."
+      "Badges HACCP dynamiques : des pastilles rouges vous alertent sur le menu latéral quand une action est oubliée ou en retard.",
+      "Correction des commandes : les produits sans fournisseur sont désormais listés sous 'Non assigné'.",
+      "Optimisation du scroll : correction du scroll de la barre latérale sur iPad."
     ]
   },
   {
