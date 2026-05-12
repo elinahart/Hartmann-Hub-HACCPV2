@@ -13,6 +13,7 @@ import ProductManager from './modules/ProductManager';
 import Viandes from './modules/Viandes';
 import Inventaire from './modules/Inventaire';
 import InventaireIntelligent from './modules/InventaireIntelligent';
+import CommandesFournisseurs from './modules/CommandesFournisseurs';
 import { MobileSessions } from './modules/MobileSessions';
 import { clearAllData, getStoredData } from './lib/db';
 import { QRScanner } from './components/QRScanner';
@@ -43,7 +44,7 @@ import { SyncIndicator } from './components/SyncIndicator';
 
 import { useI18n } from './lib/i18n';
 
-type View = 'dashboard' | 'receptions' | 'tracabilite' | 'prep' | 'temperatures' | 'desserts' | 'oil' | 'cleaning' | 'products' | 'viandes' | 'inventaire' | 'inventaire-intelligent' | 'sessions-mobiles';
+type View = 'dashboard' | 'receptions' | 'tracabilite' | 'prep' | 'temperatures' | 'desserts' | 'oil' | 'cleaning' | 'products' | 'viandes' | 'inventaire' | 'inventaire-intelligent' | 'sessions-mobiles' | 'orders';
 
 const Tile = ({ icon: Icon, title, badge, alert, status, statusColor = 'gray', onClick }: { icon: any, title: string, badge?: number, alert?: boolean, status?: React.ReactNode, statusColor?: string, onClick: () => void }) => {
   const getStatusColor = () => {
@@ -383,9 +384,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (currentView === 'dashboard') {
-      calculateProgress();
-    }
+    calculateProgress();
   }, [currentView]);
 
   if (mobileModeData) {
@@ -427,6 +426,7 @@ export default function App() {
       case 'inventaire': return t('nav_inventaire');
       case 'inventaire-intelligent': return t('nav_ai_manager') || 'IA Inventaire';
       case 'sessions-mobiles': return t('nav_mobile_sessions');
+      case 'orders': return t('nav_orders');
       default: return '';
     }
   };
@@ -445,6 +445,7 @@ export default function App() {
       case 'inventaire': return <Inventaire setIsSidebarCollapsed={setIsSidebarCollapsed} />;
       case 'inventaire-intelligent': return <InventaireIntelligent />;
       case 'sessions-mobiles': return <MobileSessions />;
+      case 'orders': return <CommandesFournisseurs />;
       default: return (
         <div className="p-4 space-y-6 max-w-4xl mx-auto relative w-full pb-20">
           {/* Header */}
@@ -675,6 +676,8 @@ export default function App() {
       )}
       <Sidebar 
           currentView={currentView} 
+          alerts={alerts}
+          dashboardStats={dashboardStats}
           setCurrentView={(view) => {
             setCurrentView(view);
             setIsMobileMenuOpen(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Input, Label, Button, Select } from '../components/ui/LightUI';
 import { getStoredData, setStoredData, savePhoto, deletePhoto, getPhoto } from '../lib/db';
-import { Camera, Trash2, Check, CheckCircle2, X, ImageIcon, Plus, Trash, Package, Search, ChevronRight } from 'lucide-react';
+import { Camera, Trash2, Check, CheckCircle2, X, ImageIcon, Plus, Trash, Package, Search, ChevronRight, AlertTriangle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { createSignature } from '../lib/permissions';
 import { SaisieActions } from '../components/SaisieActions';
@@ -116,6 +116,19 @@ const ReceptionCard = ({ e, confirmDelete, deleteId, setDeleteId, currentUser, o
           )}
         </div>
       )}
+
+      <div className="mt-3">
+        <Button
+          variant="outline"
+          className="w-full gap-2 text-xs text-red-600 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300"
+          onClick={() => {
+            const body = `Bonjour,\n\nNous rencontrons un problème suite à la réception du ${new Date(e.date).toLocaleDateString()}.\n\nFournisseur: ${e.fournisseur}\n\nProblème constaté: \n\nMerci de faire le nécessaire (Avoir/Remplacement).\n\nCordialement,`;
+            window.location.href = `mailto:?subject=Litige Réception - ${e.fournisseur}&body=${encodeURIComponent(body)}`;
+          }}
+        >
+          <AlertTriangle size={14} /> Signaler un Litige au {e.fournisseur}
+        </Button>
+      </div>
     </Card>
   );
 };

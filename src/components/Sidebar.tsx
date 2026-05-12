@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChefHat, Package, Thermometer, Flame, Sparkles, Tag, Droplet, ClipboardList, Archive, LogOut, Settings, ChevronLeft, ChevronRight, Home, X, Smartphone, QrCode, Brain } from 'lucide-react';
+import { ChefHat, Package, Thermometer, Flame, Sparkles, Tag, Droplet, ClipboardList, Archive, LogOut, Settings, ChevronLeft, ChevronRight, Home, X, Smartphone, QrCode, Brain, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfig } from '../contexts/ConfigContext';
 import { getInitials, getCouleurProfil } from '../lib/utils';
@@ -18,9 +18,11 @@ interface SidebarProps {
   setIsCollapsed: (collapsed: boolean) => void;
   isMobileOpen?: boolean;
   setIsMobileOpen?: (open: boolean) => void;
+  alerts?: any;
+  dashboardStats?: any;
 }
 
-export const Sidebar = ({ currentView, setCurrentView, setShowSettings, showSettings, isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }: SidebarProps) => {
+export const Sidebar = ({ currentView, setCurrentView, setShowSettings, showSettings, isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen, alerts, dashboardStats }: SidebarProps) => {
   const { currentUser, logout } = useAuth();
   const { config } = useConfig();
   const { t } = useI18n();
@@ -45,18 +47,21 @@ export const Sidebar = ({ currentView, setCurrentView, setShowSettings, showSett
     { id: 'dashboard', label: t('nav_dashboard'), icon: Home },
     ...(config.modules?.reception !== false ? [{ id: 'receptions', label: t('nav_receptions'), icon: Package }] : []),
     ...(config.modules?.traceabilite !== false ? [{ id: 'tracabilite', label: t('nav_tracabilite'), icon: QrCode }] : []),
-    ...(config.modules?.temperatures !== false ? [{ id: 'temperatures', label: t('nav_temperatures'), icon: Thermometer }] : []),
+    ...(config.modules?.temperatures !== false ? [{ id: 'temperatures', label: t('nav_temperatures'), icon: Thermometer, badge: alerts?.temps ? '1' : null, badgeColor: 'bg-red-500' }] : []),
     ...(config.modules?.cuisson !== false ? [{ id: 'viandes', label: t('nav_viandes'), icon: Flame }] : []),
-    ...(config.modules?.nettoyage !== false ? [{ id: 'cleaning', label: t('nav_cleaning'), icon: Sparkles }] : []),
-    ...(config.modules?.dlc !== false ? [{ id: 'desserts', label: t('nav_desserts'), icon: Tag }] : []),
+    ...(config.modules?.nettoyage !== false ? [{ id: 'cleaning', label: t('nav_cleaning'), icon: Sparkles, badge: alerts?.cleaning ? '1' : null, badgeColor: 'bg-orange-500' }] : []),
+    ...(config.modules?.dlc !== false ? [{ id: 'desserts', label: t('nav_desserts'), icon: Tag, badge: alerts?.dlcCount > 0 ? alerts.dlcCount.toString() : null, badgeColor: 'bg-red-500' }] : []),
     ...(config.modules?.preparations !== false ? [{ id: 'prep', label: t('nav_prep'), icon: ChefHat }] : []),
-    ...(config.modules?.huiles !== false ? [{ id: 'oil', label: t('nav_oil'), icon: Droplet }] : []),
+    ...(config.modules?.huiles !== false ? [{ id: 'oil', label: t('nav_oil'), icon: Droplet, badge: alerts?.oil ? '1' : null, badgeColor: 'bg-orange-500' }] : []),
     ...(config.modules?.inventaire !== false ? [
       { id: 'inventaire', label: t('nav_inventaire'), icon: ClipboardList },
       ...(currentUser?.role !== 'Invité' ? [{ id: 'inventaire-intelligent', label: 'IA Inventaire', icon: Brain }] : [])
     ] : []),
     ...(config.modules?.sessions !== false ? [{ id: 'sessions-mobiles', label: t('nav_mobile_sessions'), icon: Smartphone }] : []),
-    ...(currentUser?.role !== 'Invité' ? [{ id: 'products', label: t('nav_products'), icon: Archive }] : []),
+    ...(currentUser?.role !== 'Invité' ? [
+      { id: 'orders', label: t('nav_orders'), icon: ShoppingCart },
+      { id: 'products', label: t('nav_products'), icon: Archive }
+    ] : []),
   ];
 
   return (
@@ -110,8 +115,15 @@ export const Sidebar = ({ currentView, setCurrentView, setShowSettings, showSett
                       : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                   }`}
                 >
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
-                  {shownOnMobile && <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>}
+                  <div className="relative">
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                    {item.badge && (
+                      <span className={`absolute -top-1.5 -right-1.5 ${item.badgeColor || 'bg-red-500'} text-white text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full border-2 border-white pointer-events-none`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                  {shownOnMobile && <span className="whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-left">{item.label}</span>}
                 </button>
               )
             })}

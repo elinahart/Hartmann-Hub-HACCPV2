@@ -1,11 +1,27 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.1.2";
+export const APP_VERSION = "3.2.0";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
 export const APP_LAST_UPDATE = "12 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.2.1",
+    date: "12 Mai 2026",
+    changes: [
+      "Tri Prédictif Intelligent : les catégories les plus pertinentes remontent automatiquement en haut de liste selon l'heure (matin/midi/soir).",
+      "Badges HACCP dynamiques : des pastilles rouges vous alertent sur le menu latéral quand une action est oubliée ou en retard."
+    ]
+  },
+  {
+    version: "3.2.0",
+    date: "12 Mai 2026",
+    changes: [
+      "Nouveau module : Commandes Fournisseurs basé sur l'IA de l'inventaire !",
+      "Génération automatique de bons de commande PDF et brouillons d'e-mails par fournisseur."
+    ]
+  },
   {
     version: "3.1.2",
     date: "12 Mai 2026",

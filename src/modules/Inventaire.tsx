@@ -489,11 +489,49 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
     })
     .filter(([_, items]) => items.length > 0);
 
-  const totalFilteredCount = filteredCategoriesFull.reduce((sum, cat) => sum + cat[1].length, 0);
+  // Tri Prédictif & Favoris Intelligents
+  const currentHour = new Date().getHours();
+  const getCategoryWeight = (categoryName: string) => {
+    let weight = 0;
+    const lowerName = categoryName.toLowerCase();
+    
+    // Matin (avant 11h) -> Préparations Matin / Boulangerie en premier
+    if (currentHour < 11) {
+      if (lowerName.includes('matin') || lowerName.includes('boulangerie') || lowerName.includes('viennoiserie') || lowerName.includes('petit')) {
+        weight += 100;
+        weight += 100;
+      }
+    } 
+    // Midi (11h - 14h) -> Rush midi (frites, viandes)
+    else if (currentHour >= 11 && currentHour <= 14) {
+      if (lowerName.includes('frite') || lowerName.includes('viande') || lowerName.includes('sauce') || lowerName.includes('boisson') || lowerName.includes('pains')) {
+        weight += 100;
+      }
+    }
+    // Soir (après 18h) -> Clôture / Soir / Emballage
+    else if (currentHour >= 18) {
+      if (lowerName.includes('soir') || lowerName.includes('clôture') || lowerName.includes('emballage') || lowerName.includes('carton') || lowerName.includes('dessert')) {
+        weight += 100;
+      }
+    }
+    return weight;
+  };
+
+  const sortedCategoriesFull = [...filteredCategoriesFull].sort((a, b) => {
+    const weightA = getCategoryWeight(a[0]);
+    const weightB = getCategoryWeight(b[0]);
+    
+    if (weightA !== weightB) {
+      return weightB - weightA; // Higher weight first
+    }
+    return a[0].localeCompare(b[0]);
+  });
+
+  const totalFilteredCount = sortedCategoriesFull.reduce((sum, cat) => sum + cat[1].length, 0);
 
   const paginatedCategories = [];
   let remainingCount = visibleCount;
-  for (const [cat, items] of filteredCategoriesFull) {
+  for (const [cat, items] of sortedCategoriesFull) {
     if (remainingCount <= 0) break;
     if (items.length <= remainingCount) {
       paginatedCategories.push([cat, items]);

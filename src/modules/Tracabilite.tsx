@@ -93,13 +93,51 @@ export default function Tracabilite() {
   }, [sortedProducts, searchTerm]);
 
   const groupedProducts = useMemo(() => {
+    // Tri Prédictif & Favoris Intelligents
+    const currentHour = new Date().getHours();
+    const getCategoryWeight = (categoryName: string) => {
+      let weight = 0;
+      const lowerName = categoryName.toLowerCase();
+      
+      // Matin (avant 11h) -> Préparations Matin / Boulangerie en premier
+      if (currentHour < 11) {
+        if (lowerName.includes('matin') || lowerName.includes('boulangerie') || lowerName.includes('viennoiserie') || lowerName.includes('petit')) {
+          weight += 100;
+          weight += 100;
+        }
+      } 
+      // Midi (11h - 14h) -> Rush midi (frites, viandes)
+      else if (currentHour >= 11 && currentHour <= 14) {
+        if (lowerName.includes('frite') || lowerName.includes('viande') || lowerName.includes('sauce') || lowerName.includes('boisson') || lowerName.includes('pains')) {
+          weight += 100;
+        }
+      }
+      // Soir (après 18h) -> Clôture / Soir / Emballage
+      else if (currentHour >= 18) {
+        if (lowerName.includes('soir') || lowerName.includes('clôture') || lowerName.includes('emballage') || lowerName.includes('carton') || lowerName.includes('dessert')) {
+          weight += 100;
+        }
+      }
+      return weight;
+    };
+
     const groups: Record<string, typeof sortedProducts> = {};
     filteredProducts.forEach(p => {
       const cat = p.category || 'Non classé';
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(p);
     });
-    return groups;
+
+    const entries = Object.entries(groups).sort((a, b) => {
+      const weightA = getCategoryWeight(a[0]);
+      const weightB = getCategoryWeight(b[0]);
+      if (weightA !== weightB) {
+        return weightB - weightA;
+      }
+      return a[0].localeCompare(b[0]);
+    });
+
+    return Object.fromEntries(entries);
   }, [filteredProducts]);
 
   useEffect(() => {
