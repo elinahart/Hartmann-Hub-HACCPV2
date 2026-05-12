@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Button } from '../components/ui/LightUI';
-import { getStoredData } from '../lib/db';
+import { Card, Button, Input } from '../components/ui/LightUI';
+import { getStoredData, setStoredData } from '../lib/db';
 import { useInventaire } from '../providers/InventaireProvider';
 import { useAuth } from '../contexts/AuthContext';
-import { Brain, TrendingUp, AlertTriangle, ArrowRight, Package, TrendingDown, Clock, Search, X, Edit2, Calendar, FileText, Lock } from 'lucide-react';
+import { Brain, TrendingUp, AlertTriangle, ArrowRight, Package, TrendingDown, Clock, Search, X, Edit2, Calendar, FileText, Lock, Check } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { InventoryProduct } from '../types';
@@ -572,8 +572,8 @@ export default function InventaireIntelligent() {
             document.body
           )}
 
-          {isCorrectionModalOpen && createPortal(
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          {isCorrectionModalOpen && selectedProductStat && createPortal(
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[7000] flex items-center justify-center p-4">
                <Card className="w-full max-w-sm bg-white overflow-hidden shadow-2xl rounded-[2.5rem] border-0 animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-6 pt-6 pb-4">
                      <div className="flex items-center justify-between mb-4">

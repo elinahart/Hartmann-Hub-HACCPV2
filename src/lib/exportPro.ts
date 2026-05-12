@@ -1114,11 +1114,11 @@ export const generateProPDF = async (options: ExportOptions) => {
               doc.setFont("helvetica", "bold");
               doc.text(`Réf Image: ${item._photoRef}`, xOffset, yOffset + imgHeight + 4);
               doc.setFont("helvetica", "normal");
-              doc.text(`Prdt: ${item.produit}`, xOffset, yOffset + imgHeight + 8);
-              doc.text(`Lot: ${item.numeroLot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 12);
+              doc.text(`Prdt: ${item.produit || item.ingredient || ''}`, xOffset, yOffset + imgHeight + 8);
+              doc.text(`Lot: ${item.numeroLot || item.lot || ''} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 12);
             } else {
-              doc.text(`Produit: ${item.produit}`, xOffset, yOffset + imgHeight + 4);
-              doc.text(`Lot: ${item.numeroLot} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 8);
+              doc.text(`Produit: ${item.produit || item.ingredient || ''}`, xOffset, yOffset + imgHeight + 4);
+              doc.text(`Lot: ${item.numeroLot || item.lot || ''} - Le: ${format(new Date(item.date), 'dd/MM/yy')}`, xOffset, yOffset + imgHeight + 8);
             }
             
             xOffset += imgWidth + 10;
