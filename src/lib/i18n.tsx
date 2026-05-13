@@ -227,10 +227,16 @@ const translations = {
     nav_inventaire: "Inventory",
     nav_mobile_sessions: "Mobile Sessions",
     nav_products: "Catalog",
+    nav_ai_inventory: "AI Inventory",
     nav_orders: "Orders",
     nav_logout: "Log out",
+    nav_menu: "Menu",
     nav_settings: "Settings",
     nav_profile: "My Profile",
+    nav_group_main: "Main",
+    nav_group_checklists: "Field Checklists",
+    nav_group_inventory: "Inventory & Stocks",
+    nav_group_tools: "Tools",
 
     // Common
     btn_validate: "Validate",
@@ -621,10 +627,16 @@ const translations = {
     nav_inventaire: "Inventaire",
     nav_mobile_sessions: "Sessions Mobiles",
     nav_products: "Catalogue",
+    nav_ai_inventory: "IA Inventaire",
     nav_orders: "Commandes",
     nav_logout: "Me déconnecter",
+    nav_menu: "Menu",
     nav_settings: "Paramètres",
     nav_profile: "Mon Profil",
+    nav_group_main: "Principal",
+    nav_group_checklists: "Checklists Terrain",
+    nav_group_inventory: "Inventaire & Stocks",
+    nav_group_tools: "Outils",
 
     // Common
     btn_validate: "Valider",

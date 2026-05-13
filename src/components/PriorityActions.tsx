@@ -985,40 +985,55 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
 
   return (
     <>
-      <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-gray-100">
-        <h2 className="font-black text-gray-800 mb-4 flex items-center gap-2 uppercase tracking-tight text-sm">
-          <Flame size={18} className="text-crousty-pink" /> 
-          {t('lbl_priority_actions')} ({actions.length})
-        </h2>
-        
-        <div className="flex flex-col gap-2">
-          {actions.map((act) => {
-            const isCrit = act.niveau === 'critique';
-            const isUrg = act.niveau === 'urgent';
-            return (
-              <button
-                key={act.id}
-                onClick={() => setSelectedAction(act)}
-                className={`w-full text-left px-5 py-4 rounded-2xl flex items-center justify-between border active:scale-[0.98] transition-transform
-                  ${isCrit ? 'bg-[#FFF5F5] border-[#FECACA]' : isUrg ? 'bg-[#FFFBEB] border-[#FDE68A]' : 'bg-[#F3F4F6] border-[#E5E7EB]'}
-                `}
-              >
-                <div className="flex items-center gap-3 w-full">
-                  <div className={`shrink-0 ${isCrit ? 'text-[#DC2626]' : isUrg ? 'text-[#D97706]' : 'text-gray-500'}`}>
-                    {act.icon}
-                  </div>
-                  <span className={`font-black flex-1 pr-4 min-w-0 truncate ${isCrit ? 'text-[#DC2626]' : isUrg ? 'text-[#D97706]' : 'text-gray-700'}`}>
-                    {act.label}
-                  </span>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isCrit ? 'bg-[#FEE2E2] text-[#DC2626]' : isUrg ? 'bg-[#FEF3C7] text-[#D97706]' : 'bg-gray-200 text-gray-600'}`}>
-                    <ChevronRight size={18} />
-                  </div>
-                </div>
-              </button>
-            )
-          })}
-        </div>
+      <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-50">
+      <h2 className="px-1 text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center justify-between">
+        <span>{t('lbl_priority_actions') || 'Actions Prioritaires'}</span>
+        <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-[10px]">{actions.length}</span>
+      </h2>
+      
+      <div className="flex flex-col gap-3">
+        {actions.map((act) => {
+          const isCrit = act.niveau === 'critique';
+          const isUrg = act.niveau === 'urgent';
+          
+          return (
+            <motion.button
+              key={act.id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setSelectedAction(act)}
+              className={`w-full text-left p-4 rounded-3xl flex items-center gap-4 border transition-all active:shadow-inner group relative overflow-hidden
+                ${isCrit ? 'bg-red-50/50 border-red-100' : isUrg ? 'bg-orange-50/50 border-orange-100' : 'bg-blue-50/50 border-blue-100'}
+              `}
+            >
+              <div className={`p-3 rounded-2xl shrink-0 ${
+                isCrit ? 'bg-red-500 text-white shadow-lg shadow-red-200' : 
+                isUrg ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 
+                'bg-blue-500 text-white shadow-lg shadow-blue-200'
+              }`}>
+                {act.icon}
+              </div>
+              
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-0.5 ${
+                  isCrit ? 'text-red-900' : isUrg ? 'text-orange-900' : 'text-blue-900'
+                }`}>
+                  {isCrit ? t('prio_critical') : isUrg ? t('prio_urgent') : t('prio_info')}
+                </span>
+                <span className={`text-sm font-black tracking-tight leading-tight truncate ${
+                  isCrit ? 'text-red-950' : isUrg ? 'text-orange-950' : 'text-blue-950'
+                }`}>
+                  {act.label}
+                </span>
+              </div>
+
+              <div className="w-8 h-8 rounded-full bg-white/50 border border-white flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform">
+                <ChevronRight size={18} className="text-gray-400" />
+              </div>
+            </motion.button>
+          )
+        })}
       </div>
+    </div>
 
       <Modal
         isOpen={!!selectedAction}

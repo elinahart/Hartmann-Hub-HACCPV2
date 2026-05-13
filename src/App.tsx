@@ -2,7 +2,8 @@ import { useAuth } from './contexts/AuthContext';
 import { LoginScreen } from './components/LoginScreen';
 import { ForceChangePinScreen } from './components/ForceChangePinScreen';
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, ChefHat, Thermometer, Tag, Droplet, Sparkles, ArrowLeft, Settings, Trash2, Home, ClipboardList, Clock, User, ScanBarcode, QrCode, Download, Archive, Flame, X, AlertTriangle, Smartphone } from 'lucide-react';
+import { Package, ChefHat, Thermometer, Tag, Droplet, Sparkles, ArrowLeft, Settings, Trash2, Home, ClipboardList, Clock, User, ScanBarcode, QrCode, Download, Archive, Flame, X, AlertTriangle, Smartphone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from './lib/utils';
 import Receptions from './modules/Receptions';
 import PrepSauces from './modules/PrepSauces';
 import TemperaturesChecklist from './modules/TemperaturesChecklist';
@@ -62,22 +63,33 @@ const Tile = ({ icon: Icon, title, badge, alert, status, statusColor = 'gray', o
   return (
     <motion.button 
       whileTap={{ scale: 0.95 }}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick} 
-      className={`bg-white rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 sm:gap-3 relative shadow-[0_4px_20px_rgba(0,0,0,0.04)] border ${alert ? 'border-l-4 border-l-red-500 border-y-gray-100 border-r-gray-100' : 'border-gray-100'} text-center aspect-square`}
+      className={`bg-white rounded-3xl p-4 sm:p-5 flex flex-col items-center justify-center gap-3 relative shadow-sm border ${alert ? 'ring-2 ring-red-500' : 'border-gray-100'} text-center aspect-square transition-all hover:shadow-md active:bg-gray-50 group overflow-hidden`}
     >
       {badge ? (
-        <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md ${alert ? 'bg-red-500' : 'bg-[var(--color-primary)]'}`}>
+        <div className={`absolute top-2 right-2 min-w-[20px] h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-sm px-1.5 ${alert ? 'bg-red-500' : 'bg-[var(--color-primary)]'}`}>
           {badge}
         </div>
       ) : null}
-      <Icon className="text-[var(--color-primary)] w-6 h-6 sm:w-8 sm:h-8" strokeWidth={1.5} />
-      <div className="font-black text-gray-800 leading-tight text-sm sm:text-base">{title}</div>
+      
+      <div className="p-3 bg-gray-50 rounded-2xl group-hover:bg-white transition-colors">
+        <Icon className="text-[var(--color-primary)] w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.5} />
+      </div>
+
+      <div className="font-black text-gray-900 tracking-tight text-xs sm:text-sm leading-tight px-1 flex-1 flex items-center justify-center overflow-hidden">
+        {title}
+      </div>
+      
       {status && (
-        <div className={`mt-auto text-[9px] sm:text-[10px] md:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md border w-full max-w-full truncate ${getStatusColor()}`}>
+        <div className={`mt-auto text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border w-full truncate ${getStatusColor()}`}>
           {status}
         </div>
+      )}
+
+      {alert && (
+        <div className="absolute inset-0 bg-red-500/5 pointer-events-none" />
       )}
     </motion.button>
   );
@@ -449,125 +461,123 @@ export default function App() {
       case 'sessions-mobiles': return <MobileSessions />;
       case 'orders': return <CommandesFournisseurs />;
       default: return (
-        <div className="p-4 space-y-6 max-w-4xl mx-auto relative w-full pb-20">
-          {/* Header */}
-          <header className="px-6 py-8 mb-6 bg-white border-b border-gray-100 rounded-b-[2rem] shadow-sm">
-            <div className="max-w-5xl mx-auto">
-              <div className="flex items-center justify-between gap-6">
-                <div className="flex items-center gap-5 min-w-0">
-                  <button 
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="md:hidden w-11 h-11 flex items-center justify-center bg-gray-50 border border-gray-100 rounded-xl text-gray-500 shrink-0 shadow-sm"
-                  >
-                    <div className="flex flex-col gap-1.5">
-                       <div className="w-5 h-0.5 bg-current rounded-full"></div>
-                       <div className="w-4 h-0.5 bg-current rounded-full"></div>
-                       <div className="w-5 h-0.5 bg-current rounded-full"></div>
-                    </div>
-                  </button>
-                  
-                  <div className="hidden md:block shrink-0">
-                    <RestaurantLogo 
-                      size="sm" 
-                      showText 
-                      layout="vertical" 
-                      className="p-1.5 rounded-2xl bg-white shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100" 
-                    />
+        <div className="space-y-4 md:space-y-6 max-w-6xl mx-auto w-full pb-24 h-full">
+          {/* Main Dashboard UI for Mobile First */}
+          <header className="px-5 pt-8 pb-6 bg-white border-b border-gray-100 rounded-b-[2.5rem] shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)]/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
+            
+            <div className="relative">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">
+                      {currentUser?.role === 'manager' ? (t('role_admin_manager') || 'Admin / Manager') : (t('role_field_team') || 'Équipe Terrain')}
+                    </p>
                   </div>
-
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        {currentUser?.role === 'manager' ? (t('role_admin_manager') || 'Admin / Manager') : (t('role_field_team') || 'Équipe Terrain')}
-                      </p>
-                    </div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight truncate leading-none">
-                      {new Date().getHours() >= 18 ? t('dashboard_good_evening') : t('dashboard_good_morning')} {currentUser?.name}
-                    </h1>
-                    <div className="flex items-center gap-2 mt-2">
-                       <span className="text-[11px] font-bold text-gray-400">{format(new Date(), 'EEEE d MMMM yyyy', { locale: language === 'en' ? enUS : fr })}</span>
-                    </div>
-                  </div>
+                  <h1 className="text-2xl font-black text-gray-900 tracking-tight truncate leading-tight">
+                    {new Date().getHours() >= 18 ? t('dashboard_good_evening') : t('dashboard_good_morning')} <span className="text-[var(--color-primary)]">{currentUser?.name}</span>
+                  </h1>
                 </div>
                 
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="p-1 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-1">
+                <UserMenu />
+              </div>
+
+              <div className="flex items-center gap-3 overflow-x-auto no-scrollbar -mx-2 px-2">
+                <div className="flex items-center bg-gray-50 p-1 rounded-2xl border border-gray-100/50">
+                  <button 
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="md:hidden h-11 px-4 flex items-center justify-center gap-2 text-gray-700 bg-white shadow-sm border border-gray-100 rounded-xl"
+                  >
+                    <div className="flex flex-col gap-1">
+                       <div className="w-4 h-0.5 bg-current rounded-full"></div>
+                       <div className="w-3 h-0.5 bg-current rounded-full"></div>
+                       <div className="w-4 h-0.5 bg-current rounded-full"></div>
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-wider">{t('nav_menu') || 'Menu'}</span>
+                  </button>
+                  
+                  <div className="h-4 w-[1px] bg-gray-200 mx-2 md:hidden" />
+
+                  <button 
+                    onClick={() => setCurrentView('sessions-mobiles')}
+                    className="h-11 px-4 flex items-center justify-center gap-2 text-slate-600 hover:text-[var(--color-primary)] transition-all bg-transparent rounded-xl group"
+                  >
+                    <Smartphone size={18} className="group-hover:scale-110 transition-transform" />
+                    <span className="font-black text-[10px] uppercase tracking-widest whitespace-nowrap">{t('dashboard_mobile_btn')}</span>
+                  </button>
+
+                  {currentUser?.role === 'manager' && (
                     <button 
-                      onClick={() => setCurrentView('sessions-mobiles')}
-                      className="h-12 px-5 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-900 hover:border-[var(--color-secondary)] hover:text-[var(--color-secondary)] transition-all shadow-sm active:scale-95 gap-3 group"
-                      title={t('nav_mobile_sessions')}
+                      onClick={() => setIsExportModalOpen(true)}
+                      className="h-11 px-4 flex items-center justify-center text-slate-400 hover:text-[var(--color-primary)] transition-all bg-transparent rounded-xl"
                     >
-                      <Smartphone size={20} className="group-hover:scale-110 transition-transform" />
-                      <span className="font-black text-xs uppercase tracking-widest hidden sm:block">{t('dashboard_mobile_btn')}</span>
+                      <Download size={18} />
                     </button>
-                    
-                    {currentUser?.role === 'manager' && (
-                      <button 
-                        onClick={() => setIsExportModalOpen(true)}
-                        className="w-12 h-12 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all shadow-sm active:scale-95"
-                        title={t('dashboard_download_zip')}
-                      >
-                        <Download size={20} />
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="h-14 w-[1px] bg-slate-100 mx-2 hidden md:block" />
-                  
-                  <UserMenu />
+                  )}
                 </div>
               </div>
             </div>
           </header>
           
-          <PredictiveAlerts />
-          
-          {/* Actions Prioritaires Re-vamp */}
-          <ActionPrioritaireList currentUser={currentUser} onNavigate={setCurrentView} onUpdateStats={calculateProgress} />
-
-          {/* Timeline d'activité */}
-          <Timeline />
-
-          {/* Progress & KPIs combined horizontally for iPad */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-             <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50 flex items-center gap-6 md:w-1/2">
-                <div className="relative w-28 h-28 shrink-0">
-                  <svg className="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#E2E8F0" strokeWidth="8" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#c2f000" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * dailyProgress) / 100} strokeLinecap="round" className="transition-all duration-1000 ease-out" />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-gray-800 tracking-tighter">{dailyProgress}%</span>
-                    <span className="text-[9px] text-gray-400 uppercase font-bold tracking-widest mt-1">{t('dashboard_day_progress')}</span>
+          <main className="px-5 space-y-6">
+            <PredictiveAlerts />
+            
+            {/* Stats Overview - More compact on mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-50 flex items-center gap-6">
+                  <div className="relative w-24 h-24 shrink-0">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="42" fill="transparent" stroke="#F1F5F9" strokeWidth="10" />
+                      <circle cx="50" cy="50" r="42" fill="transparent" stroke={dailyProgress > 99 ? "#10B981" : "var(--color-primary)"} strokeWidth="10" strokeDasharray="263.9" strokeDashoffset={263.9 - (263.9 * dailyProgress) / 100} strokeLinecap="round" className="transition-all duration-1000 ease-out" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-black text-gray-900 tracking-tighter">{dailyProgress}%</span>
+                      <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest">{t('dashboard_day_progress')}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col gap-2 flex-1">
-                  <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                    <span className="text-[10px] text-green-600 font-bold uppercase block mb-0.5">{t('dashboard_tasks_planned')}</span>
-                    <span className="text-lg font-black text-green-700">{kpiData.tasksDone} <span className="text-xs font-medium text-green-600/60">/ 5</span></span>
+                  
+                  <div className="grid grid-cols-1 gap-2 flex-1">
+                    <div className="bg-green-50/50 rounded-2xl p-3 border border-green-100/50 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-green-600 font-black uppercase tracking-wider">{t('dashboard_tasks_planned')}</span>
+                        <span className="text-xl font-black text-green-700 leading-none mt-1">{kpiData.tasksDone} <span className="text-xs font-bold text-green-600/40">/ 5</span></span>
+                      </div>
+                      <div className={cn("w-2 h-2 rounded-full", kpiData.tasksDone >= 5 ? "bg-green-500" : "bg-gray-200")} />
+                    </div>
+                    <div className="bg-gray-50/50 rounded-2xl p-3 border border-gray-200/50">
+                      <span className="text-[9px] text-gray-400 font-black uppercase tracking-wider">{t('dashboard_tasks_remaining')}</span>
+                      <span className="text-xl font-black text-gray-600 leading-none mt-1">{kpiData.tasksRemaining}</span>
+                    </div>
                   </div>
-                  <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
-                    <span className="text-[10px] text-orange-600 font-bold uppercase block mb-0.5">{t('dashboard_tasks_remaining')}</span>
-                    <span className="text-lg font-black text-orange-700">{kpiData.tasksRemaining}</span>
-                  </div>
-                </div>
-             </div>
-
-             <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50 flex flex-col justify-between md:w-1/2 gap-4">
-               <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard_last_action')}</h3>
-                  <div className="font-black text-xl text-gray-800">{kpiData.lastAction}</div>
                </div>
-               <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard_last_temp')}</h3>
-                  <div className="font-black text-xl text-crousty-purple">{kpiData.lastTemp}</div>
-               </div>
-             </div>
-          </div>
 
-          {/* Grid Modules */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+               <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-50 grid grid-cols-2 gap-6 divide-x divide-gray-100">
+                 <div className="flex flex-col justify-center">
+                    <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                       <Clock size={12} /> {t('dashboard_last_action')}
+                    </h3>
+                    <div className="font-black text-lg text-gray-900 tracking-tight">{kpiData.lastAction}</div>
+                 </div>
+                 <div className="flex flex-col justify-center pl-6">
+                    <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                       <Thermometer size={12} /> {t('dashboard_last_temp')}
+                    </h3>
+                    <div className="font-black text-lg text-[var(--color-primary)] tracking-tight">{kpiData.lastTemp}</div>
+                 </div>
+               </div>
+            </div>
+
+            {/* Actions Prioritaires */}
+            <ActionPrioritaireList currentUser={currentUser} onNavigate={setCurrentView} onUpdateStats={calculateProgress} />
+
+            {/* Grid Modules - Better spacing on mobile */}
+            <div>
+              <div className="flex items-center justify-between mb-4 px-2">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">{t('nav_group_checklists') || 'Modules Checklist'}</h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                {/* ... existing tiles ... */}
             {config.modules?.reception !== false && (
               <Tile 
                 icon={Package} 
@@ -660,28 +670,19 @@ export default function App() {
               onClick={() => setCurrentView('products')} 
             />
           </div>
-
-          {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
-          <ExportModal 
-            isOpen={isExportModalOpen} 
-            onClose={() => setIsExportModalOpen(false)} 
-          />
-          <ArchiveManager />
-          <MobileSyncModal 
-            isOpen={isMobileSyncModalOpen} 
-            onClose={() => setIsMobileSyncModalOpen(false)} 
-          />
         </div>
-      );
-    }
-  };
+      </main>
+    </div>
+  );
+}
+};
 
   return (
     <SessionManager>
     <ManagerUIProvider setForceCollapsedSidebar={setIsForceCollapsed}>
-    <div id="app-wrapper" className={`h-[100dvh] overflow-hidden flex bg-slate-50 text-gray-800 font-sans transition-all duration-[280ms] cubic-bezier(0.4, 0, 0.2, 1) ${isSidebarCollapsed || isForceCollapsed ? 'md:pl-[64px]' : 'md:pl-[250px]'}`}>
+    <div id="app-wrapper" className={`h-[100dvh] overflow-hidden flex bg-slate-50 text-gray-800 font-sans transition-all duration-[400ms] cubic-bezier(0.4, 0, 0.2, 1) ${isSidebarCollapsed || isForceCollapsed ? 'md:pl-[80px]' : 'md:pl-[280px]'}`}>
       {currentUser?.role === 'manager' && (
-        <div className="fixed top-0 left-0 right-0 h-[2px] bg-crousty-pink z-[9999] pointer-events-none" style={{ backgroundColor: 'var(--color-primary)' }} />
+        <div className="fixed top-0 left-0 right-0 h-[3px] bg-[var(--color-primary)] z-[9999] pointer-events-none opacity-50" />
       )}
       <Sidebar 
           currentView={currentView} 
@@ -698,7 +699,7 @@ export default function App() {
           isMobileOpen={isMobileMenuOpen}
           setIsMobileOpen={setIsMobileMenuOpen}
        />
-      <div className="flex-1 relative flex flex-col min-w-0 h-[100dvh] overflow-y-auto overflow-x-hidden content-scroll-container">
+      <div className="flex-1 relative flex flex-col min-w-0 h-[100dvh] overflow-y-auto overflow-x-hidden content-scroll-container bg-white md:bg-transparent">
         {isPersistent === false && (
           <div className="bg-red-50 border-b border-red-200 p-3 px-4 flex items-start gap-3">
             <span className="text-xl leading-none">⚠️</span>
@@ -768,6 +769,21 @@ export default function App() {
       {isCustomizationModalOpen && (
         <CustomizationModal initialTab={customizationInitialTab} onClose={() => setIsCustomizationModalOpen(false)} />
       )}
+      
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      
+      <ExportModal 
+        isOpen={isExportModalOpen} 
+        onClose={() => setIsExportModalOpen(false)} 
+      />
+      
+      <ArchiveManager />
+      
+      <MobileSyncModal 
+        isOpen={isMobileSyncModalOpen} 
+        onClose={() => setIsMobileSyncModalOpen(false)} 
+      />
+
       <SyncIndicator />
     </div>
     </div>

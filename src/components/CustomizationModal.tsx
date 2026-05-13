@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useI18n } from '../lib/i18n';
 import { createPortal } from 'react-dom';
-import { X, Store, Thermometer, Droplets, Sparkles, BookOpen, Users, UploadCloud, Shield, Box, Printer, Smartphone, Settings, Flame, CheckCircle2 } from 'lucide-react';
+import { X, Store, Thermometer, Droplets, Sparkles, BookOpen, Users, UploadCloud, Shield, Box, Printer, Smartphone, Settings, Flame, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion } from 'motion/react';
+import { cn } from '../lib/utils';
 import { useConfig } from '../contexts/ConfigContext';
 import { Button, Input, Label } from './ui/LightUI';
 
@@ -62,63 +64,113 @@ export const CustomizationModal = ({ onClose, initialTab = 'identite' }: { onClo
     { id: 'audit', label: 'Journal d\'Audit', icon: <BookOpen size={18} /> },
   ];
 
+  const [showMobileMenu, setShowMobileMenu] = useState(true);
+
+  useEffect(() => {
+    // If we change tab on mobile, show the content and hide menu
+    if (activeTab) {
+      setShowMobileMenu(false);
+    }
+  }, [activeTab]);
+
   return createPortal(
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-7xl h-[90dvh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
-          <h2 className="text-xl font-black text-gray-800 flex items-center gap-3">
-            <Settings className="text-gray-400" size={24} /> 
-            Configuration Restaurant
-          </h2>
-          <button onClick={onClose} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
-            <X size={24} />
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[300] flex items-center justify-center sm:p-4">
+      <div className="bg-white sm:rounded-[3rem] w-full max-w-7xl h-full sm:h-[90dvh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+          <div className="flex items-center gap-3">
+            {!showMobileMenu && (
+              <button 
+                onClick={() => setShowMobileMenu(true)}
+                className="md:hidden p-2 -ml-2 bg-gray-50 text-gray-500 rounded-full"
+              >
+                <ChevronLeft size={20} />
+              </button>
+            )}
+            <h2 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+              <Settings className="text-[var(--color-primary)]" size={20} /> 
+              {showMobileMenu ? 'Paramètres' : tabs.find(t => t.id === activeTab)?.label}
+            </h2>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+            <X size={20} />
           </button>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar Tabs */}
-          <div className="w-64 bg-gray-50 border-r border-gray-100 p-4 overflow-y-auto shrink-0 flex flex-col gap-2">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl w-full text-left font-bold transition-all ${
-                  activeTab === tab.id 
-                    ? 'bg-white text-crousty-purple shadow-sm border border-gray-100' 
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
+        <div className="flex flex-1 overflow-hidden relative">
+          {/* Sidebar / Menu List */}
+          <div className={`
+            absolute inset-0 z-10 bg-gray-50 md:relative md:translate-x-0 md:w-72 md:flex border-r border-gray-100 overflow-y-auto transition-transform duration-300
+            ${showMobileMenu ? 'translate-x-0' : '-translate-x-full'}
+          `}>
+            <div className="p-4 w-full space-y-1.5">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setShowMobileMenu(false);
+                  }}
+                  className={`flex items-center justify-between px-4 py-4 rounded-[1.25rem] w-full text-left font-black transition-all group ${
+                    activeTab === tab.id 
+                      ? 'bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/20 shadow-md translate-x-1' 
+                      : 'bg-white md:bg-transparent text-gray-500 hover:bg-white hover:text-gray-900 border border-gray-100/50 md:border-transparent'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn("p-2 rounded-xl transition-colors", activeTab === tab.id ? "bg-white/20" : "bg-gray-100 group-hover:bg-white")}>
+                      {React.cloneElement(tab.icon as React.ReactElement, { size: 18 })}
+                    </div>
+                    <span className="text-sm tracking-tight">{tab.label}</span>
+                  </div>
+                  <ChevronRight size={16} className={cn("transition-opacity", activeTab === tab.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100")} />
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 p-8 overflow-y-auto bg-white">
-            {activeTab === 'identite' && <IdentiteTab />}
-            {activeTab === 'modules' && <ModulesTab />}
-            {activeTab === 'receptions' && <ReceptionsTab />}
-            {activeTab === 'temperatures' && <TemperaturesTab />}
-            {activeTab === 'cuisson' && <CuissonTab />}
-            {activeTab === 'huiles' && <HuilesTab />}
-            {activeTab === 'nettoyage' && <NettoyageTab />}
-            {activeTab === 'produits' && <ProduitsTab />}
-            {activeTab === 'inventaire' && <InventaireTab />}
-            {activeTab === 'equipe' && <EquipeTab />}
-            {activeTab === 'sessions' && <SessionsTab />}
-            {activeTab === 'impression' && <ImpressionTab />}
-            {activeTab === 'audit' && <AuditTab />}
-            {activeTab === 'securite_stockage' && (
-              <div className="space-y-12">
-                <div>
-                  <h3 className="text-2xl font-black text-gray-800 mb-6 pb-2 border-b border-gray-100">Contrôle d'accès</h3>
-                  <SecuriteTab onCloseModal={onClose} />
+          <div className={`
+            flex-1 overflow-y-auto bg-white p-6 sm:p-10 scroll-smooth
+            ${!showMobileMenu ? 'block' : 'hidden md:block'}
+          `}>
+             <div className="max-w-4xl mx-auto">
+                <div className="mb-8 hidden md:block">
+                  <h3 className="text-3xl font-black text-gray-900 tracking-tighter mb-2">
+                    {tabs.find(t => t.id === activeTab)?.label}
+                  </h3>
+                  <div className="h-1.5 w-12 bg-[var(--color-primary)] rounded-full" />
                 </div>
-                <div>
-                   <SecurityStorageSection />
-                </div>
-              </div>
-            )}
+
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {activeTab === 'identite' && <IdentiteTab />}
+                  {activeTab === 'modules' && <ModulesTab />}
+                  {activeTab === 'receptions' && <ReceptionsTab />}
+                  {activeTab === 'temperatures' && <TemperaturesTab />}
+                  {activeTab === 'cuisson' && <CuissonTab />}
+                  {activeTab === 'huiles' && <HuilesTab />}
+                  {activeTab === 'nettoyage' && <NettoyageTab />}
+                  {activeTab === 'produits' && <ProduitsTab />}
+                  {activeTab === 'inventaire' && <InventaireTab />}
+                  {activeTab === 'equipe' && <EquipeTab />}
+                  {activeTab === 'sessions' && <SessionsTab />}
+                  {activeTab === 'impression' && <ImpressionTab />}
+                  {activeTab === 'audit' && <AuditTab />}
+                  {activeTab === 'securite_stockage' && (
+                    <div className="space-y-16">
+                      <div className="bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100">
+                        <h3 className="text-2xl font-black text-gray-900 mb-6">Contrôle d'accès</h3>
+                        <SecuriteTab onCloseModal={onClose} />
+                      </div>
+                      <SecurityStorageSection />
+                    </div>
+                  )}
+                </motion.div>
+             </div>
           </div>
         </div>
       </div>
