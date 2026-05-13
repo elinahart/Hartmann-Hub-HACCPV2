@@ -66,7 +66,7 @@ const Tile = ({ icon: Icon, title, badge, alert, status, statusColor = 'gray', o
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick} 
-      className={`bg-white rounded-3xl p-4 sm:p-5 flex flex-col items-center justify-center gap-3 relative shadow-sm border ${alert ? 'ring-2 ring-red-500' : 'border-gray-100'} text-center aspect-square transition-all hover:shadow-md active:bg-gray-50 group overflow-hidden`}
+      className={`bg-white rounded-3xl p-3 sm:p-5 flex flex-col items-center justify-between gap-1.5 sm:gap-3 relative shadow-sm border ${alert ? 'ring-2 ring-red-500' : 'border-gray-100'} text-center min-h-[145px] sm:min-h-[180px] transition-all hover:shadow-md active:bg-gray-50 group overflow-hidden`}
     >
       {badge ? (
         <div className={`absolute top-2 right-2 min-w-[20px] h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-sm px-1.5 ${alert ? 'bg-red-500' : 'bg-[var(--color-primary)]'}`}>
@@ -74,16 +74,16 @@ const Tile = ({ icon: Icon, title, badge, alert, status, statusColor = 'gray', o
         </div>
       ) : null}
       
-      <div className="p-3 bg-gray-50 rounded-2xl group-hover:bg-white transition-colors">
-        <Icon className="text-[var(--color-primary)] w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.5} />
+      <div className="p-2 sm:p-2.5 bg-gray-50 rounded-2xl group-hover:bg-white transition-colors shrink-0">
+        <Icon className="text-[var(--color-primary)] w-4 h-4 sm:w-6 sm:h-6" strokeWidth={1.5} />
       </div>
 
-      <div className="font-black text-gray-900 tracking-tight text-xs sm:text-sm leading-tight px-1 flex-1 flex items-center justify-center overflow-hidden">
+      <div className="font-black text-gray-900 tracking-tight text-[10px] sm:text-sm leading-tight px-0.5 flex-1 flex items-center justify-center min-h-[2.5rem]">
         {title}
       </div>
       
       {status && (
-        <div className={`mt-auto text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border w-full truncate ${getStatusColor()}`}>
+        <div className={`text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1 sm:px-2 py-0.5 sm:py-1 rounded-lg border w-full truncate shrink-0 ${getStatusColor()}`}>
           {status}
         </div>
       )}

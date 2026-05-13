@@ -842,12 +842,12 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
 
     if (aChanger.length > 0 || aSurveiller.length > 0) {
       const parties = [];
-      if (aChanger.length) parties.push(`${aChanger.length} à changer`);
-      if (aSurveiller.length) parties.push(`${aSurveiller.length} à surveiller`);
+      if (aChanger.length) parties.push(`${aChanger.length} ${t('lbl_to_change') || 'à changer'}`);
+      if (aSurveiller.length) parties.push(`${aSurveiller.length} ${t('lbl_to_monitor') || 'à surveiller'}`);
       list.push({
         id: "huiles", module: "huiles",
         niveau: aChanger.length > 0 ? "critique" : "urgent",
-        label: `Huiles — ${parties.join(" · ")}`,
+        label: `${t('nav_oil')} — ${parties.join(" · ")}`,
         icon: <Flame size={20} />,
         donnees: { aChanger, aSurveiller }
       });
@@ -878,7 +878,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
     if (expirées.length > 0) {
       list.push({
         id: "etiquettes", module: "etiquettes", niveau: "urgent",
-        label: `Vérifiez que les ${expirées.length} produits périmés ont bien été jetés`,
+        label: t('lbl_check_expired_products', { count: expirées.length }),
         icon: <Trash2 size={20} />,
         donnees: { expirées }
       });
@@ -898,7 +898,7 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
     if (!etat.nettoyage.complet && h >= 17) {
       list.push({
         id: "nettoyage", module: "cleaning", niveau: "info",
-        label: "Plan de nettoyage à compléter",
+        label: t('lbl_cleaning_plan_pending') || "Plan de nettoyage à compléter",
         icon: <Sparkles size={20} />,
         donnees: {}
       });
@@ -1040,9 +1040,9 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
         onClose={() => setSelectedAction(null)}
         icon={selectedAction?.icon}
         titre={
-          selectedAction?.module === "etiquettes" ? "Produits périmés — À jeter" : 
-          selectedAction?.module === "temperatures" ? (selectedAction.donnees.créneau === "matin" ? `🌅 Relevé Matin` : `🌆 Relevé Soir`) : 
-          (selectedAction?.label || "Action requise")
+          selectedAction?.module === "etiquettes" ? (t('lbl_expired_products_to_discard') || "Produits périmés — À jeter") : 
+          selectedAction?.module === "temperatures" ? (selectedAction.donnees.créneau === "matin" ? `🌅 ${t('lbl_morning_reading') || 'Relevé Matin'}` : `🌆 ${t('lbl_evening_reading') || 'Relevé Soir'}`) : 
+          (selectedAction?.label || (t('lbl_action_required') || "Action requise"))
         }
       >
         {selectedAction?.module === "huiles" && (
@@ -1078,9 +1078,9 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
             onClose={() => setSelectedAction(null)} 
             onNaviguer={onNavigate}
           >
-            {selectedAction.module === "viandes" && "L'enregistrement des cuissons demande un passage en revue de toutes les viandes cuites."}
-            {selectedAction.module === "cleaning" && "Le plan de nettoyage a besoin d'être validé tâche par tâche pour garantir l'hygiène du restaurant."}
-            {selectedAction.module === "inventaire" && "Effectuez l'inventaire complet pour pouvoir l'exporter et l'envoyer au supérieur."}
+            {selectedAction.module === "viandes" && (t('lbl_cooking_nav_desc') || "L'enregistrement des cuissons demande un passage en revue de toutes les viandes cuites.")}
+            {selectedAction.module === "cleaning" && (t('lbl_cleaning_nav_desc') || "Le plan de nettoyage a besoin d'être validé tâche par tâche pour garantir l'hygiène du restaurant.")}
+            {selectedAction.module === "inventaire" && (t('lbl_inventory_nav_desc') || "Effectuez l'inventaire complet pour pouvoir l'exporter et l'envoyer au supérieur.")}
           </ModaleNavigation>
         )}
       </Modal>
