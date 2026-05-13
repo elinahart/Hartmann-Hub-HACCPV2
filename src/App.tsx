@@ -44,6 +44,8 @@ import { SyncIndicator } from './components/SyncIndicator';
 
 import { useI18n } from './lib/i18n';
 
+import { PredictiveAlerts } from './components/PredictiveAlerts';
+
 type View = 'dashboard' | 'receptions' | 'tracabilite' | 'prep' | 'temperatures' | 'desserts' | 'oil' | 'cleaning' | 'products' | 'viandes' | 'inventaire' | 'inventaire-intelligent' | 'sessions-mobiles' | 'orders';
 
 const Tile = ({ icon: Icon, title, badge, alert, status, statusColor = 'gray', onClick }: { icon: any, title: string, badge?: number, alert?: boolean, status?: React.ReactNode, statusColor?: string, onClick: () => void }) => {
@@ -513,7 +515,9 @@ export default function App() {
               </div>
             </div>
           </header>
-
+          
+          <PredictiveAlerts />
+          
           {/* Actions Prioritaires Re-vamp */}
           <ActionPrioritaireList currentUser={currentUser} onNavigate={setCurrentView} onUpdateStats={calculateProgress} />
 

@@ -10,6 +10,8 @@ import { HoneycombWatch } from './HoneycombWatch';
 import { renderAvatarIcon } from './AvatarCustomizerModal';
 import { UserAvatar } from './UserAvatar';
 
+import { RestaurantLogo } from './ui/RestaurantLogo';
+
 export const LoginScreen = () => {
   const { login, users } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -199,8 +201,8 @@ export const LoginScreen = () => {
           >
             {/* Header section */}
             <div className="flex flex-col items-center mt-12 mb-10">
-              <div className="w-20 h-20 bg-[var(--color-primary)] rounded-full flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-[var(--color-primary)]/10 mb-6 ring-8 ring-white">
-                <Shield size={32} />
+              <div className="mb-6 ring-8 ring-white rounded-full">
+                <RestaurantLogo size="lg" />
               </div>
               <h1 className="text-4xl font-black text-gray-800 tracking-tighter mb-1">Accès Équipe</h1>
               <p className="text-gray-400 font-bold text-sm tracking-tight">Utilisez votre code PIN pour accéder</p>

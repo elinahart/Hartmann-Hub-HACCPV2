@@ -1,7 +1,7 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import { useConfig } from '../../contexts/ConfigContext';
-import { getInitials } from '../../lib/utils';
+import { getInitials, darken } from '../../lib/utils';
 import { cn } from '../../lib/utils';
 import { APP_NAME } from '../../constants';
 
@@ -71,7 +71,8 @@ export const RestaurantLogo = ({ className, size = 'md', showText = false, inter
   };
 
   const backgroundClasses = cn(
-    'flex items-center justify-center shrink-0 shadow-sm transition-all',
+    'flex items-center justify-center shrink-0 shadow-lg transition-all relative group',
+    'after:absolute after:inset-0 after:rounded-full after:bg-white/10 after:opacity-0 hover:after:opacity-100 after:transition-opacity',
     identity.logoBackgroundStyle === 'round' ? 'rounded-full' : 
     identity.logoBackgroundStyle === 'square' ? 'rounded-xl' : 'rounded-none bg-transparent shadow-none',
     sizeClasses[size],
@@ -80,6 +81,11 @@ export const RestaurantLogo = ({ className, size = 'md', showText = false, inter
 
   const bgColor = identity.logoBackgroundColor || identity.couleurPrimaire;
   const textColor = identity.logoTextColor;
+
+  const isCosmic = identity.logoIcon === 'Thermometer';
+  const cosmicBg = isCosmic 
+    ? 'linear-gradient(135deg, #1A0B2E 0%, #7c3aed 50%, #ec4899 100%)'
+    : `linear-gradient(135deg, ${bgColor}, ${darken(bgColor, 0.2)})`;
 
   return (
     <div className={cn("flex items-center gap-3", interactive && "cursor-pointer")}>
@@ -92,14 +98,26 @@ export const RestaurantLogo = ({ className, size = 'md', showText = false, inter
         }}
         className={cn(
           backgroundClasses,
-          interactive && "hover:ring-4 hover:ring-crousty-pink/30 hover:scale-105 active:scale-95 transition-all outline-offset-4"
+          interactive && "hover:ring-4 hover:ring-crousty-pink/30 hover:scale-105 active:scale-95 transition-all outline-offset-4",
+          isCosmic && "overflow-hidden ring-2 ring-white/20 shadow-[0_0_20px_rgba(124,58,237,0.5)]"
         )}
         style={{ 
           backgroundColor: identity.logoBackgroundStyle !== 'none' ? bgColor : 'transparent',
-          color: textColor
+          color: textColor,
+          background: identity.logoBackgroundStyle !== 'none' ? cosmicBg : 'transparent'
         }}
       >
-        {renderLogoContent()}
+        {isCosmic && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-[-20%] left-[-20%] w-[140%] h-[140%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)] animate-pulse" />
+          </div>
+        )}
+        <div className={cn("relative z-10", isCosmic && "drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]")}>
+          {renderLogoContent()}
+          {identity.logoBackgroundStyle !== 'none' && !isCosmic && (
+            <div className="absolute -inset-1 bg-white/20 blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+        </div>
       </div>
       {showText && (
         <span 

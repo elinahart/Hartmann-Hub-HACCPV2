@@ -129,10 +129,10 @@ export const DEFAULT_CONFIG: AppConfig = {
   restaurant: {
     nom: 'Hartmann Hub',
     ville: '',
-    couleurPrimaire: '#004696',
+    couleurPrimaire: '#1A0B2E',
     couleurSecondaire: '#00A9E0',
-    logoMode: 'initials',
-    logoIcon: 'ChefHat',
+    logoMode: 'icon+initials',
+    logoIcon: 'Thermometer',
     logoBackgroundStyle: 'round',
     logoTextColor: '#FFFFFF'
   },

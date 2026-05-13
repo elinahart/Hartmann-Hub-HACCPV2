@@ -1,11 +1,20 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.2.0";
+export const APP_VERSION = "3.2.1";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "12 Mai 2026";
+export const APP_LAST_UPDATE = "13 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.2.1",
+    date: "13 Mai 2026",
+    changes: [
+      "Alertes Prédictives de Rupture (Intelligence Proactive) : Le système analyse vos consommations et vous alerte sur l'accueil si un produit risque de manquer aujourd'hui ou demain.",
+      "Optimisation de l'affichage des alertes : Une seule ligne claire résume les risques avec une vue détaillée disponible au clic.",
+      "Nouveau Logo Cosmique : Mise à jour de l'identité visuelle avec un design moderne et futuriste.",
+    ]
+  },
   {
     version: "3.5.0",
     date: "12 Mai 2026",
