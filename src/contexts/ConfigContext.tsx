@@ -104,6 +104,14 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       initialConfig.employes = DEFAULT_CONFIG.employes;
     }
 
+    // Force migration to cosmic logo if using old defaults
+    if (initialConfig.restaurant.logoIcon === 'ChefHat' || !initialConfig.restaurant.logoIcon) {
+      initialConfig.restaurant.logoIcon = 'Thermometer';
+      if (initialConfig.restaurant.logoMode === 'initials') {
+        initialConfig.restaurant.logoMode = 'icon+initials';
+      }
+    }
+
     setConfig(initialConfig);
     applyTheme(initialConfig);
   }, []);

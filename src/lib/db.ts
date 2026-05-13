@@ -36,9 +36,16 @@ export interface SyncTask {
   timestamp: number;
 }
 
+interface AppStateRecord {
+  key: string;
+  value: any;
+  updatedAt: number;
+}
+
 class CroustyDB extends Dexie {
   photos!: Table<PhotoRecord>;
   syncQueue!: Table<SyncTask>;
+  appState!: Table<AppStateRecord>;
 
   constructor() {
     super('crousty-hub-v2');
@@ -48,6 +55,11 @@ class CroustyDB extends Dexie {
     this.version(2).stores({
       photos: 'id, timestamp',
       syncQueue: 'id, status, type, timestamp'
+    });
+    this.version(3).stores({
+      photos: 'id, timestamp',
+      syncQueue: 'id, status, type, timestamp',
+      appState: 'key'
     });
   }
 }
@@ -130,7 +142,7 @@ export const getStoredData = <T>(key: string, defaultValue: T): T => {
 };
 
 /**
- * Enregistre les données brutes (Local Storage)
+ * Enregistre les données brutes (Local Storage + IndexedDB Backup)
  */
 let quotaAlertShown = false;
 
@@ -138,14 +150,68 @@ export const setStoredData = <T>(key: string, value: T) => {
   try {
     const serialized = JSON.stringify(value);
     window.localStorage.setItem(key, serialized);
+    
+    // Backup asynchrone dans IndexedDB pour la sécurité
+    db.appState.put({
+      key,
+      value,
+      updatedAt: Date.now()
+    }).catch(err => console.warn('Failed to backup to IndexedDB:', err));
+
   } catch (error: any) {
     console.error('Error in setStoredData (Quota exceeded?):', error);
     if (!quotaAlertShown && (error.name === 'QuotaExceededError' || (error.message && error.message.toLowerCase().includes('quota')))) {
       quotaAlertShown = true;
       alert("⚠️ Espace de stockage plein ! L'application ne peut plus sauvegarder vos dernières saisies.\n\nVeuillez supprimer des anciennes archives dans les Paramètres > Stockage pour libérer de l'espace.");
     }
-    // We do NOT throw an unhandled error here anymore so we don't brutally crash the app
-    // Components that absolutely need to know should wrap their setItem logic manually (like AuthContext).
+  }
+};
+
+/**
+ * Restaure les données depuis IndexedDB vers LocalStorage si nécessaire
+ * (Utile si le navigateur vide le LocalStorage)
+ */
+export const restoreDataFromIndexedDB = async () => {
+  try {
+    const allStates = await db.appState.toArray();
+    let restoredCount = 0;
+    
+    for (const state of allStates) {
+      if (!window.localStorage.getItem(state.key)) {
+        window.localStorage.setItem(state.key, JSON.stringify(state.value));
+        restoredCount++;
+      }
+    }
+    
+    if (restoredCount > 0) {
+      console.log(`[Persistence] Restored ${restoredCount} items from IndexedDB backup.`);
+    }
+  } catch (error) {
+    console.error('[Persistence] Restoration failed:', error);
+  }
+};
+
+/**
+ * Migration initiale : On s'assure que tout ce qui est dans LocalStorage
+ * est aussi sauvegardé dans IndexedDB.
+ */
+export const syncLocalStorageToIndexedDB = async () => {
+  try {
+    const keys = Object.keys(window.localStorage);
+    const croustyKeys = keys.filter(k => k.startsWith('crousty_') || k.startsWith('app_') || k === 'auth_session');
+    
+    for (const key of croustyKeys) {
+      const val = getStoredData(key, null);
+      if (val !== null) {
+        await db.appState.put({
+          key,
+          value: val,
+          updatedAt: Date.now()
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[Persistence] Sync failed:', error);
   }
 };
 

@@ -10,6 +10,7 @@ export const APP_CHANGELOG = [
     version: "3.2.1",
     date: "13 Mai 2026",
     changes: [
+      "Bouclier de Données (IndexedDB) : Nouveau système de sauvegarde en double pour éviter les pertes de relevés si le navigateur vide son cache temporaire.",
       "Alertes Prédictives de Rupture (Intelligence Proactive) : Le système analyse vos consommations et vous alerte sur l'accueil si un produit risque de manquer aujourd'hui ou demain.",
       "Optimisation de l'affichage des alertes : Une seule ligne claire résume les risques avec une vue détaillée disponible au clic.",
       "Nouveau Logo Cosmique : Mise à jour de l'identité visuelle avec un design moderne et futuriste.",

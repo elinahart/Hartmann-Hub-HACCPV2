@@ -202,7 +202,7 @@ export const LoginScreen = () => {
             {/* Header section */}
             <div className="flex flex-col items-center mt-12 mb-10">
               <div className="mb-6 ring-8 ring-white rounded-full">
-                <RestaurantLogo size="lg" />
+                <RestaurantLogo size="lg" showText layout="vertical" />
               </div>
               <h1 className="text-4xl font-black text-gray-800 tracking-tighter mb-1">Accès Équipe</h1>
               <p className="text-gray-400 font-bold text-sm tracking-tight">Utilisez votre code PIN pour accéder</p>

@@ -466,8 +466,13 @@ export default function App() {
                     </div>
                   </button>
                   
-                  <div className="hidden md:block p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                    <RestaurantLogo size="sm" />
+                  <div className="hidden md:block shrink-0">
+                    <RestaurantLogo 
+                      size="sm" 
+                      showText 
+                      layout="vertical" 
+                      className="p-1.5 rounded-2xl bg-white shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100" 
+                    />
                   </div>
 
                   <div className="flex flex-col min-w-0">
