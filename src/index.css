@@ -96,6 +96,16 @@ html, body {
 
 /* Navigation and Module Animations */
 
+@keyframes inputPop {
+  0% { transform: scale(1); background-color: var(--color-crousty-light); }
+  50% { transform: scale(1.02); background-color: rgba(0, 70, 150, 0.05); }
+  100% { transform: scale(1); background-color: var(--color-crousty-light); }
+}
+
+.animate-input-pop {
+  animation: inputPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
 @keyframes pageIn {
   from { opacity: 0; transform: translateX(16px); }
   to   { opacity: 1; transform: translateX(0); }

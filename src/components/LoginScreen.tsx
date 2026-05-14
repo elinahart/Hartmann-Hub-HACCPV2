@@ -214,6 +214,7 @@ export const LoginScreen = () => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={18} />
                 <input 
                   type="text"
+                  data-keyboard="text"
                   placeholder="Rechercher..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -408,7 +409,10 @@ export const LoginScreen = () => {
                 key === '' ? <div key={`empty-${i}`} /> : (
                   <button
                     key={key}
-                    onClick={() => handleKeypad(key)}
+                    onClick={() => {
+                        if (navigator.vibrate) navigator.vibrate(30);
+                        handleKeypad(key);
+                    }}
                     className="w-16 h-16 bg-gray-50 text-2xl font-black rounded-2xl mx-auto flex items-center justify-center active:bg-[var(--color-primary)] active:text-white active:scale-95 transition-all shadow-sm"
                   >
                     {key}
@@ -416,7 +420,10 @@ export const LoginScreen = () => {
                 )
               ))}
               <button
-                onClick={() => setPin(pin.slice(0, -1))}
+                onClick={() => {
+                    if (navigator.vibrate) navigator.vibrate(30);
+                    setPin(pin.slice(0, -1));
+                }}
                 className="w-16 h-16 bg-gray-50 text-xs font-black rounded-2xl mx-auto flex items-center justify-center active:bg-gray-100 active:scale-95 transition-all text-gray-400"
               >
                 EFFACER

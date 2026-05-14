@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
+import { motion, AnimatePresence } from 'framer-motion';
+
 type KeyboardType = 'text' | 'numeric' | 'temperature' | 'date' | 'alphanumeric';
 
 interface KeyboardOptions {
@@ -108,6 +110,12 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
     
     setValue(newValue);
     options.onChange(newValue);
+    
+    if (activeInputRef.current) {
+      activeInputRef.current.classList.remove('animate-input-pop');
+      void activeInputRef.current.offsetWidth; // trigger reflow
+      activeInputRef.current.classList.add('animate-input-pop');
+    }
   };
 
   // Synchronize value if external initialValue changes
@@ -193,15 +201,17 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
   return (
     <KeyboardContext.Provider value={{ openKeyboard, closeKeyboard, isOpen }}>
       {children}
-      {isOpen && options && (
-        <VirtualKeyboardUI 
-          type={options.type} 
-          onKeyPress={handleKeyPress} 
-          onClose={() => {
-            closeKeyboard();
-          }} 
-        />
-      )}
+      <AnimatePresence>
+        {isOpen && options && (
+          <VirtualKeyboardUI 
+            type={options.type} 
+            onKeyPress={handleKeyPress} 
+            onClose={() => {
+              closeKeyboard();
+            }} 
+          />
+        )}
+      </AnimatePresence>
     </KeyboardContext.Provider>
   );
 };
@@ -260,50 +270,77 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
   };
 
   return (
-    <div 
+    <motion.div 
+      initial={{ y: "100%", opacity: 0.5 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: "100%", opacity: 0 }}
+      transition={{ type: "spring", damping: 25, stiffness: 200 }}
       id="virtual-keyboard-ui"
-      className="fixed bottom-0 left-0 right-0 bg-slate-200/95 backdrop-blur-xl border-t border-slate-300 shadow-2xl z-[9999] p-2 pb-safe select-none overflow-hidden touch-none animate-in slide-in-from-bottom-full duration-200"
+      className={`fixed bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:rounded-3xl bg-slate-200/95 backdrop-blur-xl border-t md:border border-slate-300 shadow-2xl z-[9999] p-2 md:p-4 pb-safe select-none overflow-hidden touch-none ${type === 'alphanumeric' ? 'md:max-w-3xl' : 'md:max-w-sm'}`}
       onPointerDown={e => e.preventDefault()}
     >
       <div className="flex justify-between items-center px-4 py-2 border-b border-slate-300/50 mb-2">
         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Clavier Intelligent</span>
-        <button onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="p-2 px-4 bg-slate-300 rounded-full text-slate-700 hover:bg-slate-400 font-bold text-sm">Fermer</button>
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
+          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} 
+          className="p-2 px-4 bg-slate-300 rounded-full text-slate-700 hover:bg-slate-400 font-bold text-sm"
+        >
+          Fermer
+        </motion.button>
       </div>
       
-      <div className="flex flex-col gap-1.5 md:gap-2 max-w-4xl mx-auto">
+      <div className="flex flex-col gap-1.5 md:gap-2.5 mx-auto w-full">
         {currentLayout.map((row, i) => (
           <div key={i} className="flex justify-center gap-1.5 md:gap-2 w-full">
-            {row.map(key => {
-              let btnClass = "bg-white text-slate-800 font-bold rounded-xl shadow-sm border border-slate-300/50 flex items-center justify-center text-xl transition-transform active:bg-slate-300 active:scale-95 touch-none";
+            {row.map((key, j) => {
+              let btnClass = "bg-white text-slate-800 font-bold rounded-xl shadow-sm border border-slate-300/50 flex items-center justify-center text-xl md:text-2xl touch-none";
               let label = key;
+              let isSpecial = false;
+              
+              let sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' 
+                ? 'h-12 md:h-14 w-full max-w-[100px]' 
+                : 'h-10 md:h-12 flex-1 max-w-[60px] md:max-w-[80px]';
               
               if (key === 'ENTER') {
-                btnClass = "bg-[var(--color-primary)] text-white font-bold rounded-xl shadow-sm text-lg md:text-xl px-4 md:px-8 active:scale-95 touch-none";
+                btnClass = "bg-[var(--color-primary)] text-white font-bold rounded-xl shadow-sm text-sm md:text-base px-2 touch-none";
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-14 w-full max-w-[100px] flex-1' : 'h-10 md:h-12 flex-[2] max-w-[120px]';
                 label = 'Valider';
+                isSpecial = true;
               } else if (key === 'BACKSPACE') {
-                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-lg md:text-xl px-2 md:px-4 active:scale-95 touch-none";
+                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-lg md:text-xl px-2 touch-none";
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-14 w-full max-w-[100px]' : 'h-10 md:h-12 flex-[1.5] max-w-[90px]';
                 label = '⌫';
+                isSpecial = true;
               } else if (key === 'CLEAR') {
-                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-xs md:text-sm px-2 md:px-4 active:scale-95 touch-none";
+                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-xs md:text-sm px-2 touch-none";
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-14 w-full max-w-[100px]' : 'h-10 md:h-12 flex-[1.5] max-w-[100px]';
                 label = 'Effacer';
+                isSpecial = true;
               } else if (key === 'SPACE') {
-                 btnClass = "bg-white text-slate-800 shadow-sm border border-slate-300/50 rounded-xl px-8 md:px-12 active:scale-95 touch-none";
+                 btnClass = "bg-white text-slate-800 shadow-sm border border-slate-300/50 rounded-xl px-4 touch-none font-semibold text-sm";
+                 sizeClass = "h-10 md:h-12 flex-[4] max-w-[300px]";
                  label = 'Espace';
+                 isSpecial = true;
               }
 
               return (
-                <button
+                <motion.button
                   key={key}
-                  className={`${btnClass} ${type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-16 w-1/4 max-w-[100px]' : 'h-10 md:h-12 flex-1 max-w-[60px] md:max-w-[80px]'}`}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.05 + (i * 0.02) + (j * 0.01), type: "spring", stiffness: 300 }}
+                  whileTap={{ scale: 0.92, backgroundColor: isSpecial ? "var(--color-primary-dark, #ccc)" : "#e2e8f0" }}
+                  className={`${btnClass} ${sizeClass}`}
                   onPointerDown={(e) => handleKey(e, key)}
                 >
                   {label}
-                </button>
+                </motion.button>
               );
             })}
           </div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 };
