@@ -287,6 +287,8 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
     else onKeyPress(key);
   };
 
+  const isSmallKeyboard = type === 'numeric' || type === 'temperature' || type === 'date';
+
   return (
     <motion.div 
       initial={{ y: "100%", opacity: 0.5 }}
@@ -294,11 +296,26 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
       exit={{ y: "100%", opacity: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       id="virtual-keyboard-ui"
-      className={`fixed bottom-0 left-0 right-0 ${type === 'alphanumeric' ? 'md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:rounded-3xl md:max-w-4xl w-full' : 'md:left-auto md:right-8 md:bottom-8 md:rounded-[2rem] md:max-w-sm md:w-[380px]'} bg-slate-200/95 backdrop-blur-xl border-t md:border border-slate-300 md:shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] shadow-2xl z-[9999] p-2 md:p-5 pb-safe select-none overflow-hidden touch-none`}
+      drag={window.innerWidth >= 768 && isSmallKeyboard}
+      dragMomentum={false}
+      className={`fixed bottom-0 left-0 right-0 ${type === 'alphanumeric' || type === 'text' ? 'md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:rounded-3xl md:max-w-4xl w-full' : 'md:left-auto md:right-8 md:bottom-8 md:rounded-[2rem] md:max-w-sm md:w-[380px]'} bg-slate-200/95 backdrop-blur-xl border-t md:border border-slate-300 md:shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] shadow-2xl z-[9999] p-2 md:p-5 pb-safe select-none overflow-hidden touch-none`}
       onPointerDown={e => e.preventDefault()}
+      style={{ touchAction: 'none' }}
     >
-      <div className="flex justify-between items-center px-4 py-2 border-b border-slate-300/50 mb-2">
-        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Clavier Intelligent</span>
+      <div className={`flex justify-between items-center px-4 py-2 border-b border-slate-300/50 mb-2 ${window.innerWidth >= 768 && isSmallKeyboard ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+        <div className="flex items-center gap-2">
+          {window.innerWidth >= 768 && isSmallKeyboard && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-400">
+              <circle cx="9" cy="5" r="1.5" fill="currentColor"/>
+              <circle cx="15" cy="5" r="1.5" fill="currentColor"/>
+              <circle cx="9" cy="12" r="1.5" fill="currentColor"/>
+              <circle cx="15" cy="12" r="1.5" fill="currentColor"/>
+              <circle cx="9" cy="19" r="1.5" fill="currentColor"/>
+              <circle cx="15" cy="19" r="1.5" fill="currentColor"/>
+            </svg>
+          )}
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Clavier Intelligent</span>
+        </div>
         <motion.button 
           whileTap={{ scale: 0.9 }}
           onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} 
