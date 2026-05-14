@@ -178,7 +178,7 @@ export const LoginScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center p-4 pt-safe select-none overflow-hidden touch-none relative" onWheel={handlePinch}>
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center p-4 pt-safe overflow-hidden relative" onWheel={handlePinch}>
       
       {/* Mobile Mode Button (Top Left) */}
       <div className="absolute top-4 left-4 z-50 md:hidden">
