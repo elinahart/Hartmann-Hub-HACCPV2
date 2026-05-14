@@ -15,10 +15,10 @@
 }
 
 input, textarea, [contenteditable="true"] {
+  -webkit-appearance: none;
   -webkit-user-select: text !important;
   user-select: text !important;
   cursor: text !important;
-  touch-action: manipulation;
 }
 
 html, body {
@@ -29,9 +29,7 @@ html, body {
   padding: 0;
 }
 
-body {
-  overflow-x: hidden;
-}
+/* Remove body overflow hidden to prevent iPad keyboard bugs */
 
 /* Custom Scrollbar for a cleaner look */
 ::-webkit-scrollbar {

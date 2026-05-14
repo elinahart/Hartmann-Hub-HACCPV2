@@ -178,7 +178,7 @@ export const LoginScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center p-4 pt-safe overflow-hidden relative" onWheel={handlePinch}>
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center p-4 pt-safe relative" onWheel={handlePinch}>
       
       {/* Mobile Mode Button (Top Left) */}
       <div className="absolute top-4 left-4 z-50 md:hidden">
@@ -217,10 +217,7 @@ export const LoginScreen = () => {
                   placeholder="Rechercher..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  onTouchStart={(e) => { e.stopPropagation(); }}
-                  onClick={(e) => { e.stopPropagation(); (e.target as HTMLInputElement).focus(); }}
                   className="w-full h-10 pl-11 pr-4 bg-white/50 border border-transparent rounded-full text-sm font-bold focus:bg-white focus:border-gray-100 transition-all outline-none"
-                  style={{ WebkitUserSelect: "text", userSelect: "text" }}
                 />
               </div>
               
