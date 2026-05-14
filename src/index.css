@@ -25,6 +25,8 @@ html, body {
   background-color: var(--color-crousty-light);
   color: var(--color-crousty-dark);
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: auto;
+  user-select: auto;
   margin: 0;
   padding: 0;
 }
