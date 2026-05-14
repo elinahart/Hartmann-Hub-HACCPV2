@@ -32,6 +32,18 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
   const [value, setValue] = useState('');
   const activeInputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    const container = document.querySelector('.content-scroll-container') as HTMLElement;
+    if (isOpen) {
+      if (container) container.style.paddingBottom = '400px';
+    } else {
+      if (container) container.style.paddingBottom = '';
+    }
+    return () => {
+      if (container) container.style.paddingBottom = '';
+    };
+  }, [isOpen]);
+
   const openKeyboard = (opt: KeyboardOptions, inputEl?: HTMLInputElement) => {
     setOptions(opt);
     setValue(opt.initialValue || '');
@@ -48,15 +60,21 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
       setTimeout(() => {
         const keyboardEl = document.getElementById('virtual-keyboard-ui');
         if (keyboardEl && inputEl) {
-          const keyboardHeight = keyboardEl.getBoundingClientRect().height;
+          const keyboardRect = keyboardEl.getBoundingClientRect();
           const inputRect = inputEl.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
           
-          if (inputRect.bottom > viewportHeight - keyboardHeight) {
+          const isOverlapping = !(
+            inputRect.right < keyboardRect.left || 
+            inputRect.left > keyboardRect.right || 
+            inputRect.bottom < keyboardRect.top || 
+            inputRect.top > keyboardRect.bottom
+          );
+          
+          if (isOverlapping || inputRect.bottom > window.innerHeight - 150) {
             inputEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
           }
         }
-      }, 250);
+      }, 150);
     }
   };
 
@@ -276,7 +294,7 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
       exit={{ y: "100%", opacity: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       id="virtual-keyboard-ui"
-      className={`fixed bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:rounded-3xl bg-slate-200/95 backdrop-blur-xl border-t md:border border-slate-300 shadow-2xl z-[9999] p-2 md:p-4 pb-safe select-none overflow-hidden touch-none ${type === 'alphanumeric' ? 'md:max-w-3xl' : 'md:max-w-sm'}`}
+      className={`fixed bottom-0 left-0 right-0 ${type === 'alphanumeric' ? 'md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:rounded-3xl md:max-w-4xl w-full' : 'md:left-auto md:right-8 md:bottom-8 md:rounded-[2rem] md:max-w-sm md:w-[380px]'} bg-slate-200/95 backdrop-blur-xl border-t md:border border-slate-300 md:shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] shadow-2xl z-[9999] p-2 md:p-5 pb-safe select-none overflow-hidden touch-none`}
       onPointerDown={e => e.preventDefault()}
     >
       <div className="flex justify-between items-center px-4 py-2 border-b border-slate-300/50 mb-2">
@@ -299,22 +317,22 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
               let isSpecial = false;
               
               let sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' 
-                ? 'h-12 md:h-14 w-full max-w-[100px]' 
+                ? 'h-12 md:h-16 w-full max-w-[100px]' 
                 : 'h-10 md:h-12 flex-1 max-w-[60px] md:max-w-[80px]';
               
               if (key === 'ENTER') {
                 btnClass = "bg-[var(--color-primary)] text-white font-bold rounded-xl shadow-sm text-sm md:text-base px-2 touch-none";
-                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-14 w-full max-w-[100px] flex-1' : 'h-10 md:h-12 flex-[2] max-w-[120px]';
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-16 w-full flex-1 max-w-none' : 'h-10 md:h-12 flex-[2] max-w-[120px]';
                 label = 'Valider';
                 isSpecial = true;
               } else if (key === 'BACKSPACE') {
-                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-lg md:text-xl px-2 touch-none";
-                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-14 w-full max-w-[100px]' : 'h-10 md:h-12 flex-[1.5] max-w-[90px]';
+                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-lg md:text-xl px-2 touch-none flex items-center justify-center";
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-16 w-full flex-1 max-w-none' : 'h-10 md:h-12 flex-[1.5] max-w-[90px]';
                 label = '⌫';
                 isSpecial = true;
               } else if (key === 'CLEAR') {
                 btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-xs md:text-sm px-2 touch-none";
-                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-14 w-full max-w-[100px]' : 'h-10 md:h-12 flex-[1.5] max-w-[100px]';
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-16 w-full flex-1 max-w-none' : 'h-10 md:h-12 flex-[1.5] max-w-[100px]';
                 label = 'Effacer';
                 isSpecial = true;
               } else if (key === 'SPACE') {
