@@ -35,7 +35,7 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
   useEffect(() => {
     const container = document.querySelector('.content-scroll-container') as HTMLElement;
     if (isOpen) {
-      if (container) container.style.paddingBottom = '400px';
+      if (container) container.style.paddingBottom = '600px';
     } else {
       if (container) container.style.paddingBottom = '';
     }
@@ -59,22 +59,25 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
       
       setTimeout(() => {
         const keyboardEl = document.getElementById('virtual-keyboard-ui');
+        const container = document.querySelector('.content-scroll-container') as HTMLElement || window;
         if (keyboardEl && inputEl) {
           const keyboardRect = keyboardEl.getBoundingClientRect();
           const inputRect = inputEl.getBoundingClientRect();
           
-          const isOverlapping = !(
-            inputRect.right < keyboardRect.left || 
-            inputRect.left > keyboardRect.right || 
-            inputRect.bottom < keyboardRect.top || 
-            inputRect.top > keyboardRect.bottom
-          );
+          // Height of available space above keyboard
+          const safeAreaHeight = keyboardRect.top > 0 ? keyboardRect.top : window.innerHeight / 2;
           
-          if (isOverlapping || inputRect.bottom > window.innerHeight - 150) {
-            inputEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          // If input is covered by keyboard, or very close to it
+          if (inputRect.bottom > safeAreaHeight - 60) {
+            const scrollAmount = (inputRect.bottom - safeAreaHeight) + 120; // Scroll past it a bit
+            if (container.scrollBy) {
+                container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+            } else if (container === window) {
+                window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+            }
           }
         }
-      }, 150);
+      }, 300); // Wait for keyboard animation to settle
     }
   };
 
