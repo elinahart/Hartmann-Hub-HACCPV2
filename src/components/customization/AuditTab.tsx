@@ -21,6 +21,7 @@ export const AuditTab = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState<'selected' | 'all' | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
 
   useEffect(() => {
     const loadEvents = () => {
@@ -224,7 +225,13 @@ export const AuditTab = () => {
                     "hover:bg-gray-50 cursor-pointer transition-colors",
                     selectedIds.includes(evt.id) && "bg-amber-50/50"
                   )}
-                  onClick={() => isSelectionMode && toggleSelection(evt.id)}
+                  onClick={() => {
+                    if (isSelectionMode) {
+                      toggleSelection(evt.id);
+                    } else {
+                      setSelectedEvent(evt);
+                    }
+                  }}
                 >
                   {isSelectionMode && (
                     <td className="px-6 py-4">
@@ -255,7 +262,7 @@ export const AuditTab = () => {
                     <div className="text-xs text-gray-400">{evt.source === 'hub' ? 'Hartmann Hub' : 'Hartmann Mobile'}</div>
                   </td>
                   <td className="px-6 py-4 text-xs">
-                    <div className="max-w-xs space-y-1">
+                    <div className="max-w-xs space-y-1 line-clamp-2 overflow-hidden text-ellipsis h-[34px]">
                       {evt.details ? (
                         typeof evt.details === 'object' ? (
                           Object.entries(evt.details).map(([k, v]) => {
@@ -265,14 +272,14 @@ export const AuditTab = () => {
                             if (k === 'id' || k === 'sid' || k === 'photoId' || k === 'session') return null;
                             if (displayVal === '' || displayVal === '[]' || displayVal === '{}') return null;
                             return (
-                              <div key={k} className="flex gap-2 items-start">
-                                <span className="font-bold text-gray-500 capitalize">{k.replace(/_/g, ' ')}:</span>
-                                <span className="text-gray-800 break-all">{displayVal}</span>
-                              </div>
+                              <span key={k} className="inline-flex gap-1 items-center mr-2">
+                                <span className="font-bold text-gray-400 capitalize">{k.replace(/_/g, ' ')}:</span>
+                                <span className="text-gray-600 truncate max-w-[100px]">{displayVal}</span>
+                              </span>
                             );
                           })
                         ) : (
-                          <div className="text-gray-800 break-all">{String(evt.details)}</div>
+                          <div className="text-gray-600 truncate">{String(evt.details)}</div>
                         )
                       ) : (
                         <span className="text-gray-400">-</span>
@@ -288,6 +295,51 @@ export const AuditTab = () => {
           </table>
         )}
       </div>
+
+      {selectedEvent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] p-8 max-w-2xl w-full shadow-2xl max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-gray-900 leading-tight flex items-center gap-2">
+                <FileEdit size={24} className="text-crousty-purple" />
+                Détails de l'action
+              </h3>
+              <button onClick={() => setSelectedEvent(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-900">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto min-h-0 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Date</div>
+                  <div className="font-bold text-gray-900">{format(new Date(selectedEvent.timestamp), 'dd MMM yyyy HH:mm:ss', { locale: fr })}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Utilisateur</div>
+                  <div className="font-bold text-gray-900">{selectedEvent.userName}</div>
+                  <div className="text-xs text-gray-400">{selectedEvent.source === 'hub' ? 'Hartmann Hub' : 'Hartmann Mobile'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Action</div>
+                  <div className="font-bold text-gray-900">{selectedEvent.action}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Module</div>
+                  <div className="font-bold text-gray-900 uppercase">{selectedEvent.module}</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">Données brutes</div>
+                <div className="bg-gray-900 text-gray-100 p-4 rounded-2xl font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all shadow-inner border border-gray-800">
+                  {selectedEvent.details ? JSON.stringify(selectedEvent.details, null, 2) : 'Aucun détail'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
