@@ -14,6 +14,13 @@
   --color-secondary: #00A9E0;
 }
 
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: auto !important;
+  user-select: auto !important;
+  cursor: text !important;
+  touch-action: manipulation;
+}
+
 html, body {
   background-color: var(--color-crousty-light);
   color: var(--color-crousty-dark);
