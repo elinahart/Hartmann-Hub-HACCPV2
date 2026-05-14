@@ -2,6 +2,7 @@ import { useAuth } from './contexts/AuthContext';
 import { LoginScreen } from './components/LoginScreen';
 import { ForceChangePinScreen } from './components/ForceChangePinScreen';
 import React, { useState, useEffect, useRef } from 'react';
+import { KeyboardProvider } from './contexts/KeyboardContext';
 import { Package, ChefHat, Thermometer, Tag, Droplet, Sparkles, ArrowLeft, Settings, Trash2, Home, ClipboardList, Clock, User, ScanBarcode, QrCode, Download, Archive, Flame, X, AlertTriangle, Smartphone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from './lib/utils';
 import Receptions from './modules/Receptions';

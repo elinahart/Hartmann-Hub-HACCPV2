@@ -596,7 +596,7 @@ export default function InventaireIntelligent() {
                         <div>
                            <label className="block text-[10px] uppercase font-black tracking-widest text-gray-500 mb-2">Cartons</label>
                            <Input 
-                             type="number"
+                             type="text" inputMode="none"
                              value={correctionCartons}
                              onChange={(e: any) => setCorrectionCartons(e.target.value)}
                              className="h-14 bg-gray-50 border-2 border-gray-100 rounded-2xl text-lg font-black text-center"
@@ -605,7 +605,7 @@ export default function InventaireIntelligent() {
                         <div>
                            <label className="block text-[10px] uppercase font-black tracking-widest text-gray-500 mb-2">{selectedProductStat.product.uniteStock || 'Unités'}</label>
                            <Input 
-                             type="number"
+                             type="text" inputMode="none"
                              value={correctionUnits}
                              onChange={(e: any) => setCorrectionUnits(e.target.value)}
                              className="h-14 bg-gray-50 border-2 border-gray-100 rounded-2xl text-lg font-black text-center"

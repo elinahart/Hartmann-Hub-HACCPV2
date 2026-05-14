@@ -366,7 +366,7 @@ function EditorForm({ prefill, onSave, onFermer, isGrid }: any) {
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Valeur DLC</label>
         <div className="flex gap-3">
-          <Input type="number" min="1" value={val} onChange={(e: any) => setVal(e.target.value)} className="w-1/2 font-black text-lg h-14" />
+          <Input type="text" inputMode="none" min="1" value={val} onChange={(e: any) => setVal(e.target.value)} className="w-1/2 font-black text-lg h-14" />
           <Select value={unit} onChange={(e: any) => setUnit(e.target.value)} className="w-1/2 font-black text-lg h-14">
             <option value="hours">Heures</option>
             <option value="days">Jours</option>

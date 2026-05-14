@@ -63,11 +63,11 @@ const EditTempZoneModal = ({ zone, onClose, onSave, onDelete }: any) => {
           <div className="flex gap-4">
              <div className="flex-1">
                <Label className="text-sm font-bold text-gray-700">{t('lbl_temp_min') || 'Seuil Min (°C)'}</Label>
-               <Input type="number" step="0.1" value={seuilMin} onChange={e => setSeuilMin(e.target.value)} className="mt-1" />
+               <Input type="text" inputMode="none" step="0.1" value={seuilMin} onChange={e => setSeuilMin(e.target.value)} className="mt-1" />
              </div>
              <div className="flex-1">
                <Label className="text-sm font-bold text-gray-700">{t('lbl_temp_max') || 'Seuil Max (°C)'}</Label>
-               <Input type="number" step="0.1" value={seuilMax} onChange={e => setSeuilMax(e.target.value)} className="mt-1" />
+               <Input type="text" inputMode="none" step="0.1" value={seuilMax} onChange={e => setSeuilMax(e.target.value)} className="mt-1" />
              </div>
           </div>
         </div>
@@ -501,8 +501,8 @@ export default function TemperaturesChecklist({
                     </button>
                     
                     <input 
-                      type="number" 
-                      inputMode="decimal" 
+                      type="text" 
+                      inputMode="none" 
                       step="0.1" 
                       placeholder="°C" 
                       className={`w-16 bg-transparent text-center text-xl font-black focus:outline-none ${bad ? 'text-red-700' : 'text-gray-900'}`}
@@ -636,7 +636,7 @@ export default function TemperaturesChecklist({
                           <div key={eq}>
                              <Label className="text-xs text-gray-500 uppercase">{eq}</Label>
                              <Input 
-                               type="number" step="0.1"
+                               type="text" inputMode="none" step="0.1"
                                value={editData.equipments[eq] || ''}
                                onChange={ev => setEditData({...editData, equipments: {...editData.equipments, [eq]: ev.target.value}})}
                              />

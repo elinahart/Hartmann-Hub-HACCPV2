@@ -163,7 +163,7 @@ function PhotoTesto({ cuveName, initialFile, onResult, onCancel }: { cuveName: s
           
           <div className="flex items-center justify-center gap-2 mb-3">
             <input
-              type="number" inputMode="numeric"
+              type="text" inputMode="none"
               value={tpm.entier}
               onChange={e => setTpm(prev => ({ ...prev, entier: e.target.value }))}
               placeholder="00"
@@ -173,7 +173,7 @@ function PhotoTesto({ cuveName, initialFile, onResult, onCancel }: { cuveName: s
             />
             <span className="text-4xl font-black text-gray-300">.</span>
             <input
-              type="number" inputMode="numeric"
+              type="text" inputMode="none"
               value={tpm.decimal}
               onChange={e => setTpm(prev => ({ ...prev, decimal: e.target.value }))}
               placeholder="0"
@@ -197,7 +197,7 @@ function PhotoTesto({ cuveName, initialFile, onResult, onCancel }: { cuveName: s
           
           <div className="flex items-center justify-center gap-2">
             <input
-              type="number" inputMode="numeric"
+              type="text" inputMode="none"
               value={temp.entier}
               onChange={e => setTemp(prev => ({ ...prev, entier: e.target.value }))}
               placeholder="000"
@@ -207,7 +207,7 @@ function PhotoTesto({ cuveName, initialFile, onResult, onCancel }: { cuveName: s
             />
             <span className="text-4xl font-black text-gray-300">.</span>
             <input
-              type="number" inputMode="numeric"
+              type="text" inputMode="none"
               value={temp.decimal}
               onChange={e => setTemp(prev => ({ ...prev, decimal: e.target.value }))}
               placeholder="0"

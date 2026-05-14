@@ -11,6 +11,7 @@ import { TemperaturesProvider } from './providers/TemperaturesProvider';
 import { HuilesProvider } from './providers/HuilesProvider';
 import { I18nProvider } from './lib/i18n';
 import { restoreDataFromIndexedDB, syncLocalStorageToIndexedDB } from './lib/db';
+import { KeyboardProvider } from './contexts/KeyboardContext';
 
 async function initPersistentApp() {
   // 1. Restaurer ce qui aurait pu être supprimé du LocalStorage
@@ -29,7 +30,9 @@ async function initPersistentApp() {
                 <HuilesProvider>
                   <AuthProvider>
                     <InventaireProvider>
-                      <App />
+                      <KeyboardProvider>
+                        <App />
+                      </KeyboardProvider>
                     </InventaireProvider>
                   </AuthProvider>
                 </HuilesProvider>

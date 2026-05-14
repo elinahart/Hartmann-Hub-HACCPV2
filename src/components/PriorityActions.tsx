@@ -249,7 +249,7 @@ function ModaleHuiles({ donnees, onClose, currentUser, onSaveSuccess }: any) {
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <input
-              type="number" inputMode="numeric"
+              type="text" inputMode="none"
               placeholder="--" min="0" max="40"
               value={valeurs[cuve.id]?.entier || ""}
               onChange={e => setValeurs(p => ({
@@ -266,7 +266,7 @@ function ModaleHuiles({ donnees, onClose, currentUser, onSaveSuccess }: any) {
             />
             <span style={{ fontSize: "24px", fontWeight: "bold" }}>.</span>
             <input
-              type="number" inputMode="numeric"
+              type="text" inputMode="none"
               placeholder="0" min="0" max="9"
               value={valeurs[cuve.id]?.decimal || ""}
               onChange={e => setValeurs(p => ({
@@ -660,8 +660,8 @@ function ModaleReleveTemperatures({
                 -
               </button>
               <input
-                type="number"
-                inputMode="decimal"
+                type="text"
+                inputMode="none"
                 step="0.1"
                 placeholder="--"
                 value={valStr}

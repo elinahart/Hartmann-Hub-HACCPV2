@@ -565,7 +565,7 @@ export default function Receptions() {
                   </div>
                   <div>
                     <Label>{t('lbl_temperature') || 'Température (°C)'}</Label>
-                    <Input type="number" inputMode="decimal" value={ligne.temperature || ''} onChange={(e: any) => updateLigne(ligne.id, 'temperature', e.target.value)} placeholder={t('lbl_optional') || 'Optionnel'} />
+                    <Input type="text" inputMode="none" value={ligne.temperature || ''} onChange={(e: any) => updateLigne(ligne.id, 'temperature', e.target.value)} placeholder={t('lbl_optional') || 'Optionnel'} />
                   </div>
                 </div>
               </div>
