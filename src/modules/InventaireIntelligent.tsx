@@ -60,7 +60,11 @@ export default function InventaireIntelligent() {
       const avgPerWeek = metrics.avgPerWeek;
       
       const conv = p.conversionCartonUnite || 5;
-      const countNum = lastCounted ? (parseInt(lastCounted.units || '0') + parseInt(lastCounted.cartons || '0') * conv) : 0;
+      const parsedUnits = parseFloat(String(lastCounted?.units || '0').replace(',', '.'));
+      const parsedCartons = parseFloat(String(lastCounted?.cartons || '0').replace(',', '.'));
+      const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+      const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+      const countNum = lastCounted ? (safeUnits + safeCartons * conv) : 0;
       
       const daysSinceLast = Math.max(0, differenceInDays(Date.now(), new Date(newest.date)));
       

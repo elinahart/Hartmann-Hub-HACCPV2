@@ -22,7 +22,11 @@ export function calculateExpectedStock(
      return calculateDeliveriesSince(product, lastInventory.date, receptions);
   }
 
-  const stockInitial = (parseInt(detail.units || '0')) + (parseInt(detail.cartons || '0') * conv);
+  const parsedUnits = parseFloat(String(detail.units || '0').replace(',', '.'));
+  const parsedCartons = parseFloat(String(detail.cartons || '0').replace(',', '.'));
+  const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+  const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+  const stockInitial = safeUnits + safeCartons * conv;
   const livraisonsSince = calculateDeliveriesSince(product, lastInventory.date, receptions);
 
   return stockInitial + livraisonsSince;
@@ -50,8 +54,9 @@ export function calculateDeliveriesSince(
     rec.lignes?.forEach((l: any) => {
       // Comparison insensitive cases
       if (l.produit.toLowerCase().trim() === product.name.toLowerCase().trim()) {
-        const qStr = String(l.quantite).toLowerCase().trim();
-        const num = parseInt(qStr.match(/\d+/) ? qStr.match(/\d+/)![0] : '0');
+        const qStr = String(l.quantite).toLowerCase().trim().replace(',', '.');
+        const numMatch = qStr.match(/\d+(\.\d+)?/);
+        const num = parseFloat(numMatch ? numMatch[0] : '0');
         
         if (!isNaN(num)) {
           const isCarton = qStr.includes('carton') || qStr.includes('colis') || qStr.includes('crt');
@@ -116,7 +121,11 @@ export function calculateAdvancedConsumptionMetrics(
     const getStock = (inv: InventoryEntry) => {
       const detail = inv.items[product.category]?.[product.name] as InventoryItemDetail;
       if (!detail || detail.na) return null;
-      return (parseInt(detail.units || '0')) + (parseInt(detail.cartons || '0') * conv);
+      const parsedUnits = parseFloat(String(detail.units || '0').replace(',', '.'));
+      const parsedCartons = parseFloat(String(detail.cartons || '0').replace(',', '.'));
+      const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+      const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+      return safeUnits + safeCartons * conv;
     };
 
     const stockNewest = getStock(newest);
@@ -170,8 +179,9 @@ function calculateDeliveriesInInterval(
     if (rt > startTime && rt <= endTime) {
       rec.lignes?.forEach((l: any) => {
         if (l.produit.toLowerCase().trim() === product.name.toLowerCase().trim()) {
-          const qStr = String(l.quantite).toLowerCase().trim();
-          const num = parseInt(qStr.match(/\d+/) ? qStr.match(/\d+/)![0] : '0');
+          const qStr = String(l.quantite).toLowerCase().trim().replace(',', '.');
+          const numMatch = qStr.match(/\d+(\.\d+)?/);
+          const num = parseFloat(numMatch ? numMatch[0] : '0');
           const isCarton = qStr.includes('carton') || qStr.includes('colis') || qStr.includes('crt');
           total += isCarton ? num * conv : num;
         }

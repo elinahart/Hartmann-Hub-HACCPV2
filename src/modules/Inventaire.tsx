@@ -121,8 +121,11 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
       
       const countAtLast = newest.items[p.category]?.[p.name];
       const conv = p.conversionCartonUnite || 5;
-      const lastStockNum = countAtLast ? 
-        (parseInt((countAtLast as any).units || '0') + parseInt((countAtLast as any).cartons || '0') * conv) : 0;
+      const parsedUnits = parseFloat(String((countAtLast as any)?.units || '0').replace(',', '.'));
+      const parsedCartons = parseFloat(String((countAtLast as any)?.cartons || '0').replace(',', '.'));
+      const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+      const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+      const lastStockNum = countAtLast ? (safeUnits + safeCartons * conv) : 0;
 
       const estimated = Math.max(0, lastStockNum + (expected - lastStockNum) - (avgPerDay * daysSinceLast));
       
@@ -184,7 +187,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
     setQuantities(prev => {
       const currentEntry = prev[category]?.[item] || { units: '0', cartons: '0', na: false };
       if (currentEntry.na) return prev;
-      const currentVal = parseInt((currentEntry[field] as string) ?? '0') || 0;
+      const currentVal = parseFloat(String((currentEntry[field] as string) ?? '0').replace(',', '.')) || 0;
       const nextVal = Math.max(0, currentVal + delta);
       return {
         ...prev,
@@ -422,9 +425,11 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
         if (isRecorded) {
           const product = products.find(p => p.name === item);
           const conv = product?.conversionCartonUnite || 5;
-          const unitsNum = parseInt((d as any).units || '0');
-          const cartonsNum = parseInt((d as any).cartons || '0');
-          const totalNum = unitsNum + (cartonsNum * conv);
+          const unitsNum = parseFloat(String((d as any).units || '0').replace(',', '.'));
+          const cartonsNum = parseFloat(String((d as any).cartons || '0').replace(',', '.'));
+          const safeUnits = isNaN(unitsNum) ? 0 : unitsNum;
+          const safeCartons = isNaN(cartonsNum) ? 0 : cartonsNum;
+          const totalNum = safeUnits + (safeCartons * conv);
           const isLow = product && totalNum <= product.minThreshold;
           const status = isLow ? `⚠️ ${t('lbl_out_of_stock_upper') || 'RUPTURE'}` : 'OK';
           tableData.push([item, formatItemValue(d), status]);
@@ -481,7 +486,11 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
           if (!showRupturesOnly) return true;
           const conv = p.conversionCartonUnite || 5;
           const itemDetail = quantities[category]?.[p.name] ?? { units: '0', cartons: '0', na: false };
-          const totalNum = parseInt(itemDetail.units) + (parseInt(itemDetail.cartons) * conv);
+          const parsedUnits = parseFloat(String(itemDetail.units || '0').replace(',', '.'));
+          const parsedCartons = parseFloat(String(itemDetail.cartons || '0').replace(',', '.'));
+          const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+          const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+          const totalNum = safeUnits + (safeCartons * conv);
           return !itemDetail.na && totalNum <= p.minThreshold;
         })
         .sort((a, b) => a.name.localeCompare(b.name));
@@ -742,7 +751,11 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                           {categoryProducts.map((product, index) => {
                             const conv = product.conversionCartonUnite || 5;
                             const itemDetail = quantities[category]?.[product.name] ?? { units: '0', cartons: '0', na: false };
-                            const totalNum = parseInt(itemDetail.units) + (parseInt(itemDetail.cartons) * conv);
+                            const parsedUnits = parseFloat(String(itemDetail.units || '0').replace(',', '.'));
+                            const parsedCartons = parseFloat(String(itemDetail.cartons || '0').replace(',', '.'));
+                            const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+                            const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+                            const totalNum = safeUnits + (safeCartons * conv);
                             const isLow = !itemDetail.na && totalNum <= product.minThreshold;
                             const style = getCategorieStyle(category);
                             const IconComp = ICONS_MAP[product.icon as keyof typeof ICONS_MAP] || Package;
