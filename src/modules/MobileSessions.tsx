@@ -496,21 +496,28 @@ export const MobileSessions = () => {
                     <div>
                        <Label className="mb-2 block">Modules autorisés</Label>
                        <div className="grid grid-cols-1 gap-2">
-                          {MODULES_LIST.map(mod => (
-                            <label key={mod.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-                               <input 
-                                type="checkbox" 
-                                checked={selectedModules.includes(mod.id)} 
-                                onChange={e => {
-                                  if (e.target.checked) setSelectedModules([...selectedModules, mod.id]);
-                                  else setSelectedModules(selectedModules.filter(id => id !== mod.id));
-                                }}
-                                className="w-5 h-5 text-crousty-purple rounded focus:ring-crousty-purple"
-                               />
-                               <mod.icon size={20} className={mod.color} />
-                               <span className="font-bold text-gray-700 text-sm">{mod.label}</span>
-                            </label>
-                          ))}
+                          {MODULES_LIST.map(mod => {
+                             const isSelected = selectedModules.includes(mod.id);
+                             return (
+                             <div 
+                               key={mod.id}
+                               onClick={() => {
+                                 if (isSelected) {
+                                   setSelectedModules(selectedModules.filter(id => id !== mod.id));
+                                 } else {
+                                   setSelectedModules([...selectedModules, mod.id]);
+                                 }
+                               }}
+                               className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
+                             >
+                                <div className={`w-5 h-5 rounded flex items-center justify-center border-2 box-border transition-colors ${isSelected ? 'bg-crousty-purple border-crousty-purple text-white' : 'bg-white border-gray-300'}`}>
+                                  {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                                </div>
+                                <mod.icon size={20} className={mod.color} />
+                                <span className="font-bold text-gray-700 text-sm">{mod.label}</span>
+                             </div>
+                             );
+                          })}
                        </div>
                     </div>
                  </div>
