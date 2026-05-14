@@ -71,14 +71,12 @@ export const SessionManager: React.FC<{ children: React.ReactNode }> = ({ childr
 
     window.addEventListener('mousemove', resetInteract);
     window.addEventListener('keydown', resetInteract);
-    window.addEventListener('touchstart', resetInteract, { passive: true });
     window.addEventListener('click', resetInteract);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('mousemove', resetInteract);
       window.removeEventListener('keydown', resetInteract);
-      window.removeEventListener('touchstart', resetInteract);
       window.removeEventListener('click', resetInteract);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(interval);

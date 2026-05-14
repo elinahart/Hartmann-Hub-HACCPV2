@@ -211,13 +211,16 @@ export const LoginScreen = () => {
             {/* View Toggle & Search Minimal */}
             <div className="flex justify-between items-center mb-8 px-6">
               <div className="relative flex-1 max-w-xs">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={18} />
                 <input 
                   type="text"
                   placeholder="Rechercher..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onTouchStart={(e) => { e.stopPropagation(); }}
+                  onClick={(e) => { e.stopPropagation(); (e.target as HTMLInputElement).focus(); }}
                   className="w-full h-10 pl-11 pr-4 bg-white/50 border border-transparent rounded-full text-sm font-bold focus:bg-white focus:border-gray-100 transition-all outline-none"
+                  style={{ WebkitUserSelect: "text", userSelect: "text" }}
                 />
               </div>
               
