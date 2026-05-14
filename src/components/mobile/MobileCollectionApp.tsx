@@ -128,20 +128,24 @@ export const MobileCollectionApp = ({ session, onExit }: { session: any, onExit:
     }
   };
 
+  const [oldDataCount, setOldDataCount] = useState<number>(0);
+
   const calculateCounts = () => {
+    let total = 0;
     const newCounts: Record<string, number> = {};
-    for (const mod of session.m) {
-      if (MODULE_CONFIG[mod]) {
-         newCounts[mod] = getStoredData<any[]>(MODULE_CONFIG[mod].storageKey, []).length;
+    for (const mod of Object.keys(MODULE_CONFIG)) {
+      const data = getStoredData<any[]>(MODULE_CONFIG[mod].storageKey, []);
+      if (session.m.includes(mod)) {
+          newCounts[mod] = data.length;
       }
+      total += data.length;
     }
     setCounts(newCounts);
+    setOldDataCount(total);
   };
 
   useEffect(() => {
-    if (currentView === 'dashboard') {
-      calculateCounts();
-    }
+    calculateCounts();
   }, [currentView]);
 
   const generateZip = async () => {
@@ -317,9 +321,26 @@ export const MobileCollectionApp = ({ session, onExit }: { session: any, onExit:
          <h1 className="text-2xl font-black text-gray-800 tracking-tight leading-tight mb-2">
            {identity.nom}
          </h1>
-         <p className="text-gray-500 mb-8 max-w-sm">
+         <p className="text-gray-500 mb-6 max-w-sm">
            {identity.ville ? `${identity.ville} • ` : ''}{t('mobile_app_setup_desc')}
          </p>
+
+         {oldDataCount > 0 && (
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 w-full max-w-sm mb-6 space-y-3">
+               <div className="flex items-center gap-2 text-orange-600 font-black text-sm justify-center">
+                  <Flame size={16} /> Attention: {oldDataCount} données précédentes trouvées
+               </div>
+               <p className="text-orange-500 text-xs">Veuillez archiver ou supprimer ces données avant de commencer une nouvelle session.</p>
+               <div className="flex flex-col gap-2">
+                  <Button variant="outline" onClick={forceDownload} className="w-full text-xs h-10 border-orange-200 text-orange-700 bg-white">
+                      Télécharger / Archiver (Secours)
+                  </Button>
+                  <Button variant="danger" onClick={clearLocalData} className="w-full text-xs h-10 bg-red-50 text-red-600 hover:text-white border-red-100">
+                      Supprimer les données
+                  </Button>
+               </div>
+            </div>
+         )}
          
          <form onSubmit={handleStartSession} className="w-full max-w-sm space-y-4">
             <input 
@@ -330,7 +351,7 @@ export const MobileCollectionApp = ({ session, onExit }: { session: any, onExit:
               onChange={e => setWorkerName(e.target.value)}
               className="w-full px-6 py-4 text-lg font-bold text-center border-2 border-purple-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-crousty-purple/20 focus:border-crousty-purple bg-white shadow-sm"
             />
-            <Button type="submit" disabled={!workerName.trim()} className="w-full h-14 text-lg">
+            <Button type="submit" disabled={!workerName.trim() || oldDataCount > 0} className="w-full h-14 text-lg">
                {t('mobile_app_start_btn')}
             </Button>
             <Button variant="secondary" onClick={handleExit} type="button" className="w-full text-red-500">

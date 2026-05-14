@@ -254,9 +254,29 @@ export const AuditTab = () => {
                     <div className="font-bold text-gray-800">{evt.userName}</div>
                     <div className="text-xs text-gray-400">{evt.source === 'hub' ? 'Hartmann Hub' : 'Hartmann Mobile'}</div>
                   </td>
-                  <td className="px-6 py-4 text-gray-500 text-xs font-mono">
-                    <div className="max-w-[200px] truncate" title={evt.details ? JSON.stringify(evt.details) : '-'}>
-                      {evt.details ? JSON.stringify(evt.details) : '-'}
+                  <td className="px-6 py-4 text-xs">
+                    <div className="max-w-xs space-y-1">
+                      {evt.details ? (
+                        typeof evt.details === 'object' ? (
+                          Object.entries(evt.details).map(([k, v]) => {
+                            if (v === null || v === undefined) return null;
+                            const displayVal = typeof v === 'object' ? JSON.stringify(v) : String(v);
+                            // skip ugly properties
+                            if (k === 'id' || k === 'sid' || k === 'photoId' || k === 'session') return null;
+                            if (displayVal === '' || displayVal === '[]' || displayVal === '{}') return null;
+                            return (
+                              <div key={k} className="flex gap-2 items-start">
+                                <span className="font-bold text-gray-500 capitalize">{k.replace(/_/g, ' ')}:</span>
+                                <span className="text-gray-800 break-all">{displayVal}</span>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-gray-800 break-all">{String(evt.details)}</div>
+                        )
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">

@@ -63,9 +63,12 @@ export default function CommandesFournisseurs() {
         let orderCartons = 0;
         let orderUnits = recommendedOrder;
         
-        if (p.unite === 'Carton' || p.unite === 'Colis' || recommendedOrder >= conv) {
+        if (conv > 1 && (p.unite === 'Carton' || p.unite === 'Colis' || recommendedOrder >= conv)) {
           orderCartons = Math.floor(recommendedOrder / conv);
           orderUnits = recommendedOrder % conv;
+        } else {
+          orderCartons = 0;
+          orderUnits = recommendedOrder;
         }
 
         supplierGroups[fournisseur].push({

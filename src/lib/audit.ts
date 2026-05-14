@@ -21,9 +21,9 @@ export function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>) {
   try {
     const rawEvents = getStoredData<AuditEvent[]>('crousty_audit_log', []);
     const now = Date.now();
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
     
-    let events = rawEvents.filter(e => now - new Date(e.timestamp).getTime() <= TWENTY_FOUR_HOURS);
+    let events = rawEvents.filter(e => now - new Date(e.timestamp).getTime() <= ONE_WEEK);
     
     const newEvent: AuditEvent = {
       ...event,
@@ -47,11 +47,11 @@ export function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>) {
 export function getAuditEvents(): AuditEvent[] {
   const events = getStoredData<AuditEvent[]>('crousty_audit_log', []);
   const now = Date.now();
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
   
-  // Clean up events older than 24h
+  // Clean up events older than 7 days
   const filteredEvents = events.filter(e => {
-    return now - new Date(e.timestamp).getTime() <= TWENTY_FOUR_HOURS;
+    return now - new Date(e.timestamp).getTime() <= ONE_WEEK;
   });
 
   if (filteredEvents.length !== events.length) {
