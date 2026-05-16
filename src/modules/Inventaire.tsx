@@ -15,7 +15,7 @@ import { GererLesProduits, ICONS_MAP, getSmartIcon, DEFAULT_CATEGORIES } from '.
 
 import { useInventaire } from '../providers/InventaireProvider';
 import { useConfig } from '../contexts/ConfigContext';
-import { calculateExpectedStock, calculateConsumptionRate } from '../lib/stockCalculation';
+import { calculateExpectedStock, calculateConsumptionRate, calculateEstimatedStockNow } from '../lib/stockCalculation';
 
 import { getCategorieStyle } from '../lib/inventoryStyles';
 
@@ -126,8 +126,8 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
       const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
       const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
       const lastStockNum = countAtLast ? (safeUnits + safeCartons * conv) : 0;
-
-      const estimated = Math.max(0, lastStockNum + (expected - lastStockNum) - (avgPerDay * daysSinceLast));
+      
+      const estimated = calculateEstimatedStockNow(p, newest, rec, avgPerDay);
       
       est[p.name] = { expected, estimated, lastStock: lastStockNum };
     }
@@ -847,7 +847,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                                     <span className="text-[10px] items-center text-gray-400 font-bold uppercase ml-1" title="Unités">{product.uniteStock || 'Unités'}</span>
                                     <div className="flex items-center justify-between bg-gray-50 p-1 rounded-xl">
                                       <button onClick={() => adjustQuantityValue(category, product.name, 'units', -1)} className="w-8 h-8 flex items-center justify-center bg-white border border-gray-100 text-orange-500 rounded-lg font-black active:scale-90 shadow-sm">-</button>
-                                      <input type="text" inputMode="none" className="w-8 bg-transparent border-none text-center font-black text-sm text-gray-800 p-0" value={itemDetail.units} onChange={e => updateQuantity(category, product.name, 'units', e.target.value)} />
+                                      <input type="text" inputMode="none" data-keyboard="numeric" className="w-8 bg-transparent border-none text-center font-black text-sm text-gray-800 p-0" value={itemDetail.units} onChange={e => updateQuantity(category, product.name, 'units', e.target.value)} />
                                       <button onClick={() => adjustQuantityValue(category, product.name, 'units', 1)} className="w-8 h-8 flex items-center justify-center bg-orange-500 text-white rounded-lg font-black active:scale-90 shadow-sm">+</button>
                                     </div>
                                   </div>
@@ -855,7 +855,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
                                     <span className="text-[10px] text-gray-400 font-bold uppercase ml-1" title="Unité d'achat">{product.uniteAchat || 'Cartons'}</span>
                                     <div className="flex items-center justify-between bg-gray-50 p-1 rounded-xl">
                                       <button onClick={() => adjustQuantityValue(category, product.name, 'cartons', -1)} className="w-8 h-8 flex items-center justify-center bg-white border border-gray-100 text-blue-500 rounded-lg font-black active:scale-90 shadow-sm">-</button>
-                                      <input type="text" inputMode="none" className="w-8 bg-transparent border-none text-center font-black text-sm text-gray-800 p-0" value={itemDetail.cartons} onChange={e => updateQuantity(category, product.name, 'cartons', e.target.value)} />
+                                      <input type="text" inputMode="none" data-keyboard="numeric" className="w-8 bg-transparent border-none text-center font-black text-sm text-gray-800 p-0" value={itemDetail.cartons} onChange={e => updateQuantity(category, product.name, 'cartons', e.target.value)} />
                                       <button onClick={() => adjustQuantityValue(category, product.name, 'cartons', 1)} className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded-lg font-black active:scale-90 shadow-sm">+</button>
                                     </div>
                                   </div>

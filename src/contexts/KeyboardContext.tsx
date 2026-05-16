@@ -238,6 +238,8 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
 };
 
 const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string) => void, onClose: () => void }> = ({ type, onKeyPress, onClose }) => {
+  const [isShift, setIsShift] = useState(false);
+
   const layouts = {
     numeric: [
       ['1', '2', '3'],
@@ -264,13 +266,14 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
       ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
       ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
       ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'],
-      ['W', 'X', 'C', 'V', 'B', 'N', '-', '_', '/'],
+      ['SHIFT', 'W', 'X', 'C', 'V', 'B', 'N', '-', '_', '/'],
       ['CLEAR', 'BACKSPACE', 'SPACE', 'ENTER']
     ],
     text: [
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
       ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
       ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'],
-      ['W', 'X', 'C', 'V', 'B', 'N', '.', ',', '!'],
+      ['SHIFT', 'W', 'X', 'C', 'V', 'B', 'N', '.', ',', '!'],
       ['CLEAR', 'BACKSPACE', 'SPACE', 'ENTER']
     ]
   };
@@ -283,11 +286,20 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
     if (navigator.vibrate) {
       navigator.vibrate(30);
     }
-    if (key === 'SPACE') onKeyPress(' ');
-    else if (key === 'ENTER') onKeyPress('ENTER');
-    else if (key === 'BACKSPACE') onKeyPress('BACKSPACE');
-    else if (key === 'CLEAR') onKeyPress('CLEAR');
-    else onKeyPress(key);
+    if (key === 'SHIFT') {
+      setIsShift(!isShift);
+    } else if (key === 'SPACE') {
+      onKeyPress(' ');
+    } else if (key === 'ENTER') {
+      onKeyPress('ENTER');
+    } else if (key === 'BACKSPACE') {
+      onKeyPress('BACKSPACE');
+    } else if (key === 'CLEAR') {
+      onKeyPress('CLEAR');
+    } else {
+      onKeyPress(isShift ? key : key.toLowerCase());
+      if (isShift) setIsShift(false); // auto unshift
+    }
   };
 
   const isSmallKeyboard = type === 'numeric' || type === 'temperature' || type === 'date';
@@ -333,7 +345,7 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
           <div key={i} className="flex justify-center gap-1.5 md:gap-2 w-full">
             {row.map((key, j) => {
               let btnClass = "bg-white text-slate-800 font-bold rounded-xl shadow-sm border border-slate-300/50 flex items-center justify-center text-xl md:text-2xl touch-none";
-              let label = key;
+              let label = key.length === 1 && /[A-Z]/.test(key) ? (isShift ? key : key.toLowerCase()) : key;
               let isSpecial = false;
               
               let sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' 
@@ -359,6 +371,11 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
                  btnClass = "bg-white text-slate-800 shadow-sm border border-slate-300/50 rounded-xl px-4 touch-none font-semibold text-sm";
                  sizeClass = "h-10 md:h-12 flex-[4] max-w-[300px]";
                  label = 'Espace';
+                 isSpecial = true;
+              } else if (key === 'SHIFT') {
+                 btnClass = `bg-slate-300 ${isShift ? 'text-white bg-crousty-purple/80 border-crousty-purple' : 'text-slate-800'} font-bold rounded-xl shadow-sm text-xs md:text-sm px-2 touch-none`;
+                 sizeClass = "h-10 md:h-12 flex-[1.5] max-w-[100px]";
+                 label = isShift ? '⇧' : '⇧';
                  isSpecial = true;
               }
 

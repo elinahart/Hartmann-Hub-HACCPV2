@@ -302,9 +302,9 @@ export default function Receptions() {
         return;
       }
       
-      const isLignesValid = lignes.every(l => l.produit && l.quantite && l.numeroLot && l.dlc);
+      const isLignesValid = lignes.every(l => l.produit && l.quantiteValeur);
       if (!isLignesValid) {
-        setError(t('err_required_lines') || "Veuillez remplir les champs obligatoires (Produit, Qté, Lot, DLC) pour toutes les lignes.");
+        setError(t('err_required_lines') || "Veuillez remplir les champs obligatoires (Produit, Qté) pour toutes les lignes.");
         setIsSubmitting(false);
         return;
       }
@@ -556,11 +556,11 @@ export default function Receptions() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>{t('lbl_batch_number') || 'Numéro de Lot'} *</Label>
-                    <Input value={ligne.numeroLot} onChange={(e: any) => updateLigne(ligne.id, 'numeroLot', e.target.value)} placeholder="Ex: L12345" />
+                    <Label>{t('lbl_batch_number') || 'Numéro de Lot'}</Label>
+                    <Input value={ligne.numeroLot} onChange={(e: any) => updateLigne(ligne.id, 'numeroLot', e.target.value)} placeholder={t('lbl_optional') || 'Optionnel'} />
                   </div>
                   <div>
-                    <Label>{t('lbl_dlc') || 'DLC / DDM'} *</Label>
+                    <Label>{t('lbl_dlc') || 'DLC / DDM'}</Label>
                     <Input type="date" value={ligne.dlc} onChange={(e: any) => updateLigne(ligne.id, 'dlc', e.target.value)} />
                   </div>
                   <div>

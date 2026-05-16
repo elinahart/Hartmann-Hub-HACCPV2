@@ -19,8 +19,8 @@ const DATA_KEYS = [
   'crousty_traca',
   'crousty_cleaning',
   'crousty_oil_checklist',
-  'crousty_prep',
-  'crousty_inventory',
+  'crousty_prep'
+  // Removed 'crousty_inventory' to preserve historical data for the AI analysis metrics
 ];
 
 const safeFormatDate = (val: string | undefined | null) => {

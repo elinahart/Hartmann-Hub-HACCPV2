@@ -33,6 +33,72 @@ export function calculateExpectedStock(
 }
 
 /**
+ * Calcule une estimation du stock actuel en simulant la consommation jour par jour.
+ * Cela évite les stocks négatifs théoriques qui fausseraient l'ajout d'une nouvelle réception.
+ */
+export function calculateEstimatedStockNow(
+  product: InventoryProduct,
+  lastInventory: InventoryEntry | null,
+  receptions: any[],
+  avgPerDay: number
+): number {
+  if (!lastInventory) {
+    return calculateDeliveriesSince(product, new Date(0).toISOString(), receptions);
+  }
+
+  const conv = product.conversionCartonUnite || 5;
+  const detail = lastInventory.items[product.category]?.[product.name] as InventoryItemDetail;
+  let currentStock = 0;
+  
+  if (detail && !detail.na) {
+    const parsedUnits = parseFloat(String(detail.units || '0').replace(',', '.'));
+    const parsedCartons = parseFloat(String(detail.cartons || '0').replace(',', '.'));
+    const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+    const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+    currentStock = safeUnits + safeCartons * conv;
+  }
+
+  const startDate = new Date(lastInventory.date);
+  const now = new Date();
+  const daysDiff = differenceInDays(startOfDay(now), startOfDay(startDate));
+
+  if (daysDiff <= 0) {
+    return currentStock + calculateDeliveriesSince(product, lastInventory.date, receptions);
+  }
+
+  const relevantReceptions = receptions.filter(r => !r.supprime && new Date(r.date).getTime() > startDate.getTime());
+  let simulatedDate = startOfDay(startDate);
+  
+  // Simulate day by day to prevent negative drops
+  for (let i = 0; i < daysDiff; i++) {
+    const nextDate = new Date(simulatedDate.getTime() + 24 * 60 * 60 * 1000);
+    const dayDeliveries = calculateDeliveriesInInterval(
+      product,
+      simulatedDate.toISOString(),
+      nextDate.toISOString(),
+      relevantReceptions
+    );
+    
+    currentStock += dayDeliveries;
+    currentStock -= avgPerDay;
+    if (currentStock < 0) currentStock = 0;
+    
+    simulatedDate = nextDate;
+  }
+  
+  // Add today's deliveries up to 'now'
+  const todayDeliveries = calculateDeliveriesInInterval(
+    product,
+    simulatedDate.toISOString(),
+    now.toISOString(),
+    relevantReceptions
+  );
+  
+  currentStock += todayDeliveries;
+  return currentStock;
+}
+
+/**
  * Calcule la somme des unités livrées pour un produit depuis une date ISO donnée.
  */
 export function calculateDeliveriesSince(
@@ -109,46 +175,69 @@ export function calculateAdvancedConsumptionMetrics(
   let totalDays = 0;
   let validIntervals = 0;
 
-  // inventories est trié du plus récent (0) au plus ancien (N)
-  for (let i = 0; i < inventories.length - 1; i++) {
-    const newest = inventories[i];
-    const older = inventories[i + 1];
-    
-    const dNewest = new Date(newest.date).getTime();
-    const dOlder = new Date(older.date).getTime();
-    const daysDiff = Math.max(1, differenceInDays(dNewest, dOlder));
+  let currentNewestIdx = 0;
 
-    const getStock = (inv: InventoryEntry) => {
-      const detail = inv.items[product.category]?.[product.name] as InventoryItemDetail;
-      if (!detail || detail.na) return null;
-      const parsedUnits = parseFloat(String(detail.units || '0').replace(',', '.'));
-      const parsedCartons = parseFloat(String(detail.cartons || '0').replace(',', '.'));
-      const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
-      const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
-      return safeUnits + safeCartons * conv;
-    };
+  while (currentNewestIdx < inventories.length - 1) {
+     const newest = inventories[currentNewestIdx];
+     const detailNewest = newest.items[product.category]?.[product.name] as InventoryItemDetail;
+     
+     // Skip if N/A in the newer end of the interval
+     if (!detailNewest || detailNewest.na) {
+       currentNewestIdx++;
+       continue;
+     }
 
-    const stockNewest = getStock(newest);
-    const stockOlder = getStock(older);
+     // Find the next older valid inventory
+     let olderIdx = currentNewestIdx + 1;
+     let older: InventoryEntry | null = null;
+     let detailOlder: InventoryItemDetail | null = null;
+     
+     while (olderIdx < inventories.length) {
+       older = inventories[olderIdx];
+       detailOlder = older.items[product.category]?.[product.name] as InventoryItemDetail;
+       if (detailOlder && !detailOlder.na) {
+         break;
+       }
+       olderIdx++;
+     }
 
-    if (stockNewest !== null && stockOlder !== null) {
-      const deliveredInBetween = calculateDeliveriesInInterval(
-        product,
-        older.date,
-        newest.date,
-        receptions
-      );
+     if (!older || !detailOlder || detailOlder.na) {
+       // We couldn't find a valid older inventory to form an interval
+       break;
+     }
 
-      // Consommation = Ancien stock + Livré depuis - Nouveau stock
-      const consumption = stockOlder + deliveredInBetween - stockNewest;
-      
-      // On ignore les consommations négatives (ex: recomptage, don, erreur de saisie)
-      if (consumption >= 0) {
-        totalConsumption += consumption;
-        totalDays += daysDiff;
-        validIntervals++;
-      }
-    }
+     const getStock = (detail: InventoryItemDetail) => {
+       const parsedUnits = parseFloat(String(detail.units || '0').replace(',', '.'));
+       const parsedCartons = parseFloat(String(detail.cartons || '0').replace(',', '.'));
+       const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+       const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+       return safeUnits + safeCartons * conv;
+     };
+
+     const stockNewest = getStock(detailNewest);
+     const stockOlder = getStock(detailOlder);
+     
+     const dNewest = new Date(newest.date).getTime();
+     const dOlder = new Date(older.date).getTime();
+     const daysDiff = Math.max(1, differenceInDays(dNewest, dOlder));
+
+     const deliveredInBetween = calculateDeliveriesInInterval(
+       product,
+       older.date,
+       newest.date,
+       receptions
+     );
+
+     const consumption = stockOlder + deliveredInBetween - stockNewest;
+     
+     if (consumption >= 0) {
+       totalConsumption += consumption;
+       totalDays += daysDiff;
+       validIntervals++;
+     }
+
+     // Move our window
+     currentNewestIdx = olderIdx;
   }
 
   const avgPerDay = totalDays > 0 ? (totalConsumption / totalDays) : 0;

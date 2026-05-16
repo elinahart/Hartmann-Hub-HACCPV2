@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { AlertTriangle, ChevronRight, X, Package } from 'lucide-react';
 import { useInventaire } from '../providers/InventaireProvider';
 import { getStoredData } from '../lib/db';
-import { calculateExpectedStock, calculateAdvancedConsumptionMetrics } from '../lib/stockCalculation';
+import { calculateExpectedStock, calculateAdvancedConsumptionMetrics, calculateEstimatedStockNow } from '../lib/stockCalculation';
 import { differenceInDays } from 'date-fns';
 import { Card, Button } from './ui/LightUI';
 import { createPortal } from 'react-dom';
@@ -29,21 +29,39 @@ export function PredictiveAlerts() {
     const tomorrow: any[] = [];
 
     products.forEach(p => {
-      const lastCounted = newest.items[p.category]?.[p.name];
-      if (lastCounted?.na === true) return;
+      let validNewest = newest;
+      let lastCounted = validNewest.items[p.category]?.[p.name];
+      
+      if (!lastCounted || lastCounted.na) {
+        for (let i = 1; i < inventories.length; i++) {
+          const pastCount = inventories[i].items[p.category]?.[p.name];
+          if (pastCount && !pastCount.na) {
+            validNewest = inventories[i];
+            lastCounted = pastCount;
+            break;
+          }
+        }
+      }
 
-      const expectedStockValue = calculateExpectedStock(p, newest, receptions);
+      if (!lastCounted || lastCounted.na) {
+        lastCounted = { units: '0', cartons: '0', na: false };
+      }
+
+      const expectedStockValue = calculateExpectedStock(p, validNewest, receptions);
       const metrics = calculateAdvancedConsumptionMetrics(p, inventories, receptions);
       const avgPerDay = metrics.avgPerDay;
       
       const conv = p.conversionCartonUnite || 5;
-      const countNum = lastCounted ? (parseInt(lastCounted.units || '0') + parseInt(lastCounted.cartons || '0') * conv) : 0;
-      const daysSinceLast = Math.max(0, differenceInDays(Date.now(), new Date(newest.date)));
+      const parsedUnits = parseFloat(String(lastCounted?.units || '0').replace(',', '.'));
+      const parsedCartons = parseFloat(String(lastCounted?.cartons || '0').replace(',', '.'));
+      const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+      const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+      const countNum = safeUnits + safeCartons * conv;
+      const daysSinceLast = Math.max(0, differenceInDays(Date.now(), new Date(validNewest.date)));
       
       const stockAtLast = countNum;
       const receivedSinceLast = expectedStockValue - countNum;
-      const consumedSinceLast = avgPerDay * daysSinceLast;
-      const realEstimatedNow = Math.max(0, stockAtLast + receivedSinceLast - consumedSinceLast);
+      const realEstimatedNow = calculateEstimatedStockNow(p, validNewest, receptions, avgPerDay);
 
       if (avgPerDay > 0) {
         const daysRemaining = realEstimatedNow / avgPerDay;

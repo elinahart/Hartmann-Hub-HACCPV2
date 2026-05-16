@@ -5,7 +5,7 @@ import { useInventaire } from '../providers/InventaireProvider';
 import { ShoppingCart, Download, Mail, ChevronDown, ChevronRight, Package } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { calculateExpectedStock, calculateAdvancedConsumptionMetrics } from '../lib/stockCalculation';
+import { calculateExpectedStock, calculateAdvancedConsumptionMetrics, calculateEstimatedStockNow } from '../lib/stockCalculation';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useConfig } from '../contexts/ConfigContext';
@@ -18,6 +18,7 @@ export default function CommandesFournisseurs() {
   const [inventories, setInventories] = useState<any[]>([]);
   const [receptions, setReceptions] = useState<any[]>([]);
   const [expandedSuppliers, setExpandedSuppliers] = useState<Record<string, boolean>>({});
+  const [customOrders, setCustomOrders] = useState<Record<string, { orderCartons: number, orderUnits: number }>>({});
 
   useEffect(() => {
     const inv = getStoredData<any[]>('crousty_inventory', []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -35,40 +36,65 @@ export default function CommandesFournisseurs() {
     for (const p of products) {
       const fournisseur = p.fournisseur || 'Non assigné';
 
-      const lastCounted = newest.items[p.category]?.[p.name];
-      if (lastCounted?.na === true) continue;
+      let validNewest = newest;
+      let lastCounted = validNewest.items[p.category]?.[p.name];
+      
+      if (!lastCounted || lastCounted.na) {
+        for (let i = 1; i < inventories.length; i++) {
+          const pastCount = inventories[i].items[p.category]?.[p.name];
+          if (pastCount && !pastCount.na) {
+            validNewest = inventories[i];
+            lastCounted = pastCount;
+            break;
+          }
+        }
+      }
 
-      const expectedStockValue = calculateExpectedStock(p, newest, receptions);
+      if (!lastCounted || lastCounted.na) {
+        lastCounted = { units: '0', cartons: '0', na: false };
+      }
+
+      const expectedStockValue = calculateExpectedStock(p, validNewest, receptions);
       const metrics = calculateAdvancedConsumptionMetrics(p, inventories, receptions);
       const avgPerDay = metrics.avgPerDay;
       
       const conv = p.conversionCartonUnite || 5;
-      const countNum = lastCounted ? (parseInt(lastCounted.units || '0') + parseInt(lastCounted.cartons || '0') * conv) : 0;
+      const parsedUnits = parseFloat(String(lastCounted.units || '0').replace(',', '.'));
+      const parsedCartons = parseFloat(String(lastCounted.cartons || '0').replace(',', '.'));
+      const safeUnits = isNaN(parsedUnits) ? 0 : parsedUnits;
+      const safeCartons = isNaN(parsedCartons) ? 0 : parsedCartons;
+      const countNum = safeUnits + safeCartons * conv;
       
-      const daysSinceLast = Math.max(0, differenceInDays(Date.now(), new Date(newest.date)));
+      const daysSinceLast = Math.max(0, differenceInDays(Date.now(), new Date(validNewest.date)));
       
       const stockAtLast = countNum;
       const receivedSinceLast = expectedStockValue - countNum;
-      const consumedSinceLast = avgPerDay * daysSinceLast;
-      const realEstimatedNow = Math.max(0, stockAtLast + receivedSinceLast - consumedSinceLast);
+      const realEstimatedNow = calculateEstimatedStockNow(p, validNewest, receptions, avgPerDay);
 
       const targetStock = Math.max(Math.ceil(avgPerDay * 7), p.minThreshold || 0);
       const recommendedOrder = Math.max(0, targetStock - Math.round(realEstimatedNow));
 
-      if (recommendedOrder > 0) {
+      let orderCartons = 0;
+      let orderUnits = recommendedOrder;
+      
+      if (conv > 1 && (p.unite === 'Carton' || p.unite === 'Colis' || recommendedOrder >= conv)) {
+        orderCartons = Math.floor(recommendedOrder / conv);
+        orderUnits = recommendedOrder % conv;
+      } else {
+        orderCartons = 0;
+        orderUnits = recommendedOrder;
+      }
+
+      let isModified = false;
+      if (customOrders[p.name]) {
+         orderCartons = customOrders[p.name].orderCartons;
+         orderUnits = customOrders[p.name].orderUnits;
+         isModified = true;
+      }
+
+      if (recommendedOrder > 0 || (isModified && (orderCartons > 0 || orderUnits > 0))) {
         if (!supplierGroups[fournisseur]) {
           supplierGroups[fournisseur] = [];
-        }
-        
-        let orderCartons = 0;
-        let orderUnits = recommendedOrder;
-        
-        if (conv > 1 && (p.unite === 'Carton' || p.unite === 'Colis' || recommendedOrder >= conv)) {
-          orderCartons = Math.floor(recommendedOrder / conv);
-          orderUnits = recommendedOrder % conv;
-        } else {
-          orderCartons = 0;
-          orderUnits = recommendedOrder;
         }
 
         supplierGroups[fournisseur].push({
@@ -76,16 +102,36 @@ export default function CommandesFournisseurs() {
           recommendedOrder,
           orderCartons,
           orderUnits,
+          isModified,
           estimatedNow: Math.round(realEstimatedNow)
         });
       }
     }
     
     return supplierGroups;
-  }, [inventories, receptions, products]);
+  }, [inventories, receptions, products, customOrders]);
 
   const toggleSupplier = (supplier: string) => {
     setExpandedSuppliers(prev => ({ ...prev, [supplier]: !prev[supplier] }));
+  };
+
+  const updateCustomOrder = (productName: string, field: 'orderCartons' | 'orderUnits', valStr: string) => {
+    let val = parseInt(valStr || '0');
+    if (isNaN(val)) val = 0;
+    setCustomOrders(prev => {
+      const existing = prev[productName] || { 
+        orderCartons: ordersBySupplier[Object.keys(ordersBySupplier).find(k => ordersBySupplier[k].some(i => i.product.name === productName)) || '']?.find(i => i.product.name === productName)?.orderCartons || 0,
+        orderUnits: ordersBySupplier[Object.keys(ordersBySupplier).find(k => ordersBySupplier[k].some(i => i.product.name === productName)) || '']?.find(i => i.product.name === productName)?.orderUnits || 0
+      };
+      
+      return {
+        ...prev,
+        [productName]: {
+          ...existing,
+          [field]: val
+        }
+      };
+    });
   };
 
   const generateEmail = (supplier: string, items: any[]) => {
@@ -111,11 +157,26 @@ export default function CommandesFournisseurs() {
     window.location.href = `mailto:?subject=${subject}&body=${encodedBody}`;
   };
 
+  const hexToRgb = (hex: string): [number, number, number] => {
+    let r = 0, g = 0, b = 0;
+    if (hex.length === 4) {
+      r = parseInt(hex[1] + hex[1], 16);
+      g = parseInt(hex[2] + hex[2], 16);
+      b = parseInt(hex[3] + hex[3], 16);
+    } else if (hex.length === 7) {
+      r = parseInt(hex.substring(1, 3), 16);
+      g = parseInt(hex.substring(3, 5), 16);
+      b = parseInt(hex.substring(5, 7), 16);
+    }
+    return [r, g, b];
+  };
+
   const generatePDF = (supplier: string, items: any[]) => {
     const doc = new jsPDF();
     const restoName = config.restaurant?.nom || 'Restaurant';
+    const primaryColor = hexToRgb(config.colors?.primary || '#5b10aa');
     
-    doc.setFillColor(26, 11, 46); // crousty-purple
+    doc.setFillColor(...primaryColor);
     doc.rect(0, 0, 210, 30, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
@@ -133,7 +194,7 @@ export default function CommandesFournisseurs() {
     
     autoTable(doc, {
       startY: 60,
-      head: [['Produit', 'Conditionnement', 'Quantité suggérée', 'Ajustement (Réservé)']],
+      head: [['Produit', 'Conditionnement', 'Quantité à commander']],
       body: items.map(item => {
         let qteStr = "";
         if (item.orderCartons > 0 && item.orderUnits > 0) {
@@ -147,12 +208,11 @@ export default function CommandesFournisseurs() {
         return [
           item.product.name,
           `${item.product.conversionCartonUnite || 5} / Carton`,
-          qteStr,
-          ""
+          qteStr
         ];
       }),
       theme: 'grid',
-      headStyles: { fillColor: [26, 11, 46], textColor: [255, 255, 255] },
+      headStyles: { fillColor: primaryColor, textColor: [255, 255, 255] },
       styles: { fontSize: 10, cellPadding: 4 }
     });
 
@@ -241,13 +301,29 @@ export default function CommandesFournisseurs() {
                          }
 
                         return (
-                          <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 rounded-lg border border-gray-200 gap-3">
                             <div>
-                                <p className="font-bold text-gray-900 text-sm">{item.product.name}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-bold text-gray-900 text-sm">{item.product.name}</p>
+                                  {item.isModified && <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-bold uppercase">Modifié</span>}
+                                </div>
                                 <p className="text-xs text-gray-500">Stock estimé : {item.estimatedNow} {item.product.unite}</p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md uppercase tracking-wider">{qteStr}</p>
+                            <div className="flex items-center gap-2 justify-end">
+                               {(item.product.uniteAchat === 'Carton' || item.product.uniteAchat === 'Colis' || item.orderCartons > 0 || (item.product.conversionCartonUnite || 0) > 1) && (
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase mb-0.5">{item.product.uniteAchat || 'Cartons'}</span>
+                                    <div className="flex items-center bg-gray-50 rounded-lg p-0.5">
+                                      <input type="text" inputMode="none" data-keyboard="numeric" className="w-10 text-center bg-transparent border-none font-bold text-sm text-indigo-700" value={item.orderCartons} onChange={(e) => updateCustomOrder(item.product.name, 'orderCartons', e.target.value)} />
+                                    </div>
+                                  </div>
+                               )}
+                               <div className="flex flex-col items-center">
+                                 <span className="text-[10px] text-gray-400 font-bold uppercase mb-0.5">{item.product.uniteStock || 'Unités'}</span>
+                                 <div className="flex items-center bg-gray-50 rounded-lg p-0.5">
+                                   <input type="text" inputMode="none" data-keyboard="numeric" className="w-10 text-center bg-transparent border-none font-bold text-sm text-indigo-700" value={item.orderUnits} onChange={(e) => updateCustomOrder(item.product.name, 'orderUnits', e.target.value)} />
+                                 </div>
+                               </div>
                             </div>
                           </div>
                         );

@@ -1,11 +1,32 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.2.2";
+export const APP_VERSION = "3.2.4";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "14 Mai 2026";
+export const APP_LAST_UPDATE = "16 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.2.4",
+    date: "16 Mai 2026",
+    changes: [
+      "Inventaire IA : Correction d'un problème excluant complètement de l'analyse les produits qui étaient passés temporairement en N/A.",
+      "Inventaire IA : Les calculs de moyennes journalières et hebdomadaires prennent désormais correctement en compte tous les inventaires historiques valides.",
+      "Archivage : Conservation de l'historique de l'inventaire lors de la purge afin de garantir la performance des calculs IA au fil des mois."
+    ]
+  },
+  {
+    version: "3.2.3",
+    date: "16 Mai 2026",
+    changes: [
+      "Inventaire : Amélioration de la logique mathématique des estimations de stock pour prévenir les chutes sous 0 fictives.",
+      "Réceptions : Modifiez vos réceptions beaucoup plus rapidement ! Le numéro de lot et la DLC sont désormais optionnels.",
+      "Inventaire : Les champs pour compter l'inventaire affichent désormais uniquement un clavier numérique, plus adapté.",
+      "Clavier virtuel : Ajout de la touche Majuscule (SHIFT) pour permettre la saisie de majuscules et minuscules sur la tablette.",
+      "Commandes Fournisseurs : Vous pouvez désormais ajuster librement les quantités suggérées avant d'exporter en PDF ou par Email.",
+      "Commandes Fournisseurs PDF : Le fichier s'accorde dynamiquement aux couleurs du restaurant."
+    ]
+  },
   {
     version: "3.2.2",
     date: "14 Mai 2026",
