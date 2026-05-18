@@ -82,7 +82,9 @@ export default function Tracabilite() {
   const [dateSaisie, setDateSaisie] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
 
   const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+    return [...products]
+      .filter(p => p.isTracabiliteItem !== false)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [products]);
 
   const filteredProducts = useMemo(() => {

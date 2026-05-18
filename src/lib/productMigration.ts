@@ -50,6 +50,10 @@ export const migrateProductsToUnified = () => {
         name: invP.name || 'Produit Inconnu',
         category: migrateCategoryName(invP.category || catP?.category || 'Autres'), // apply migration here
         
+        // Modules flags
+        isInventoryItem: true,
+        isTracabiliteItem: !!catP,
+        
         // Fields from Inventory
         minThreshold: invP.minThreshold !== undefined ? invP.minThreshold : 0,
         fournisseur: invP.fournisseur || '',
@@ -79,6 +83,10 @@ export const migrateProductsToUnified = () => {
           name: catP.name || 'Produit Inconnu',
           category: migrateCategoryName(catP.category || 'Autres'),
           
+          // Modules flags
+          isInventoryItem: false,
+          isTracabiliteItem: true,
+
           // Fields from Inventory (Defaults)
           minThreshold: 0,
           fournisseur: '',
@@ -103,6 +111,12 @@ export const migrateProductsToUnified = () => {
   
   // ALWAYS auto-migrate categories & dlc logic on every run (to upgrade any outdated ones)
   let changed = false;
+  
+  // To retroactively apply the flags if they are missing
+  const legacyInventoryProducts = getStoredData<any[]>('crousty-inventaire-produits', []);
+  const legacyInventoryIds = new Set(legacyInventoryProducts.map(p => p.id));
+  const legacyInventoryNames = new Set(legacyInventoryProducts.map(p => (p.name || '').toLowerCase().trim()));
+
   const migratedUnified = existingUnified.map(p => {
     let pCat = p.category;
     const newCat = migrateCategoryName(pCat);
@@ -113,11 +127,33 @@ export const migrateProductsToUnified = () => {
     if (isSec) newDlcNeeded = false;
     else if (newDlcNeeded === undefined) newDlcNeeded = true;
     
-    if (pCat !== newCat || p.dlcNeeded !== newDlcNeeded) {
+    let isInv = p.isInventoryItem;
+    let isTrac = p.isTracabiliteItem;
+    
+    if (isInv === undefined || isTrac === undefined) {
+      changed = true;
+      const searchName = (p.name || '').toLowerCase().trim();
+      const wasInInventory = legacyInventoryIds.has(p.id) || legacyInventoryNames.has(searchName);
+      
+      if (isInv === undefined) {
+        // If we can't find it in legacy inventory, maybe it was just a tracabilite product
+        if (legacyInventoryProducts.length > 0) {
+           isInv = wasInInventory;
+        } else {
+           // Fallback if no legacy array exists
+           isInv = true; // by default we used to show everything if no division
+        }
+      }
+      if (isTrac === undefined) {
+         isTrac = true; // Default to true since catalogue products are mainly tracabilite
+      }
+    }
+    
+    if (pCat !== newCat || p.dlcNeeded !== newDlcNeeded || p.isInventoryItem !== isInv || p.isTracabiliteItem !== isTrac) {
         changed = true;
     }
     
-    return { ...p, category: newCat, dlcNeeded: newDlcNeeded };
+    return { ...p, category: newCat, dlcNeeded: newDlcNeeded, isInventoryItem: isInv, isTracabiliteItem: isTrac };
   });
 
   if (changed) {

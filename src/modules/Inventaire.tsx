@@ -48,7 +48,8 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
   const { t } = useI18n();
   const { currentUser } = useAuth();
   const isMobileMode = !!localStorage.getItem('crousty_mobile_session');
-  const { products, refreshProducts } = useInventaire();
+  const { products: allProducts, refreshProducts } = useInventaire();
+  const products = useMemo(() => allProducts.filter(p => p.isInventoryItem !== false), [allProducts]);
   const { config } = useConfig();
   const [entries, setEntries] = useState<InventoryEntry[]>([]);
   const [quantities, setQuantities] = useState<Record<string, Record<string, InventoryItemDetail>>>({});

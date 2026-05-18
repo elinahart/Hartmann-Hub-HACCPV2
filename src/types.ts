@@ -129,6 +129,9 @@ export interface UnifiedProduct {
   uniteStock?: string;
   uniteAchat?: string;
   conversionCartonUnite?: number;
+  // Modules flags
+  isInventoryItem?: boolean;
+  isTracabiliteItem?: boolean;
 }
 
 export type InventoryProduct = UnifiedProduct;

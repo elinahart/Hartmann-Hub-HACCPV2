@@ -89,6 +89,8 @@ export const ProduitsTab = () => {
   const [conversionCartonUnite, setConversionCartonUnite] = useState<number | string>(1);
   const [minThreshold, setMinThreshold] = useState<number | string>(0);
   const [fournisseur, setFournisseur] = useState('');
+  const [isInventoryItem, setIsInventoryItem] = useState(true);
+  const [isTracabiliteItem, setIsTracabiliteItem] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Doublons (Fusion)
@@ -167,6 +169,8 @@ export const ProduitsTab = () => {
     setConversionCartonUnite(p.conversionCartonUnite || 1);
     setMinThreshold(p.minThreshold || 0);
     setFournisseur(p.fournisseur || '');
+    setIsInventoryItem(p.isInventoryItem !== false);
+    setIsTracabiliteItem(p.isTracabiliteItem !== false);
     setError(null);
   };
 
@@ -194,6 +198,8 @@ export const ProduitsTab = () => {
     setConversionCartonUnite(1);
     setMinThreshold(0);
     setFournisseur('');
+    setIsInventoryItem(true);
+    setIsTracabiliteItem(true);
     setError(null);
   };
 
@@ -217,7 +223,9 @@ export const ProduitsTab = () => {
       uniteAchat,
       conversionCartonUnite: Number(conversionCartonUnite),
       minThreshold: Number(minThreshold),
-      fournisseur
+      fournisseur,
+      isInventoryItem,
+      isTracabiliteItem
     };
 
     let newProduits: ProductDef[];
@@ -468,6 +476,34 @@ export const ProduitsTab = () => {
             <div>
                <Label className="text-xs text-gray-700 font-bold uppercase tracking-wider mb-2 block">Fournisseur</Label>
                <Input data-native="true" value={fournisseur} onChange={(e: any) => setFournisseur(e.target.value)} placeholder="Ex: Transgourmet" className="h-11 bg-white text-sm" />
+            </div>
+
+            {/* Usage modules */}
+            <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-6">
+              <div className="flex-1 space-y-2">
+                <Label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">Inventaire</Label>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-gray-500 mr-2">Afficher dans l'inventaire et autoriser le comptage.</p>
+                  <button 
+                    type="button"
+                    onClick={() => setIsInventoryItem(!isInventoryItem)} 
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isInventoryItem ? 'bg-crousty-purple' : 'bg-gray-200'}`}>
+                     <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isInventoryItem ? 'translate-x-2.5' : '-translate-x-2.5'}`} />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 space-y-2">
+                <Label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">Traçabilité</Label>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-gray-500 mr-2">Afficher dans le catalogue des étiquettes DLC.</p>
+                  <button 
+                    type="button"
+                    onClick={() => setIsTracabiliteItem(!isTracabiliteItem)} 
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isTracabiliteItem ? 'bg-emerald-500' : 'bg-gray-200'}`}>
+                     <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isTracabiliteItem ? 'translate-x-2.5' : '-translate-x-2.5'}`} />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Icône */}
