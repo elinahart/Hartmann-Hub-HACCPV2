@@ -120,7 +120,16 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
       const avgPerDay = calculateConsumptionRate(p, entries, rec);
       const daysSinceLast = Math.max(0, differenceInDays(Date.now(), new Date(newest.date)));
       
-      const countAtLast = newest.items[p.category]?.[p.name];
+      let countAtLast: any = null;
+      if (newest && newest.items) {
+         for (const cat in newest.items) {
+            if (newest.items[cat][p.name]) {
+               countAtLast = newest.items[cat][p.name];
+               break;
+            }
+         }
+      }
+
       const conv = p.conversionCartonUnite || 5;
       const parsedUnits = parseFloat(String((countAtLast as any)?.units || '0').replace(',', '.'));
       const parsedCartons = parseFloat(String((countAtLast as any)?.cartons || '0').replace(',', '.'));

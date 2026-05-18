@@ -21,7 +21,8 @@ interface InvItems {
 }
 
 export default function InventaireIntelligent() {
-  const { products } = useInventaire();
+  const { products: allProducts } = useInventaire();
+  const products = useMemo(() => allProducts.filter(p => p.isInventoryItem !== false), [allProducts]);
   const { config } = useConfig();
   const { t } = useI18n();
   const { currentUser } = useAuth();
@@ -50,14 +51,33 @@ export default function InventaireIntelligent() {
 
     for (const p of products) {
       let validNewest = newest;
-      let lastCounted = validNewest.items[p.category]?.[p.name];
+      let lastCounted = null;
+
+      // Ensure we find the product regardless of category changes
+      if (validNewest && validNewest.items) {
+        for (const cat in validNewest.items) {
+           if (validNewest.items[cat][p.name]) {
+              lastCounted = validNewest.items[cat][p.name];
+              break;
+           }
+        }
+      }
       
       // Find the most recent inventory where this product was actually counted
       if (!lastCounted || lastCounted.na) {
         for (let i = 1; i < inventories.length; i++) {
-          const pastCount = inventories[i].items[p.category]?.[p.name];
+          const pastInv = inventories[i];
+          let pastCount = null;
+          if (pastInv && pastInv.items) {
+             for (const cat in pastInv.items) {
+                if (pastInv.items[cat][p.name]) {
+                   pastCount = pastInv.items[cat][p.name];
+                   break;
+                }
+             }
+          }
           if (pastCount && !pastCount.na) {
-            validNewest = inventories[i];
+            validNewest = pastInv;
             lastCounted = pastCount;
             break;
           }

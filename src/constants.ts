@@ -1,11 +1,20 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.5.5";
+export const APP_VERSION = "3.5.6";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "17 Mai 2026";
+export const APP_LAST_UPDATE = "18 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.5.6",
+    date: "18 Mai 2026",
+    changes: [
+      "Inventaire IA & Tablette : Correction de l'algorithme de détection des produits sur tous les types d'inventaires (secs, surgelés/congelés, etc).",
+      "Inventaire et Receptions : La reconnaissance des produits dans l'historique ignore désormais les anciens noms de catégories pour une précision de 100%.",
+      "Synchronisation Mobile : Les produits secs alimentaires et surgelés ne disparaissent plus lors du renvoi des inventaires vers l'iPad."
+    ]
+  },
   {
     version: "3.5.5",
     date: "17 Mai 2026",

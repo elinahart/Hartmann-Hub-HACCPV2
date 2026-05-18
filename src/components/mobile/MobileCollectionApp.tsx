@@ -75,7 +75,7 @@ export const MobileCollectionApp = ({ session, onExit }: { session: any, onExit:
                if (data.configSnapshot.fournisseurs) setStoredData('crousty_fournisseurs', data.configSnapshot.fournisseurs);
                if (data.configSnapshot.employees) setStoredData('crousty_employees', data.configSnapshot.employees);
                if (data.configSnapshot.temperaturesZones) setStoredData('crousty-temperatures-zones', data.configSnapshot.temperaturesZones);
-               if (data.configSnapshot.inventaireProduits) setStoredData('crousty-inventaire-produits', data.configSnapshot.inventaireProduits);
+               if (data.configSnapshot.unifiedProducts) setStoredData('crousty_unified_products', data.configSnapshot.unifiedProducts);
                if (data.configSnapshot.huilesCuves) setStoredData('crousty-huiles-cuves', data.configSnapshot.huilesCuves);
                if (data.configSnapshot.nettoyageTaches) setStoredData('crousty-nettoyage-taches', data.configSnapshot.nettoyageTaches);
                if (data.configSnapshot.catalogueProvider) setStoredData('crousty-catalogue-produits', data.configSnapshot.catalogueProvider);

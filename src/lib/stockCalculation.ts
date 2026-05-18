@@ -2,6 +2,19 @@ import { InventoryEntry, InventoryProduct, InventoryItemDetail } from '../types'
 import { differenceInDays, startOfDay } from 'date-fns';
 
 /**
+ * Helper to find a product detail in an inventory entry regardless of the category it was saved under.
+ */
+function getDetailFromInventory(product: InventoryProduct, inventory: InventoryEntry | null): InventoryItemDetail | null {
+  if (!inventory || !inventory.items) return null;
+  for (const cat in inventory.items) {
+    if (inventory.items[cat] && inventory.items[cat][product.name]) {
+      return inventory.items[cat][product.name] as InventoryItemDetail;
+    }
+  }
+  return null;
+}
+
+/**
  * Calcule le stock attendu pour un produit donné à une date T.
  * Logique : Dernier inventaire validé + Somme des livraisons depuis cet inventaire.
  */
@@ -16,7 +29,7 @@ export function calculateExpectedStock(
   }
 
   const conv = product.conversionCartonUnite || 5;
-  const detail = lastInventory.items[product.category]?.[product.name] as InventoryItemDetail;
+  const detail = getDetailFromInventory(product, lastInventory);
   
   if (!detail || detail.na) {
      return calculateDeliveriesSince(product, lastInventory.date, receptions);
@@ -47,7 +60,7 @@ export function calculateEstimatedStockNow(
   }
 
   const conv = product.conversionCartonUnite || 5;
-  const detail = lastInventory.items[product.category]?.[product.name] as InventoryItemDetail;
+  const detail = getDetailFromInventory(product, lastInventory);
   let currentStock = 0;
   
   if (detail && !detail.na) {
@@ -179,7 +192,7 @@ export function calculateAdvancedConsumptionMetrics(
 
   while (currentNewestIdx < inventories.length - 1) {
      const newest = inventories[currentNewestIdx];
-     const detailNewest = newest.items[product.category]?.[product.name] as InventoryItemDetail;
+     const detailNewest = getDetailFromInventory(product, newest);
      
      // Skip if N/A in the newer end of the interval
      if (!detailNewest || detailNewest.na) {
@@ -194,7 +207,7 @@ export function calculateAdvancedConsumptionMetrics(
      
      while (olderIdx < inventories.length) {
        older = inventories[olderIdx];
-       detailOlder = older.items[product.category]?.[product.name] as InventoryItemDetail;
+       detailOlder = getDetailFromInventory(product, older);
        if (detailOlder && !detailOlder.na) {
          break;
        }

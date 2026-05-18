@@ -93,7 +93,7 @@ export const MobileSyncModal = ({ isOpen, onClose }: MobileSyncModalProps) => {
       fournisseurs: getStoredData('crousty_fournisseurs', []),
       employees: getStoredData('crousty_employees', []),
       temperaturesZones: getStoredData('crousty-temperatures-zones', []),
-      inventaireProduits: getStoredData('crousty-inventaire-produits', []),
+      unifiedProducts: getStoredData('crousty_unified_products', []),
       huilesCuves: getStoredData('crousty-huiles-cuves', []),
       nettoyageTaches: getStoredData('crousty-nettoyage-taches', []),
       catalogueProvider: getStoredData('crousty-catalogue-produits', [])

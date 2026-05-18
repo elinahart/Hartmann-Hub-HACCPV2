@@ -208,7 +208,7 @@ export const MobileSessions = () => {
       fournisseurs: getStoredData('crousty_fournisseurs', []),
       employees: getStoredData('crousty_employees', []),
       temperaturesZones: getStoredData('crousty-temperatures-zones', []),
-      inventaireProduits: getStoredData('crousty-inventaire-produits', []),
+      unifiedProducts: getStoredData('crousty_unified_products', []),
       huilesCuves: getStoredData('crousty_huiles_cuves', []),
       nettoyageTaches: getStoredData('crousty-nettoyage-taches', []),
     };
