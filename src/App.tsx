@@ -273,6 +273,7 @@ export default function App() {
     let expiringTonightCount = 0;
     
     dlcs.forEach(d => {
+      if (d.dlcCalc === "Sans DLC") return;
       const dlcDate = new Date(d.dlcCalc);
       const isPastDlc = dlcDate < now;
       if (isPastDlc) {
@@ -732,13 +733,10 @@ export default function App() {
             </button>
             <span className="font-black text-gray-800 uppercase tracking-widest text-lg truncate">{getViewTitle(currentView)}</span>
             {currentUser?.role === 'manager' && (
-               <span className="badge-manager hidden sm:inline-flex">{t('role_manager')}</span>
+               <span className="badge-manager ml-1 inline-flex shrink-0">{t('role_manager')}</span>
             )}
           </div>
           <div className="header-actions">
-            {currentUser?.role === 'manager' && (
-               <span className="badge-manager sm:hidden">{t('role_manager')}</span>
-            )}
             <UserMenu />
           </div>
         </header>

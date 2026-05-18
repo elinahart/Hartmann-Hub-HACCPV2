@@ -40,9 +40,17 @@ export const CustomizationModal = ({ onClose, initialTab = 'identite' }: { onClo
       }, 2000);
     };
 
+    const handleSwitchTab = (e: any) => {
+      if (e.detail?.tab) {
+        setActiveTab(e.detail.tab);
+      }
+    };
+
     window.addEventListener('crousty_toast', handleToast);
+    window.addEventListener('open-customization-modal', handleSwitchTab);
     return () => {
       window.removeEventListener('crousty_toast', handleToast);
+      window.removeEventListener('open-customization-modal', handleSwitchTab);
       clearTimeout(timeout);
     };
   }, []);

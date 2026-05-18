@@ -305,10 +305,11 @@ function EditorForm({ prefill, onSave, onFermer, isGrid }: any) {
   const [cat, setCat] = useState(prefill.category || "Desserts");
   const [val, setVal] = useState(prefill.dlcValue || 24);
   const [unit, setUnit] = useState(prefill.dlcUnit || "hours");
+  const [dlcNeeded, setDlcNeeded] = useState(prefill.dlcNeeded !== false);
 
   const save = () => {
-    if(!name.trim() || !val) return;
-    onSave({ name, category: cat, dlcValue: Number(val), dlcUnit: unit });
+    if(!name.trim() || (dlcNeeded && !val)) return;
+    onSave({ name, category: cat, dlcNeeded, dlcValue: Number(val), dlcUnit: unit });
   };
 
   const categories = Object.keys(CATEGORIES_CONFIG);
@@ -364,15 +365,25 @@ function EditorForm({ prefill, onSave, onFermer, isGrid }: any) {
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Valeur DLC</label>
-        <div className="flex gap-3">
-          <Input type="text" inputMode="none" min="1" value={val} onChange={(e: any) => setVal(e.target.value)} className="w-1/2 font-black text-lg h-14" />
-          <Select value={unit} onChange={(e: any) => setUnit(e.target.value)} className="w-1/2 font-black text-lg h-14">
-            <option value="hours">Heures</option>
-            <option value="days">Jours</option>
-            <option value="mois">Mois</option>
-          </Select>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Ce produit nécessite une DLC ?</label>
+          <button 
+            onClick={() => setDlcNeeded(!dlcNeeded)}
+            className={`w-12 h-6 rounded-full transition-colors relative ${dlcNeeded ? 'bg-[var(--color-primary)]' : 'bg-gray-200'}`}
+          >
+            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${dlcNeeded ? 'translate-x-6' : 'translate-x-0.5'}`} />
+          </button>
         </div>
+        {dlcNeeded && (
+          <div className="flex gap-3">
+            <Input type="text" inputMode="none" min="1" value={val} onChange={(e: any) => setVal(e.target.value)} className="w-1/2 font-black text-lg h-14" />
+            <Select value={unit} onChange={(e: any) => setUnit(e.target.value)} className="w-1/2 font-black text-lg h-14">
+              <option value="hours">Heures</option>
+              <option value="days">Jours</option>
+              <option value="mois">Mois</option>
+            </Select>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-3 pt-2">
@@ -388,7 +399,8 @@ function CarteProduit({ produit, enEdition, canEdit, onEditer, onFermer, onSauve
     return <EditorForm prefill={produit} onSave={onSauvegarder} onFermer={onFermer} isGrid={true} />;
   }
   
-  const dlcText = `+${produit.dlcValue}${['days', 'jours'].includes(produit.dlcUnit) ? 'j' : produit.dlcUnit === 'mois' ? 'm' : 'h'}`;
+  const hasDlc = produit.dlcNeeded !== false;
+  const dlcText = hasDlc ? `+${produit.dlcValue}${['days', 'jours'].includes(produit.dlcUnit) ? 'j' : produit.dlcUnit === 'mois' ? 'm' : 'h'}` : 'Sans DLC';
   const conf = getIconeCategorie(produit.category || "Non catégorisé");
   const IconCmp = conf.icone;
 
@@ -409,8 +421,8 @@ function CarteProduit({ produit, enEdition, canEdit, onEditer, onFermer, onSauve
             {produit.note && <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{produit.note}</p>}
           </div>
         )}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-sm font-black w-auto">
-           <Clock size={14} className="opacity-70"/> {dlcText}
+        <div className={`inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 ${hasDlc ? 'text-gray-600' : 'text-gray-400'} rounded-lg text-sm font-black w-auto`}>
+           {hasDlc && <Clock size={14} className="opacity-70"/>} {hasDlc ? dlcText : <span className="opacity-70 text-xs font-bold uppercase tracking-widest">{dlcText}</span>}
         </div>
       </div>
       
@@ -445,7 +457,8 @@ function LigneProduit({ produit, enEdition, canEdit, onEditer, onFermer, onSauve
     return <EditorForm prefill={produit} onSave={onSauvegarder} onFermer={onFermer} isGrid={false} />;
   }
 
-  const dlcText = `+${produit.dlcValue}${['days', 'jours'].includes(produit.dlcUnit) ? 'j' : produit.dlcUnit === 'mois' ? 'm' : 'h'}`;
+  const hasDlc = produit.dlcNeeded !== false;
+  const dlcText = hasDlc ? `+${produit.dlcValue}${['days', 'jours'].includes(produit.dlcUnit) ? 'j' : produit.dlcUnit === 'mois' ? 'm' : 'h'}` : 'Sans DLC';
   const conf = getIconeCategorie(produit.category || "Non catégorisé");
   const IconCmp = conf.icone;
 
@@ -462,7 +475,7 @@ function LigneProduit({ produit, enEdition, canEdit, onEditer, onFermer, onSauve
           {produit.note && <span className="ml-2 text-gray-400 normal-case font-normal hidden sm:inline">({produit.note})</span>}
         </p>
       </div>
-      <div className="px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-600 font-black whitespace-nowrap">
+      <div className={`px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-xl ${hasDlc ? 'text-gray-600 font-black' : 'text-gray-400 font-bold text-xs uppercase tracking-widest'} whitespace-nowrap`}>
         {dlcText}
       </div>
       {canEdit && (

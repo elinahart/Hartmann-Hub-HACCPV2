@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { InventoryProduct } from '../types';
-import { getStoredData, setStoredData } from '../lib/db';
-import { getSmartIcon, DEFAULT_CATEGORIES } from '../components/GererLesProduits';
+import { migrateProductsToUnified } from '../lib/productMigration';
 
 interface InventaireContextType {
   products: InventoryProduct[];
@@ -13,48 +12,43 @@ interface InventaireContextType {
 
 const InventaireContext = createContext<InventaireContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'crousty-inventaire-produits';
+const STORAGE_KEY = 'crousty_unified_products';
 
 export function InventaireProvider({ children }: { children: React.ReactNode }) {
   const [products, setProductsState] = useState<InventoryProduct[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
-      
-      // Fallback to defaults + auto-init
-      const initial: InventoryProduct[] = [];
-      Object.entries(DEFAULT_CATEGORIES).forEach(([cat, items]) => {
-        items.forEach(item => {
-          initial.push({ 
-            id: Math.random().toString(36).substring(2, 11), 
-            name: item, 
-            category: cat, 
-            minThreshold: 0,
-            icon: getSmartIcon(item, cat)
-          });
-        });
-      });
-      return initial;
+      const unified = migrateProductsToUnified();
+      return unified;
     } catch {
       return [];
     }
   });
 
-  // Listen to cross-module updates (like global import)
+  // Listen to cross-module updates
   useEffect(() => {
     const handleUpdate = () => {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) setProductsState(JSON.parse(saved));
+        if (saved) {
+          setProductsState(prev => {
+            if (JSON.stringify(prev) === saved) return prev;
+            return JSON.parse(saved);
+          });
+        }
       } catch(e){}
     };
-    window.addEventListener('crousty-inventaire-produits-updated', handleUpdate);
-    return () => window.removeEventListener('crousty-inventaire-produits-updated', handleUpdate);
+    window.addEventListener('crousty_unified_products_updated', handleUpdate);
+    return () => window.removeEventListener('crousty_unified_products_updated', handleUpdate);
   }, []);
 
   // Persist to localStorage whenever state changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+    const current = JSON.stringify(products);
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved !== current) {
+      localStorage.setItem(STORAGE_KEY, current);
+      window.dispatchEvent(new Event('crousty_unified_products_updated'));
+    }
   }, [products]);
 
   const setProducts = (newProducts: InventoryProduct[]) => {
@@ -71,7 +65,7 @@ export function InventaireProvider({ children }: { children: React.ReactNode }) 
 
   const addProduct = (product: Omit<InventoryProduct, 'id'>) => {
     const newProduct = { ...product, id: Math.random().toString(36).substring(2, 11) };
-    setProductsState(prev => [...prev, newProduct]);
+    setProductsState(prev => [...prev, newProduct as InventoryProduct]);
   };
 
   return (

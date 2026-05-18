@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ProductDef } from '../types';
-import { getMergedProducts } from '../lib/croustyConfig';
+import { migrateProductsToUnified } from '../lib/productMigration';
 
 interface CatalogueContextType {
   produits: ProductDef[];
@@ -9,40 +9,42 @@ interface CatalogueContextType {
 
 const CatalogueContext = createContext<CatalogueContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'crousty-catalogue-produits';
+const STORAGE_KEY = 'crousty_unified_products';
 
 export function CatalogueProvider({ children }: { children: React.ReactNode }) {
   const [produits, setProduitsState] = useState<ProductDef[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
-      
-      // Fallback to existing defaults if main key is empty
-      return getMergedProducts();
+      const unified = migrateProductsToUnified();
+      return unified;
     } catch {
       return [];
     }
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(produits));
+    const current = JSON.stringify(produits);
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved !== current) {
+      localStorage.setItem(STORAGE_KEY, current);
+      window.dispatchEvent(new Event('crousty_unified_products_updated'));
+    }
   }, [produits]);
 
-  // Écouter les mises à jour en provenance de l'import
+  // Écouter les mises à jour en provenance de cross module
   useEffect(() => {
-    const handleImportUpdate = (e: any) => {
-      if (e.detail?.products && Array.isArray(e.detail.products)) {
-        setProduitsState(e.detail.products);
-      } else {
-        // Fallback: reread from localStorage
+    const handleImportUpdate = () => {
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) setProduitsState(JSON.parse(saved));
+          if (saved) {
+            setProduitsState(prev => {
+              if (JSON.stringify(prev) === saved) return prev;
+              return JSON.parse(saved);
+            });
+          }
         } catch { /* ignore */ }
-      }
     };
-    window.addEventListener('catalogue-produits-updated', handleImportUpdate);
-    return () => window.removeEventListener('catalogue-produits-updated', handleImportUpdate);
+    window.addEventListener('crousty_unified_products_updated', handleImportUpdate);
+    return () => window.removeEventListener('crousty_unified_products_updated', handleImportUpdate);
   }, []);
 
   const setProduits = (newProduits: ProductDef[]) => {

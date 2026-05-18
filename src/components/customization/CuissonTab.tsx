@@ -5,7 +5,7 @@ import { Plus, Trash2, Edit2, AlertTriangle, Check, X, Flame, Shield, LayoutGrid
 import { CookingProductConfig } from '../../lib/configSchema';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
-import { ICONS_MAP } from '../GererLesProduits';
+import { ICONS_MAP } from '../../lib/inventoryIcons';
 import { useI18n } from '../../lib/i18n';
 
 export function CuissonTab() {

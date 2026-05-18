@@ -9,7 +9,7 @@ import { createSignature } from '../lib/permissions';
 import { SaisieActions } from '../components/SaisieActions';
 import { SignatureSaisie } from '../types';
 import { cn } from '../lib/utils';
-import { ICONS_MAP } from '../components/GererLesProduits';
+import { ICONS_MAP } from '../lib/inventoryIcons';
 
 export interface CuissonProduit {
   temp: string;

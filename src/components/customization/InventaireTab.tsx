@@ -4,14 +4,11 @@ import { Button, Label } from '../ui/LightUI';
 import { Package, Calendar, Bell, Send, ChevronRight, Settings, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { getStoredData } from '../../lib/db';
 import { InventoryProduct } from '../../types';
-import { GererLesProduits } from '../GererLesProduits';
-
 import { useInventaire } from '../../providers/InventaireProvider';
 
 export const InventaireTab = () => {
   const { config, updateConfig } = useConfig();
   const { products } = useInventaire();
-  const [isManagingProducts, setIsManagingProducts] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const productCount = products.length;
@@ -37,13 +34,10 @@ export const InventaireTab = () => {
 
   const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-  if (isManagingProducts) {
-    return (
-      <div className="h-full flex flex-col">
-        <GererLesProduits onCancel={() => setIsManagingProducts(false)} />
-      </div>
-    );
-  }
+  const goToCatalogue = () => {
+    const event = new CustomEvent('open-customization-modal', { detail: { tab: 'produits' } });
+    window.dispatchEvent(event);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -57,10 +51,10 @@ export const InventaireTab = () => {
             <p className="text-gray-600 text-sm">Vous avez <span className="font-black text-crousty-purple">{productCount}</span> produits enregistrés.</p>
           </div>
           <Button 
-            onClick={() => setIsManagingProducts(true)}
+            onClick={goToCatalogue}
             className="bg-crousty-purple text-white rounded-2xl flex items-center gap-2 px-6 py-3 whitespace-nowrap shadow-lg shadow-purple-200 hover:scale-105 transition-transform"
           >
-            Gérer la liste des produits <ChevronRight size={18} />
+            Aller au Catalogue Produits <ChevronRight size={18} />
           </Button>
         </div>
       </section>

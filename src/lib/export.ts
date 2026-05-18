@@ -52,7 +52,7 @@ export const exportToExcel = (temperatures: any[], dlcs: any[], primaryDlcs: any
   const dlcRows = dlcs.map(d => [
     d.productName,
     format(new Date(d.dateSaisie), 'dd/MM/yyyy HH:mm'),
-    format(new Date(d.dlcCalc), 'dd/MM/yyyy HH:mm'),
+    d.dlcCalc === "Sans DLC" ? "Sans DLC" : format(new Date(d.dlcCalc), 'dd/MM/yyyy HH:mm'),
     d.photoId ? `Photo stockée localement (ID: ${d.photoId})` : 'Aucune',
     d.observation || ''
   ]);

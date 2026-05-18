@@ -30,7 +30,7 @@ export const DlcHistory: React.FC<DlcHistoryProps> = ({ entries, onMarkUsed, onR
       .filter(e => {
         if (statusFilter === 'all') return true;
         const used = !!e.used;
-        const past = Boolean(e.dlcCalc && isPast(new Date(e.dlcCalc)));
+        const past = Boolean(e.dlcCalc && e.dlcCalc !== "Sans DLC" && isPast(new Date(e.dlcCalc)));
         if (statusFilter === 'used') return used || past; // Let's also consider expired as 'used' or inactive. Actually let's just stick to used
         if (statusFilter === 'active') return !used && !past;
         return true;
@@ -58,10 +58,10 @@ export const DlcHistory: React.FC<DlcHistoryProps> = ({ entries, onMarkUsed, onR
       e.dessertName,
       e.quantity || 1,
       format(new Date(e.date), 'dd/MM/yyyy HH:mm'),
-      format(new Date(e.dlcCalc), 'dd/MM/yyyy HH:mm'),
+      e.dlcCalc === "Sans DLC" ? "Sans DLC" : format(new Date(e.dlcCalc), 'dd/MM/yyyy HH:mm'),
       e.mode === 'virtual' ? 'Virtuelle' : 'Imprimée',
       e.responsable,
-      e.used ? 'Consommée' : isPast(new Date(e.dlcCalc)) ? 'Expirée' : 'Active'
+      e.used ? 'Consommée' : (e.dlcCalc !== "Sans DLC" && isPast(new Date(e.dlcCalc))) ? 'Expirée' : 'Active'
     ]);
     const csvContent = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -84,10 +84,10 @@ export const DlcHistory: React.FC<DlcHistoryProps> = ({ entries, onMarkUsed, onR
       e.dessertName,
       (e.quantity || 1).toString(),
       format(new Date(e.date), 'dd/MM/yyyy HH:mm'),
-      format(new Date(e.dlcCalc), 'dd/MM/yyyy HH:mm'),
+      e.dlcCalc === "Sans DLC" ? "Sans DLC" : format(new Date(e.dlcCalc), 'dd/MM/yyyy HH:mm'),
       e.mode === 'virtual' ? 'Virtuelle' : 'Imprimée',
       e.responsable,
-      e.used ? 'Consommée' : isPast(new Date(e.dlcCalc)) ? 'Expirée (Perte)' : 'Active'
+      e.used ? 'Consommée' : (e.dlcCalc !== "Sans DLC" && isPast(new Date(e.dlcCalc))) ? 'Expirée (Perte)' : 'Active'
     ]);
 
     autoTable(doc, {
@@ -161,7 +161,7 @@ export const DlcHistory: React.FC<DlcHistoryProps> = ({ entries, onMarkUsed, onR
            <div className="text-center py-20 text-gray-400 font-medium">Aucune étiquette trouvée.</div>
         ) : (
            filteredEntries.map(entry => {
-             const isExpired = isPast(new Date(entry.dlcCalc));
+             const isExpired = entry.dlcCalc !== "Sans DLC" && isPast(new Date(entry.dlcCalc));
              const isActive = !entry.used && !isExpired;
              const isVirtual = entry.mode === 'virtual';
 

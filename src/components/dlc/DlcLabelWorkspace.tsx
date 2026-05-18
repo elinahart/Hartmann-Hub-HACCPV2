@@ -6,6 +6,7 @@ import { PrintSettings } from '../../types/printing';
 import { getStoredData } from '../../lib/db';
 import { triggerSystemPrint } from '../../lib/printing/triggerSystemPrint';
 import { getIconeCategorie } from '../../lib/categoriesIcones';
+import { addHours, addDays, addMonths } from 'date-fns';
 
 import { useConfig } from '../../contexts/ConfigContext';
 
@@ -70,13 +71,22 @@ export const DlcLabelWorkspace: React.FC<DlcLabelWorkspaceProps> = ({
 
     if (printSettings.mode === 'system') {
       setIsPrinting(true);
+      
+      let dlcCalcString = "Sans DLC";
+      if (selectedProduct.dlcNeeded !== false) {
+        const dlcCalc = selectedProduct.dlcUnit === 'hours' ? addHours(new Date(), selectedProduct.dlcValue || 24) :
+                        selectedProduct.dlcUnit === 'mois' ? addMonths(new Date(), selectedProduct.dlcValue || 1) :
+                        addDays(new Date(), selectedProduct.dlcValue || 1);
+        dlcCalcString = 'Exp: ' + dlcCalc.toLocaleString('fr-FR');
+      }
+
       // Générer le HTML d'impression
       const htmlDoc = `
         <div style="font-family: sans-serif; text-align: center; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 2px;">
           <div style="font-weight: 900; font-size: 10px; border-bottom: 1px solid black; padding-bottom: 2px;">${effectiveRestaurantName}</div>
           <div style="font-weight: bold; font-size: 14px; margin-top: 5px;">${selectedProduct.name}</div>
           <div style="font-size: 10px; margin-top: 2px;">${selectedProduct.category}</div>
-          <div style="font-weight: 900; font-size: 12px; margin-top: auto; border-top: 1px solid black; padding-top: 2px;">Exp: DEMAIN 23:59</div>
+          <div style="font-weight: 900; font-size: 12px; margin-top: auto; border-top: 1px solid black; padding-top: 2px;">${dlcCalcString}</div>
         </div>
       `;
 
@@ -203,7 +213,12 @@ export const DlcLabelWorkspace: React.FC<DlcLabelWorkspaceProps> = ({
                       </div>
                       <div className="flex justify-between items-center" style={{ color: getIconeCategorie(selectedProduct.category).couleur }}>
                         <span className="text-xs font-bold opacity-80">Expiration</span>
-                        <span className="font-black text-lg">+{selectedProduct.dlcValue || 24} {selectedProduct.dlcUnit === 'days' ? 'jours' : 'heures'}</span>
+                        <span className="font-black text-lg">
+                          {selectedProduct.dlcNeeded === false 
+                            ? 'Sans DLC' 
+                            : `+${selectedProduct.dlcValue || 24} ${selectedProduct.dlcUnit === 'days' ? 'jours' : selectedProduct.dlcUnit === 'mois' ? 'mois' : 'heures'}`
+                          }
+                        </span>
                       </div>
                       <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase">
                         <span>Par : {currentUser?.name || 'Chef'}</span>

@@ -1,11 +1,33 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.2.4";
+export const APP_VERSION = "3.5.5";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "16 Mai 2026";
+export const APP_LAST_UPDATE = "17 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.5.5",
+    date: "17 Mai 2026",
+    changes: [
+      "Catalogue Produits : Nettoyage des anciennes catégories et conservation uniquement des catégories finales normalisées (Frais, Sec, Surgelé, Boissons...).",
+      "Nettoyage Intelligent renforcé : Détection puissante des produits proches (ex. 'Ail' et 'Ail frais') pour une meilleure fusion.",
+      "Simplification des rapprochements : Interface améliorée pour distinguer les doublons stricts des variantes à vérifier.",
+      "La catégorie 'Sec' désactive automatiquement les options de DLC.",
+      "Fiche Produit 360° unifiée : Paramétrage du catalogue au même endroit avec gestion de l'alerte stock et conditionnements."
+    ]
+  },
+  {
+    version: "3.5.0",
+    date: "17 Mai 2026",
+    changes: [
+      "Catalogue Unique : Fusion de 'Catalogue Produits' et 'Gérer les produits' en un seul catalogue produit centralisé et de référence.",
+      "Import Automatisé : Tous les produits et configurations issues de l'inventaire ont été récupérés en préservant toutes les catégories existantes.",
+      "Fiche Produit Complète : Les réglages sont maintenant unifiés (seuil d'alerte, conditionnement, conversion, DLC, fournisseur associé).",
+      "Détection Intelligente : Signalisation automatique des produits avec des données de configuration manquantes.",
+      "Résolution de Doublons : Détection des noms très proches et fusion des produits existants intelligente sans perte de données."
+    ]
+  },
   {
     version: "3.2.4",
     date: "16 Mai 2026",

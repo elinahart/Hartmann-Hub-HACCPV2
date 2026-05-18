@@ -1,27 +1,39 @@
 import {
-  IceCream, Refrigerator, Snowflake, GlassWater,
-  Package, ChefHat, Beef, Tag, Cookie, Milk,
-  Croissant, Droplets, Apple, Fish
+  Package, Snowflake, Refrigerator, GlassWater, Tag
 } from "lucide-react";
 
 export const CATEGORIES_CONFIG = {
-  "Desserts":          { icone: IceCream,     couleur: "var(--color-primary)" },
-  "Frais":             { icone: Refrigerator,  couleur: "#42A5F5" },
-  "Surgelés Congelés": { icone: Snowflake,     couleur: "#1565C0" },
-  "Boissons":          { icone: GlassWater,    couleur: "#00BCD4" },
-  "Sec Alimentaire":   { icone: Package,       couleur: "#FF9800" },
-  "Sauces":            { icone: ChefHat,       couleur: "#4CAF50" },
-  "Viandes":           { icone: Beef,          couleur: "#F44336" },
-  "Produits Laitiers": { icone: Milk,          couleur: "#FFC107" },
-  "Boulangerie":       { icone: Croissant,     couleur: "#795548" },
-  "Fruits Légumes":    { icone: Apple,         couleur: "#8BC34A" },
-  "Poissons":          { icone: Fish,          couleur: "#03A9F4" },
-  "Non catégorisé":    { icone: Tag,           couleur: "#9E9E9E" },
+  "Frais":             { icone: Refrigerator, couleur: "#42A5F5" },
+  "Sec alimentaire":   { icone: Package,      couleur: "#FF9800" },
+  "Sec":               { icone: Package,      couleur: "#FF9800" },
+  "Surgelé / Congelé": { icone: Snowflake,    couleur: "#1565C0" },
+  "Boissons":          { icone: GlassWater,   couleur: "#00BCD4" },
+  "Non catégorisé":    { icone: Tag,          couleur: "#9E9E9E" },
 } as const;
 
 export type Categorie = keyof typeof CATEGORIES_CONFIG;
 
 export function getIconeCategorie(categorie: string) {
-  return CATEGORIES_CONFIG[categorie as Categorie] 
-    ?? CATEGORIES_CONFIG["Non catégorisé"];
+  // Use migration logic effectively for icon retrieval
+  const mapped = migrateCategoryName(categorie);
+  return CATEGORIES_CONFIG[mapped as Categorie] ?? CATEGORIES_CONFIG["Non catégorisé"];
 }
+
+export function migrateCategoryName(oldCategory: string): string {
+  if (!oldCategory) return "Non catégorisé";
+  const norm = oldCategory.trim();
+  const lower = norm.toLowerCase();
+  
+  if (lower === "frais" || lower.includes("laitier") || lower.includes("viande") || lower.includes("poisson") || lower.includes("légume") || lower.includes("fruit") || lower.includes("sauce")) return "Frais";
+  if (lower.includes("surge") || lower.includes("congel") || lower === "desserts") return "Surgelé / Congelé";
+  if (lower.includes("boisson") || lower.includes("liquide")) return "Boissons";
+  if (lower.includes("sec alimentaire") || lower.includes("épicerie") || lower.includes("boulangerie")) return "Sec alimentaire";
+  if (lower === "sec") return "Sec";
+  
+  // If it exactly matches one of the new ones (just in case)
+  if (Object.keys(CATEGORIES_CONFIG).includes(norm)) return norm;
+  
+  return "Non catégorisé";
+}
+
+

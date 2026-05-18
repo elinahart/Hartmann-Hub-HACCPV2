@@ -101,6 +101,29 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
       options.onEnter?.();
       closeKeyboard();
       return;
+    } else if (key === 'NEXT') {
+      if (activeInputRef.current) {
+        // Find all inputs that we can focus (visible, not disabled, not readonly)
+        const inputs = Array.from(document.querySelectorAll('input:not([disabled]):not([type="hidden"]):not([readonly])')) as HTMLInputElement[];
+        // Filter out inputs that are off-screen or inside closed modals/dropdowns roughly
+        const visibleInputs = inputs.filter(i => {
+           const rect = i.getBoundingClientRect();
+           return rect.width > 0 && rect.height > 0 && window.getComputedStyle(i).display !== 'none';
+        });
+        
+        const index = visibleInputs.indexOf(activeInputRef.current);
+        if (index > -1 && index < visibleInputs.length - 1) {
+          const nextInput = visibleInputs[index + 1];
+          // We blur current, but since closeKeyboard is not called, it might just switch nicely
+          // Actually, activeInput is set to null in closeKeyboard. Let's just focus the next one
+          // The global focus listener will catch it
+          activeInputRef.current.blur();
+          nextInput.focus();
+        } else {
+          closeKeyboard(); // no next input
+        }
+      }
+      return;
     } else if (key === 'CLEAR') {
       newValue = '';
     } else {
@@ -153,6 +176,8 @@ export const KeyboardProvider: React.FC<{children: React.ReactNode}> = ({ childr
       if (target.tagName === 'INPUT') {
         const input = target as HTMLInputElement;
         const originalType = input.type;
+        
+        if (input.dataset.native) return; // Allow native keyboard
         
         if (originalType !== 'file' && originalType !== 'checkbox' && originalType !== 'color' && originalType !== 'radio' && originalType !== 'submit' && originalType !== 'button' && !input.readOnly) {
           // Immediately blur to PREVENT the native keyboard
@@ -246,14 +271,15 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
       ['4', '5', '6'],
       ['7', '8', '9'],
       ['CLEAR', '0', 'BACKSPACE'],
-      ['ENTER']
+      ['NEXT', 'ENTER']
     ],
     temperature: [
       ['1', '2', '3'],
       ['4', '5', '6'],
       ['7', '8', '9'],
       ['-', '0', ','],
-      ['CLEAR', 'BACKSPACE', 'ENTER']
+      ['CLEAR', 'BACKSPACE'],
+      ['NEXT', 'ENTER']
     ],
     date: [
       ['1', '2', '3'],
@@ -280,11 +306,9 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
 
   const currentLayout = layouts[type] || layouts.alphanumeric;
 
-  const handleKey = (e: React.PointerEvent, key: string) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleKey = (key: string) => {
     if (navigator.vibrate) {
-      navigator.vibrate(30);
+      navigator.vibrate(15);
     }
     if (key === 'SHIFT') {
       setIsShift(!isShift);
@@ -292,6 +316,8 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
       onKeyPress(' ');
     } else if (key === 'ENTER') {
       onKeyPress('ENTER');
+    } else if (key === 'NEXT') {
+      onKeyPress('NEXT');
     } else if (key === 'BACKSPACE') {
       onKeyPress('BACKSPACE');
     } else if (key === 'CLEAR') {
@@ -311,86 +337,70 @@ const VirtualKeyboardUI: React.FC<{ type: KeyboardType, onKeyPress: (key: string
       exit={{ y: "100%", opacity: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       id="virtual-keyboard-ui"
-      drag={window.innerWidth >= 768 && isSmallKeyboard}
-      dragMomentum={false}
-      className={`fixed bottom-0 left-0 right-0 ${type === 'alphanumeric' || type === 'text' ? 'md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:rounded-3xl md:max-w-4xl w-full' : 'md:left-auto md:right-8 md:bottom-8 md:rounded-[2rem] md:max-w-sm md:w-[380px]'} bg-slate-200/95 backdrop-blur-xl border-t md:border border-slate-300 md:shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] shadow-2xl z-[9999] p-2 md:p-5 pb-safe select-none overflow-hidden touch-none`}
-      onPointerDown={e => e.preventDefault()}
-      style={{ touchAction: 'none' }}
+      className={`fixed bottom-0 left-0 right-0 ${type === 'alphanumeric' || type === 'text' ? 'md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:rounded-3xl md:max-w-4xl w-full' : 'md:left-auto md:right-8 md:bottom-8 md:rounded-[2rem] md:max-w-sm md:w-[380px]'} bg-slate-200/95 backdrop-blur-xl border-t md:border border-slate-300 md:shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] shadow-2xl z-[9999] p-2 md:p-5 pb-safe select-none overflow-hidden`}
     >
-      <div className={`flex justify-between items-center px-4 py-2 border-b border-slate-300/50 mb-2 ${window.innerWidth >= 768 && isSmallKeyboard ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+      <div className={`flex justify-between items-center px-4 py-2 border-b border-slate-300/50 mb-2`}>
         <div className="flex items-center gap-2">
-          {window.innerWidth >= 768 && isSmallKeyboard && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-400">
-              <circle cx="9" cy="5" r="1.5" fill="currentColor"/>
-              <circle cx="15" cy="5" r="1.5" fill="currentColor"/>
-              <circle cx="9" cy="12" r="1.5" fill="currentColor"/>
-              <circle cx="15" cy="12" r="1.5" fill="currentColor"/>
-              <circle cx="9" cy="19" r="1.5" fill="currentColor"/>
-              <circle cx="15" cy="19" r="1.5" fill="currentColor"/>
-            </svg>
-          )}
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Clavier Intelligent</span>
         </div>
-        <motion.button 
-          whileTap={{ scale: 0.9 }}
-          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} 
-          className="p-2 px-4 bg-slate-300 rounded-full text-slate-700 hover:bg-slate-400 font-bold text-sm"
+        <button 
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} 
+          className="p-2 px-4 bg-slate-300 rounded-full text-slate-700 hover:bg-slate-400 active:scale-95 transition-transform font-bold text-sm"
         >
           Fermer
-        </motion.button>
+        </button>
       </div>
       
       <div className="flex flex-col gap-1.5 md:gap-2.5 mx-auto w-full">
         {currentLayout.map((row, i) => (
           <div key={i} className="flex justify-center gap-1.5 md:gap-2 w-full">
             {row.map((key, j) => {
-              let btnClass = "bg-white text-slate-800 font-bold rounded-xl shadow-sm border border-slate-300/50 flex items-center justify-center text-xl md:text-2xl touch-none";
+              let btnClass = "bg-white text-slate-800 font-bold rounded-xl shadow-sm border border-slate-300/50 flex items-center justify-center text-xl md:text-2xl touch-none transition-all duration-75 active:bg-slate-200 active:scale-95";
               let label = key.length === 1 && /[A-Z]/.test(key) ? (isShift ? key : key.toLowerCase()) : key;
-              let isSpecial = false;
               
               let sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' 
-                ? 'h-12 md:h-16 w-full max-w-[100px]' 
+                ? 'h-11 md:h-14 w-full max-w-[90px]' 
                 : 'h-10 md:h-12 flex-1 max-w-[60px] md:max-w-[80px]';
               
               if (key === 'ENTER') {
-                btnClass = "bg-[var(--color-primary)] text-white font-bold rounded-xl shadow-sm text-sm md:text-base px-2 touch-none";
-                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-16 w-full flex-1 max-w-none' : 'h-10 md:h-12 flex-[2] max-w-[120px]';
+                btnClass = "bg-[var(--color-primary)] text-white font-bold rounded-xl shadow-sm text-sm md:text-base px-2 touch-none transition-all duration-75 active:opacity-80 active:scale-95";
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-10 md:h-12 w-full flex-1 max-w-[140px]' : 'h-10 md:h-12 flex-[2] max-w-[120px]';
                 label = 'Valider';
-                isSpecial = true;
+              } else if (key === 'NEXT') {
+                btnClass = "bg-[var(--color-secondary)] text-white font-bold rounded-xl shadow-sm text-sm md:text-base px-2 touch-none transition-all duration-75 active:opacity-80 active:scale-95";
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-10 md:h-12 w-full flex-1 max-w-[140px]' : 'h-10 md:h-12 flex-1 max-w-[100px]';
+                label = 'Suivant ➔';
               } else if (key === 'BACKSPACE') {
-                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-lg md:text-xl px-2 touch-none flex items-center justify-center";
-                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-16 w-full flex-1 max-w-none' : 'h-10 md:h-12 flex-[1.5] max-w-[90px]';
+                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-lg md:text-xl px-2 touch-none flex items-center justify-center transition-all duration-75 active:bg-slate-400 active:scale-95";
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-10 md:h-12 w-full flex-1 max-w-[140px]' : 'h-10 md:h-12 flex-[1.5] max-w-[90px]';
                 label = '⌫';
-                isSpecial = true;
               } else if (key === 'CLEAR') {
-                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-xs md:text-sm px-2 touch-none";
-                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-12 md:h-16 w-full flex-1 max-w-none' : 'h-10 md:h-12 flex-[1.5] max-w-[100px]';
+                btnClass = "bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm text-xs md:text-sm px-2 touch-none transition-all duration-75 active:bg-slate-400 active:scale-95";
+                sizeClass = type === 'numeric' || type === 'temperature' || type === 'date' ? 'h-10 md:h-12 w-full flex-1 max-w-[140px]' : 'h-10 md:h-12 flex-[1.5] max-w-[100px]';
                 label = 'Effacer';
-                isSpecial = true;
               } else if (key === 'SPACE') {
-                 btnClass = "bg-white text-slate-800 shadow-sm border border-slate-300/50 rounded-xl px-4 touch-none font-semibold text-sm";
+                 btnClass = "bg-white text-slate-800 shadow-sm border border-slate-300/50 rounded-xl px-4 touch-none font-semibold text-sm transition-all duration-75 active:bg-slate-200 active:scale-95";
                  sizeClass = "h-10 md:h-12 flex-[4] max-w-[300px]";
                  label = 'Espace';
-                 isSpecial = true;
               } else if (key === 'SHIFT') {
-                 btnClass = `bg-slate-300 ${isShift ? 'text-white bg-crousty-purple/80 border-crousty-purple' : 'text-slate-800'} font-bold rounded-xl shadow-sm text-xs md:text-sm px-2 touch-none`;
+                 btnClass = `bg-slate-300 ${isShift ? 'text-white bg-crousty-purple/80 border-crousty-purple' : 'text-slate-800'} font-bold rounded-xl shadow-sm text-xs md:text-sm px-2 touch-none transition-all duration-75 active:bg-slate-400 active:scale-95`;
                  sizeClass = "h-10 md:h-12 flex-[1.5] max-w-[100px]";
                  label = isShift ? '⇧' : '⇧';
-                 isSpecial = true;
               }
 
               return (
-                <motion.button
+                <button
                   key={key}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.05 + (i * 0.02) + (j * 0.01), type: "spring", stiffness: 300 }}
-                  whileTap={{ scale: 0.92, backgroundColor: isSpecial ? "var(--color-primary-dark, #ccc)" : "#e2e8f0" }}
                   className={`${btnClass} ${sizeClass}`}
-                  onPointerDown={(e) => handleKey(e, key)}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleKey(key);
+                  }}
+                  tabIndex={-1}
                 >
                   {label}
-                </motion.button>
+                </button>
               );
             })}
           </div>

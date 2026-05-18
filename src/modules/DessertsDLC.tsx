@@ -51,16 +51,20 @@ export default function DessertsDLC() {
     const dessert = produits.find(d => d.id === productId);
     if (!dessert) return;
 
-    const dlcCalc = dessert.dlcUnit === 'hours' ? addHours(new Date(), dessert.dlcValue || 24) :
-                    dessert.dlcUnit === 'mois' ? addMonths(new Date(), dessert.dlcValue || 1) :
-                    addDays(new Date(), dessert.dlcValue || 1);
+    let dlcCalcString = "Sans DLC";
+    if (dessert.dlcNeeded !== false) {
+      const dlcCalc = dessert.dlcUnit === 'hours' ? addHours(new Date(), dessert.dlcValue || 24) :
+                      dessert.dlcUnit === 'mois' ? addMonths(new Date(), dessert.dlcValue || 1) :
+                      addDays(new Date(), dessert.dlcValue || 1);
+      dlcCalcString = dlcCalc.toISOString();
+    }
     
     const mobileWorker = localStorage.getItem('crousty_mobile_worker');
     const newEntry: DessertEntry = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
       dessertName: dessert.name,
-      dlcCalc: dlcCalc.toISOString(),
+      dlcCalc: dlcCalcString,
       responsable: currentUser?.name || mobileWorker || 'Inconnu',
       quantity,
       mode,
@@ -113,7 +117,7 @@ export default function DessertsDLC() {
             <div style="font-weight: 900; font-size: 10px; border-bottom: 1px solid black; padding-bottom: 2px;">${effectiveName}</div>
             <div style="font-weight: bold; font-size: 14px; margin-top: 5px;">${entry.dessertName}</div>
             <div style="font-size: 10px; margin-top: 2px;">x${entry.quantity || 1}</div>
-            <div style="font-weight: 900; font-size: 12px; margin-top: auto; border-top: 1px solid black; padding-top: 2px;">Exp: ${new Date(entry.dlcCalc).toLocaleString('fr-FR')}</div>
+            <div style="font-weight: 900; font-size: 12px; margin-top: auto; border-top: 1px solid black; padding-top: 2px;">${entry.dlcCalc === "Sans DLC" ? "Sans DLC" : 'Exp: ' + new Date(entry.dlcCalc).toLocaleString('fr-FR')}</div>
           </div>
         `;
         try {

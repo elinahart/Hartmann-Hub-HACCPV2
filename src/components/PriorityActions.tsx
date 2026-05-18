@@ -807,8 +807,8 @@ export function ActionPrioritaireList({ currentUser, onNavigate, onUpdateStats }
     const dlcs = getStoredData<any[]>('crousty_desserts', []);
     let etiquettes: any[] = [];
     dlcs.forEach(d => {
-      const isPast = new Date(d.dlcCalc) < now;
-      if (isPast) {
+      const isPastValue = d.dlcCalc && d.dlcCalc !== "Sans DLC" && new Date(d.dlcCalc) < now;
+      if (isPastValue) {
         const dt = new Date(d.dlcCalc);
         const formattedDate = `${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')} à ${dt.getHours().toString().padStart(2, '0')}h${dt.getMinutes().toString().padStart(2, '0')}`;
         etiquettes.push({ id: d.id, produit: d.produitText || 'Produit', expirée: true, dateExpiration: formattedDate, rawDate: d.dlcCalc });

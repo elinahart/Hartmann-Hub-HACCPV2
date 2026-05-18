@@ -106,32 +106,33 @@ export interface InventoryEntry extends BaseEntry {
   items: Record<string, Record<string, InventoryItemDetail>>;
 }
 
-export interface InventoryProduct {
+export interface UnifiedProduct {
   id: string;
   name: string;
   category: string;
-  minThreshold: number;
-  fournisseur?: string;
-  icon?: string;
-  uniteStock?: string;
-  uniteAchat?: string;
-  conversionCartonUnite?: number;
-  signature?: SignatureSaisie;
-}
-
-export interface ProductDef {
-  id: string;
-  name: string;
-  category?: string;
-  dlcValue: number;
-  dlcUnit: 'hours' | 'days' | 'heures' | 'jours' | 'mois';
+  
+  // DLC / Catalogue info
+  dlcNeeded?: boolean;
+  dlcValue?: number;
+  dlcUnit?: 'hours' | 'days' | 'heures' | 'jours' | 'mois' | 'none';
   conservation?: string;
   note?: string;
   icone?: string;
   iconeCouleur?: string;
   readOnly?: boolean;
   signature?: SignatureSaisie;
+  
+  // Inventory info
+  minThreshold?: number;
+  fournisseur?: string;
+  icon?: string;
+  uniteStock?: string;
+  uniteAchat?: string;
+  conversionCartonUnite?: number;
 }
+
+export type InventoryProduct = UnifiedProduct;
+export type ProductDef = UnifiedProduct;
 
 export interface MembreEquipe {
   id: string;

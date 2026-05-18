@@ -11,7 +11,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format, isWithinInterval, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 
-import { GererLesProduits, ICONS_MAP, getSmartIcon, DEFAULT_CATEGORIES } from '../components/GererLesProduits';
+import { ICONS_MAP, getSmartIcon } from '../lib/inventoryIcons';
 
 import { useInventaire } from '../providers/InventaireProvider';
 import { useConfig } from '../contexts/ConfigContext';
@@ -620,17 +620,6 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
             </motion.div>
           )}
         </div>
-        <button 
-          onClick={() => {
-            setIsManageModalOpen(true);
-            setIsSidebarCollapsed?.(true);
-          }}
-          className="bg-white border border-gray-200 text-crousty-purple p-2 rounded-xl shadow-sm hover:bg-gray-50 active:scale-95 transition-transform flex items-center gap-2"
-          title="Gérer les produits"
-        >
-          <Settings size={20} />
-          <span className="text-xs font-bold hidden sm:inline uppercase">Configuration</span>
-        </button>
       </div>
 
       <div className={`p-4 rounded-2xl flex items-center justify-between border ${statusInventoryDone ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : statusInventoryLate ? 'bg-red-50 border-red-200 text-red-800' : statusInventoryNeeded ? 'bg-orange-50 border-orange-200 text-orange-800' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
@@ -942,16 +931,7 @@ export default function Inventaire({ setIsSidebarCollapsed }: { setIsSidebarColl
         </AnimatePresence>
       </div>
 
-      {isManageModalOpen && createPortal(
-        <AnimatePresence>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white w-full max-w-2xl rounded-[2rem] overflow-hidden relative shadow-2xl h-[90dvh] flex flex-col">
-              <GererLesProduits onSave={refreshProducts} onCancel={() => { setIsManageModalOpen(false); setIsSidebarCollapsed?.(false); }} />
-            </motion.div>
-          </motion.div>
-        </AnimatePresence>,
-        document.body
-      )}
+      {/* <GererLesProduits> has been merged and moved to Settings > Catalogue produits */}
     </div>
   );
 }
