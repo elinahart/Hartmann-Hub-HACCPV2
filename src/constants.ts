@@ -1,11 +1,20 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.5.7";
+export const APP_VERSION = "3.5.8";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
 export const APP_LAST_UPDATE = "19 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.5.8",
+    date: "19 Mai 2026",
+    changes: [
+      "Export Complet (ZIP) : Le fichier ZIP inclut désormais l'intégralité de vos photos (traçabilité, réceptions, relevés d'huile).",
+      "Catalogue à jour : Le système exporte la version la plus récente de votre catalogue de produits dynamiquement (en incluant bien tous les nouveaux produits).",
+      "Restauration : Les photos et le catalogue s'importent maintenant parfaitement lors d'une restauration depuis le fichier ZIP."
+    ]
+  },
   {
     version: "3.5.7",
     date: "19 Mai 2026",

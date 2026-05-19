@@ -1,29 +1,7 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { getStoredData, setStoredData } from './db';
+import { getStoredData, setStoredData, db, savePhotoBase64 } from './db';
 import { AppConfig } from './configSchema';
-
-const ALL_KEYS = [
-  'crousty-config',
-  'crousty_unified_products',
-  'crousty_inventory',
-  'crousty_inventory_draft',
-  'crousty_temp_checklist',
-  'crousty_viandes',
-  'crousty_tracabilite_v2',
-  'crousty_receptions_v3',
-  'crousty_cleaning',
-  'crousty_oil_checklist',
-  'crousty-temperatures-zones',
-  'crousty_huiles_cuves',
-  'crousty-nettoyage-taches',
-  'crousty_fournisseurs',
-  'crousty_employees',
-  'crousty-catalogue-produits',
-  'crousty_catalogue_v2',
-  'crousty_print_settings',
-  'app_print_settings',
-];
 
 export const createFullRestaurantBackup = async (restaurantName: string) => {
   const zip = new JSZip();
@@ -37,11 +15,32 @@ export const createFullRestaurantBackup = async (restaurantName: string) => {
   
   zip.file('manifest.json', JSON.stringify(manifest, null, 2));
 
-  for (const key of ALL_KEYS) {
+  // Determine all relevant keys dynamically
+  const allStorageKeys = Object.keys(window.localStorage).filter(k => 
+    k.startsWith('crousty_') || 
+    k.startsWith('crousty-') || 
+    k.startsWith('app_')
+  );
+
+  for (const key of allStorageKeys) {
     const raw = localStorage.getItem(key);
     if (raw) {
-      zip.file(`${key}.json`, raw);
+      zip.file(`data/${key}.json`, raw);
     }
+  }
+
+  // Export all photos from IndexedDB
+  try {
+    const photos = await db.photos.toArray();
+    const photosExport: Record<string, string> = {};
+    for (const p of photos) {
+      photosExport[p.id] = p.dataUrl;
+    }
+    if (Object.keys(photosExport).length > 0) {
+      zip.file('photos.json', JSON.stringify(photosExport));
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'export des photos:", error);
   }
 
   const blob = await zip.generateAsync({ type: 'blob' });
@@ -67,20 +66,61 @@ export const importFullRestaurantBackup = async (file: File): Promise<{success: 
     }
     
     let importedKeys = 0;
+    let importedPhotos = 0;
     
-    for (const key of ALL_KEYS) {
-      const f = content.file(`${key}.json`);
-      if (f) {
-        const fileContent = await f.async("string");
-        // Verify JSON validity
-        JSON.parse(fileContent);
-        localStorage.setItem(key, fileContent);
-        importedKeys++;
+    // Process LocalStorage files
+    const dataFolder = content.folder("data");
+    if (dataFolder) {
+      for (const relativePath in dataFolder.files) {
+        if (!relativePath.endsWith('.json')) continue;
+        
+        const f = dataFolder.file(relativePath);
+        if (f) {
+           const fileContent = await f.async("string");
+           try {
+             JSON.parse(fileContent); // Validation
+             // Key is relativePath without '.json'
+             const key = relativePath.replace('.json', '');
+             localStorage.setItem(key, fileContent);
+             importedKeys++;
+           } catch (e) {
+             console.warn("Fichier backup invalide ignoré:", relativePath);
+           }
+        }
+      }
+    } else {
+      // Pour la compatibilité avec les anciens backups ZIP qui étaient à la racine
+      for (const relativePath in content.files) {
+         if (!relativePath.endsWith('.json') || relativePath === 'manifest.json' || relativePath === 'photos.json') continue;
+         const f = content.file(relativePath);
+         if (f) {
+            const fileContent = await f.async("string");
+            try {
+              JSON.parse(fileContent);
+              const key = relativePath.replace('.json', '');
+              localStorage.setItem(key, fileContent);
+              importedKeys++;
+            } catch(e) {}
+         }
       }
     }
     
-    // Reload page to apply new config globally
-    return { success: true, message: `Sauvegarde restaurée avec succès (${importedKeys} fichiers importés). Redémarrage de l'application...` };
+    // Process Photos
+    const photosFile = content.file("photos.json");
+    if (photosFile) {
+      try {
+        const photosStr = await photosFile.async("string");
+        const photosData = JSON.parse(photosStr);
+        for (const [id, base64] of Object.entries(photosData)) {
+          await savePhotoBase64(id, base64 as string);
+          importedPhotos++;
+        }
+      } catch (e) {
+        console.error("Erreur lors de l'import des photos:", e);
+      }
+    }
+    
+    return { success: true, message: `Sauvegarde restaurée (Clés: ${importedKeys}, Photos: ${importedPhotos}). Redémarrage de l'application...` };
   } catch (err: any) {
     return { success: false, message: err.message || "Erreur lors de la lecture du fichier ZIP." };
   }
