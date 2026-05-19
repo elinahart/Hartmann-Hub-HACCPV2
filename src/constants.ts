@@ -1,11 +1,20 @@
 export const APP_NAME = "Hartmann Hub";
-export const APP_VERSION = "3.5.6";
+export const APP_VERSION = "3.5.7";
 export const APP_AUTHOR = "Elina Hartmann";
 export const APP_CONTACT = "elina.hartmann.pro@gmail.com";
 export const APP_DESCRIPTION = "Solution complète de gestion HACCP, traçabilité et pilotage opérationnel professionnel.";
-export const APP_LAST_UPDATE = "18 Mai 2026";
+export const APP_LAST_UPDATE = "19 Mai 2026";
 
 export const APP_CHANGELOG = [
+  {
+    version: "3.5.7",
+    date: "19 Mai 2026",
+    changes: [
+      "Nouvelle fonctionnalité - Sauvegarde Universelle (ZIP) : Vous pouvez désormais exporter l'intégralité du restaurant (configuration, catalogue, + TOUT l'historique d'inventaire, réception, traçabilité, températures, etc) dans un seul fichier ZIP.",
+      "Restauration Complète : Importez le fichier ZIP pour recréer un restaurant à l'identique (utile pour transférer les données ou repartir à zéro).",
+      "Interface simplifiée : Dans les paramètres d'export, le format par défaut est désormais l'historique complet (ZIP)."
+    ]
+  },
   {
     version: "3.5.6",
     date: "18 Mai 2026",

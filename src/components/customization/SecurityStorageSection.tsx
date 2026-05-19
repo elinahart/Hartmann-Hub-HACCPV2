@@ -9,6 +9,7 @@ import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { AppConfig, ConfigSchema } from '../../lib/configSchema';
 import { importCatalogueProduits } from '../../lib/produitsImportService';
+import { createFullRestaurantBackup, importFullRestaurantBackup } from '../../lib/backup';
 
 export const SecurityStorageSection = () => {
   const { status, storageInfo, requestPersist } = useStoragePersist();
@@ -20,17 +21,23 @@ export const SecurityStorageSection = () => {
   const [showJsonInput, setShowJsonInput] = useState(false);
   const [importStatus, setImportStatus] = useState<{type: 'success' | 'error', message: string, report?: ImportReport} | null>(null);
 
-  const [exportMode, setExportMode] = useState<'global'|'module'>('global');
+  const [exportMode, setExportMode] = useState<'global'|'module'|'full_zip'>('full_zip');
   const [exportTargetModule, setExportTargetModule] = useState<ModuleName>(null);
 
-  const [importMode, setImportMode] = useState<'global'|'module'>('global');
+  const [importMode, setImportMode] = useState<'global'|'module'|'full_zip'>('full_zip');
   const [importTargetModule, setImportTargetModule] = useState<ModuleName>(null);
 
   const exportedAt = config.exportedAt ? new Date(config.exportedAt) : null;
   const daysSinceExport = exportedAt ? differenceInDays(new Date(), exportedAt) : null;
 
-  const handleExport = () => {
-    exportConfig(exportMode, exportTargetModule);
+  const handleExport = async () => {
+    if (exportMode === 'full_zip') {
+      await createFullRestaurantBackup(config.restaurant?.nom || 'restaurant');
+      // @ts-ignore
+      exportConfig('global'); // To triger date updating or just do it inside Backup if needed
+    } else {
+      exportConfig(exportMode as any, exportTargetModule);
+    }
   };
 
   const processImport = (jsonString: string) => {
@@ -75,9 +82,27 @@ export const SecurityStorageSection = () => {
     }
   };
 
-  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (importMode === 'full_zip') {
+      if (!file.name.endsWith('.zip')) {
+         setImportStatus({ type: 'error', message: "Veuillez sélectionner un fichier ZIP." });
+         if (fileInputRef.current) fileInputRef.current.value = '';
+         return;
+      }
+      const result = await importFullRestaurantBackup(file);
+      if (result.success) {
+         setImportStatus({ type: 'success', message: result.message });
+         setTimeout(() => window.location.reload(), 2000);
+      } else {
+         setImportStatus({ type: 'error', message: result.message });
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
@@ -198,7 +223,8 @@ export const SecurityStorageSection = () => {
                       onChange={(e: any) => setExportMode(e.target.value)}
                       className="h-12 border-white shadow-sm"
                     >
-                      <option value="global">Tout l'établissement (Complet)</option>
+                      <option value="full_zip">Historique Complet (ZIP)</option>
+                      <option value="global">Configuration Globale (JSON)</option>
                       <option value="module">Export ciblé (Catalogue, etc.)</option>
                     </Select>
                   </div>
@@ -249,8 +275,9 @@ export const SecurityStorageSection = () => {
                       onChange={(e: any) => setImportMode(e.target.value)}
                       className="h-12 border-white shadow-sm"
                     >
-                      <option value="global">Écraser / Fusion globale</option>
-                      <option value="module">Forcer vers un module précis</option>
+                      <option value="full_zip">Restauration Complète (ZIP)</option>
+                      <option value="global">Écraser / Fusion globale (JSON)</option>
+                      <option value="module">Forcer vers un module précis (JSON)</option>
                     </Select>
                   </div>
 
@@ -271,7 +298,7 @@ export const SecurityStorageSection = () => {
                   <div className="flex gap-3 pt-2">
                     <input 
                       type="file" 
-                      accept=".json,application/json" 
+                      accept={importMode === 'full_zip' ? ".zip,application/zip" : ".json,application/json"} 
                       ref={fileInputRef} 
                       onChange={handleFileImport}
                       className="hidden" 
@@ -281,15 +308,17 @@ export const SecurityStorageSection = () => {
                       variant="outline" 
                       className="flex-1 h-14 border-2 border-dashed border-gray-300 hover:border-crousty-purple hover:bg-crousty-purple/5 text-gray-700 gap-2 font-bold bg-white rounded-2xl"
                     >
-                      <Upload size={18} /> Fichier JSON
+                      <Upload size={18} /> {importMode === 'full_zip' ? 'Fichier ZIP' : 'Fichier JSON'}
                     </Button>
-                    <Button 
-                      onClick={() => setShowJsonInput(!showJsonInput)} 
-                      variant="outline" 
-                      className="flex-1 h-14 border-2 border-gray-200 hover:bg-gray-50 text-gray-700 gap-2 font-bold bg-white rounded-2xl"
-                    >
-                      <FileJson size={18} /> Coller Texte
-                    </Button>
+                    {importMode !== 'full_zip' && (
+                      <Button 
+                        onClick={() => setShowJsonInput(!showJsonInput)} 
+                        variant="outline" 
+                        className="flex-1 h-14 border-2 border-gray-200 hover:bg-gray-50 text-gray-700 gap-2 font-bold bg-white rounded-2xl"
+                      >
+                        <FileJson size={18} /> Coller Texte
+                      </Button>
+                    )}
                   </div>
 
                   {showJsonInput && (
