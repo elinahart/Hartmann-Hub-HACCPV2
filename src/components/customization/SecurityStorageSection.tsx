@@ -15,7 +15,7 @@ export const SecurityStorageSection = () => {
   const { status, storageInfo, requestPersist } = useStoragePersist();
   const { currentUser } = useAuth();
   
-  const { config, exportConfig, importConfig } = useConfig();
+  const { config, exportConfig, importConfig, updateConfig } = useConfig();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [jsonText, setJsonText] = useState('');
   const [showJsonInput, setShowJsonInput] = useState(false);
@@ -33,8 +33,7 @@ export const SecurityStorageSection = () => {
   const handleExport = async () => {
     if (exportMode === 'full_zip') {
       await createFullRestaurantBackup(config.restaurant?.nom || 'restaurant');
-      // @ts-ignore
-      exportConfig('global'); // To triger date updating or just do it inside Backup if needed
+      updateConfig({ exportedAt: new Date().toISOString() });
     } else {
       exportConfig(exportMode as any, exportTargetModule);
     }

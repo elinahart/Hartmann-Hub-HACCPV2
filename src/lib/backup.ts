@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import { getStoredData, setStoredData } from './db';
 import { AppConfig } from './configSchema';
 
@@ -44,16 +45,8 @@ export const createFullRestaurantBackup = async (restaurantName: string) => {
   }
 
   const blob = await zip.generateAsync({ type: 'blob' });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement('a');
-  link.href = url;
   const safeName = restaurantName.replace(/\s+/g, '-').toLowerCase() || 'restaurant';
-  link.download = `${safeName}-backup-complet-${new Date().toISOString().split('T')[0]}.zip`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  saveAs(blob, `${safeName}-backup-complet-${new Date().toISOString().split('T')[0]}.zip`);
 };
 
 export const importFullRestaurantBackup = async (file: File): Promise<{success: boolean, message: string}> => {
